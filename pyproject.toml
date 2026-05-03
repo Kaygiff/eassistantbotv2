@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "eassistant"
+version = "1.1.0"
+description = "E'assistant — AI Telegram Bot Platform"
+authors = ["E'assistant Team"]
+readme = "README.md"
+python = "^3.11"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+[tool.coverage.run]
+source = ["."]
+omit = ["tests/*", "eadmin/*", "scripts/*", ".venv/*"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
