@@ -1,0 +1,68 @@
+{
+  "onboarding": {
+    "welcome": "👋 Hello! I'm your personal AI assistant.\n\nLet's get acquainted. First, choose your language:",
+    "choose_language": "🌐 Choose language:",
+    "enter_assistant_name": "✨ Great! Now give your assistant a name.\n\nType any name — I'll respond to it:",
+    "name_too_long": "⚠️ Name is too long. Maximum 50 characters.",
+    "name_saved": "💾 Name saved!",
+    "profile_created": "✅ Your profile has been created!",
+    "intro": "🚀 Here's what I can do:\n\n🤖 *AI Chat* — talk about anything\n🎮 *Games* — mini-games and casino with Ecoins\n🎵 *Music* — find and send tracks\n🌤 *Weather* — forecast for any city\n📚 *Encyclopedia* — reference on everything\n💰 *Ecoins* — internal platform currency\n\nJust write to me — and let's start! 😊"
+  },
+  "common": {
+    "error": "❌ An error occurred. Please try again.",
+    "not_found": "🔍 Nothing found.",
+    "access_denied": "🚫 Access denied.",
+    "banned": "⛔ Your account is banned.",
+    "rate_limit": "⏳ Too many requests. Please wait.",
+    "only_private": "🔒 This feature is only available in private chat.",
+    "register_first": "📲 Send /start in private chat to register."
+  },
+  "ai_chat": {
+    "thinking": "💭 Thinking...",
+    "history_cleared": "🗑 Chat history cleared.",
+    "no_history": "📭 Chat history is empty."
+  },
+  "economy": {
+    "balance": "💰 Your balance: *{balance} Ecoins*",
+    "daily_bonus": "🎁 Daily bonus: *+{amount} Ecoins*\n🔥 Streak: {streak} days",
+    "already_claimed": "✅ Bonus already claimed today. Come back tomorrow!",
+    "streak_reset": "😔 Streak reset. Starting over!",
+    "transfer_sent": "✅ Sent *{amount} Ecoins* to {username}",
+    "transfer_received": "💰 You received *{amount} Ecoins* from {username}",
+    "insufficient_funds": "❌ Insufficient Ecoins. Balance: {balance}"
+  },
+  "pets": {
+    "status": "🐾 *{name}* ({species})\n❤️ Mood: {mood}\n🍖 Hunger: {hunger}%\n⚡ Energy: {energy}%\n⭐ Level: {level}",
+    "fed": "🍖 {name} has been fed! +20 to hunger.",
+    "played": "🎮 You played with {name}! +15 to energy.",
+    "sick": "🤒 {name} is sick! Heal for {cost} Ecoins.",
+    "healed": "💊 {name} is healed!",
+    "dead": "💀 {name} has died... You can get a new pet.",
+    "new_pet": "🐾 Choose pet type:",
+    "name_pet": "✏️ What will you name your pet?"
+  },
+  "casino": {
+    "warning": "⚠️ These are entertainment games using internal Ecoins currency. Real money is not used and cannot be withdrawn.",
+    "choose_game": "🎰 Choose a game:",
+    "enter_bet": "💰 Enter your bet (Ecoins):",
+    "win": "🎉 You won *{amount} Ecoins*!",
+    "loss": "😔 You lost *{amount} Ecoins*.",
+    "push": "🤝 Push! Bet returned."
+  },
+  "relationships": {
+    "propose_dating": "💌 Proposal sent to {username}. Waiting for reply...",
+    "dating_accepted": "❤️ {username} accepted your proposal! You are now dating.",
+    "propose_marriage": "💍 Marriage proposal sent to {username}.",
+    "married": "💒 Congratulations! You are now married.",
+    "already_in_relation": "💔 You are already in a relationship.",
+    "breakup": "💔 Relationship ended.",
+    "divorce": "📝 Divorce finalized."
+  },
+  "moderation": {
+    "muted": "🔇 {username} muted for {duration}.",
+    "kicked": "👢 {username} kicked from the group.",
+    "banned": "⛔ {username} banned.",
+    "warned": "⚠️ {username} received a warning ({count}/{max}).",
+    "auto_banned": "⛔ {username} automatically banned after {max} warnings."
+  }
+}
