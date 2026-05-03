@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Core palette — dark tech, bioluminescent fox */
+  --bg-base:        #080c0b;
+  --bg-surface:     #0d1412;
+  --bg-elevated:    #111a18;
+  --bg-hover:       #162320;
+
+  --border:         rgba(78, 205, 196, 0.10);
+  --border-strong:  rgba(78, 205, 196, 0.22);
+
+  --accent:         #4ecdc4;
+  --accent-dim:     rgba(78, 205, 196, 0.15);
+  --accent-glow:    rgba(78, 205, 196, 0.35);
+  --accent-bright:  #7ffff7;
+
+  --text-primary:   #e8f5f4;
+  --text-secondary: #7aa09d;
+  --text-muted:     #3d5e5a;
+  --text-accent:    #4ecdc4;
+
+  --red:            #ff6b6b;
+  --red-dim:        rgba(255, 107, 107, 0.15);
+  --yellow:         #ffd93d;
+  --yellow-dim:     rgba(255, 217, 61, 0.15);
+  --green:          #6bcb77;
+  --green-dim:      rgba(107, 203, 119, 0.15);
+
+  --radius:         8px;
+  --radius-lg:      14px;
+  --radius-xl:      20px;
+
+  --font-display:   'Syne', sans-serif;
+  --font-mono:      'JetBrains Mono', monospace;
+
+  --sidebar-width:  240px;
+  --header-height:  60px;
+
+  --shadow-card:    0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px var(--border);
+  --shadow-accent:  0 0 20px var(--accent-glow);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Selection */
+::selection { background: var(--accent-dim); color: var(--accent-bright); }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px var(--accent-glow); }
+  50%       { box-shadow: 0 0 20px var(--accent-glow), 0 0 40px rgba(78,205,196,0.15); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.fade-in { animation: fadeIn 0.3s ease forwards; }
