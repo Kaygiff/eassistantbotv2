@@ -19,11 +19,11 @@ async def get_user_by_telegram_id(telegram_id: int) -> Optional[User]:
         .table("users")
         .select("*")
         .eq("telegram_id", telegram_id)
-        .maybe_single()
+        .limit(1)
         .execute()
     )
     if res.data:
-        return User(**res.data)
+        return User(**res.data[0])
     return None
 
 
@@ -34,11 +34,11 @@ async def get_user_by_uuid(user_id: str) -> Optional[User]:
         .table("users")
         .select("*")
         .eq("id", user_id)
-        .maybe_single()
+        .limit(1)
         .execute()
     )
     if res.data:
-        return User(**res.data)
+        return User(**res.data[0])
     return None
 
 
