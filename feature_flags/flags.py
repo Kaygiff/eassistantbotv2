@@ -103,3 +103,20 @@ async def invalidate_flag_cache(flag_name: str) -> None:
     """Принудительно сбрасывает кэш конкретного флага."""
     redis = get_redis()
     await redis.delete(feature_flag_key(flag_name))
+
+async def get_all_rules() -> list[dict]:
+    """
+    Возвращает все feature flags из Supabase.
+    Используется в EAdmin для отображения списка флагов.
+    """
+    try:
+        res = (
+            supabase_admin
+            .table("feature_flags")
+            .select("*")
+            .execute()
+        )
+        return res.data or []
+    except Exception as e:
+        logger.warning(f"Failed to load all feature flags: {e}")
+        return []
