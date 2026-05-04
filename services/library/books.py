@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 import logging
 import httpx
+from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 GOOGLE_BOOKS_KEY = os.getenv("GOOGLE_BOOKS_KEY")
@@ -34,11 +35,14 @@ async def search_books(query: str, language: str = "ru") -> str:
         info = items[0].get("volumeInfo", {})
         title = info.get("title", "Без названия")
         authors = ", ".join(info.get("authors", ["Неизвестен"]))
-        preview = info.get("previewLink", "")
+        preview = (
+            info.get("previewLink")
+            or info.get("infoLink")
+            or f"https://www.google.com/search?q={quote(title + ' ' + authors)}+читать+онлайн"
+        )
 
         text = f"📖 *{title}*\n👤 {authors}"
-        if preview:
-            text += f"\n\n[Читать]({preview})"
+        text += f"\n\n[Читать онлайн]({preview})"
 
         return text
 
