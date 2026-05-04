@@ -22,7 +22,6 @@ LANG_TO_ASSEMBLYAI = {
 
 
 async def transcribe_via_whisper(file_path: str, language: str) -> str | None:
-    """Транскрибирует через OpenAI Whisper."""
     key = os.getenv("OPENAI_API_KEY")
     if not key:
         return None
@@ -32,9 +31,7 @@ async def transcribe_via_whisper(file_path: str, language: str) -> str | None:
         whisper_lang = LANG_TO_WHISPER.get(language, "ru")
         with open(file_path, "rb") as f:
             response = await client.audio.transcriptions.create(
-                model="whisper-1",
-                file=f,
-                language=whisper_lang,
+                model="whisper-1", file=f, language=whisper_lang,
             )
         return response.text.strip()
     except Exception as e:
@@ -43,7 +40,6 @@ async def transcribe_via_whisper(file_path: str, language: str) -> str | None:
 
 
 async def transcribe_via_assemblyai(file_path: str, language: str = "ru") -> str | None:
-    """Транскрибирует через AssemblyAI (синхронный SDK в executor)."""
     key = os.getenv("ASSEMBLYAI_KEY") or os.getenv("ASSEMBLYAI_API_KEY")
     if not key:
         return None
@@ -53,10 +49,7 @@ async def transcribe_via_assemblyai(file_path: str, language: str = "ru") -> str
         def _transcribe():
             aai.settings.api_key = key
             lang_code = LANG_TO_ASSEMBLYAI.get(language, "ru")
-            config = aai.TranscriptionConfig(
-                speech_models=aai.SpeechModel.best,
-                language_code=lang_code,
-            )
+            config = aai.TranscriptionConfig(language_code=lang_code)
             transcriber = aai.Transcriber(config=config)
             transcript = transcriber.transcribe(file_path)
             if transcript.error:
@@ -64,36 +57,26 @@ async def transcribe_via_assemblyai(file_path: str, language: str = "ru") -> str
             return transcript.text
 
         loop = asyncio.get_event_loop()
-        text = await loop.run_in_executor(None, _transcribe)
-        return text
+        return await loop.run_in_executor(None, _transcribe)
     except Exception as e:
         logger.warning(f"[STT] AssemblyAI error: {e}")
         return None
 
 
 async def transcribe_voice(file_id: str, language: str, bot) -> str | None:
-    """
-    Скачивает голосовое сообщение и транскрибирует его.
-    Возвращает текст или None при ошибке.
-    """
     try:
         file = await bot.get_file(file_id)
         with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as tmp:
             tmp_path = tmp.name
-
         await bot.download_file(file.file_path, destination=tmp_path)
 
-        # Пробуем Whisper
         text = await transcribe_via_whisper(tmp_path, language)
-
-        # Fallback — AssemblyAI
         if not text:
             logger.info("[STT] Whisper unavailable, trying AssemblyAI...")
             text = await transcribe_via_assemblyai(tmp_path, language)
 
         os.unlink(tmp_path)
         return text
-
     except Exception as e:
         logger.error(f"[STT] Failed to transcribe voice: {e}")
         return None
