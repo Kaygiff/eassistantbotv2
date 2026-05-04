@@ -5,6 +5,7 @@ services/library/anime.py — Поиск аниме через AniList GraphQL A
 from __future__ import annotations
 import logging
 import httpx
+from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 
@@ -12,17 +13,23 @@ ANILIST_URL = "https://graphql.anilist.co"
 
 QUERY = """
 query ($search: String) {
-  Page(perPage: 5) {
+  Page(perPage: 1) {
     media(search: $search, type: ANIME, sort: POPULARITY_DESC) {
       title { romaji english native }
       episodes
       averageScore
       status
-      siteUrl
     }
   }
 }
 """
+
+STATUS_MAP = {
+    "FINISHED": "Завершён",
+    "RELEASING": "Выходит",
+    "NOT_YET_RELEASED": "Анонс",
+    "CANCELLED": "Отменён",
+}
 
 
 async def search_anime(query: str, language: str = "ru") -> str:
@@ -45,14 +52,10 @@ async def search_anime(query: str, language: str = "ru") -> str:
         title_jp = anime["title"].get("native", "")
         episodes = anime.get("episodes") or "?"
         score = anime.get("averageScore")
-        status_map = {
-            "FINISHED": "Завершён",
-            "RELEASING": "Выходит",
-            "NOT_YET_RELEASED": "Анонс",
-            "CANCELLED": "Отменён",
-        }
-        status = status_map.get(anime.get("status", ""), "")
-        url = anime.get("siteUrl", "")
+        status = STATUS_MAP.get(anime.get("status", ""), "")
+
+        # Ссылка на Shikimori (русскоязычный)
+        shikimori_url = f"https://shikimori.one/animes/?search={quote(title_en)}"
 
         text = f"🎌 *{title_en}*"
         if title_jp:
@@ -62,8 +65,7 @@ async def search_anime(query: str, language: str = "ru") -> str:
             text += f" · ⭐ {score}/100"
         if status:
             text += f" · {status}"
-        if url:
-            text += f"\n\n[AniList]({url})"
+        text += f"\n\n[Смотреть на Shikimori]({shikimori_url})"
 
         return text
 
