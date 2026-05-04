@@ -16,7 +16,7 @@ from api.audit.logger import log_action
 async def get_warn_count(group_id: str, user_id: str) -> int:
     """Возвращает количество активных предупреждений пользователя в группе."""
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("group_warns")
         .select("id", count="exact")
         .eq("group_id", group_id)
@@ -38,7 +38,7 @@ async def warn_user(
     """
     # Получаем порог из настроек группы
     group_res = (
-        supabase_admin
+        get_supabase_admin()
         .table("groups")
         .select("warn_threshold")
         .eq("id", group_id)
@@ -81,7 +81,7 @@ async def clear_warns(group_id: str, user_id: str) -> None:
 async def get_group_member_role(group_id: str, user_id: str) -> Optional[str]:
     """Возвращает роль пользователя в группе или None если не в группе."""
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("group_members")
         .select("role")
         .eq("group_id", group_id)
@@ -116,7 +116,7 @@ async def ensure_group_exists(chat_id: int, title: str, owner_id: Optional[str] 
     Возвращает UUID группы.
     """
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("groups")
         .select("id")
         .eq("chat_id", chat_id)

@@ -29,7 +29,7 @@ async def get_top_balances(limit: int = 10, language: str = "ru") -> list[dict]:
         return json.loads(cached)[:limit]
 
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("ecoin_wallets")
         .select("balance, users(first_name, username)")
         .order("balance", desc=True)

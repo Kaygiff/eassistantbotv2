@@ -33,7 +33,7 @@ async def get_flag(flag_name: str, default: bool = True) -> bool:
     # 2. Загружаем из Supabase
     try:
         res = (
-            supabase_admin
+        get_supabase_admin()
             .table("feature_flags")
             .select("enabled")
             .eq("name", flag_name)
@@ -65,7 +65,7 @@ async def get_user_flag(flag_name: str, user_id: str, default: bool = True) -> b
 
     try:
         res = (
-            supabase_admin
+        get_supabase_admin()
             .table("feature_flag_users")
             .select("enabled")
             .eq("flag_name", flag_name)
@@ -111,7 +111,7 @@ async def get_all_rules() -> list[dict]:
     """
     try:
         res = (
-            supabase_admin
+        get_supabase_admin()
             .table("feature_flags")
             .select("*")
             .execute()

@@ -15,7 +15,7 @@ from core.models.user import User, UserCreate
 async def get_user_by_telegram_id(telegram_id: int) -> Optional[User]:
     """Возвращает пользователя по Telegram ID или None если не найден."""
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("users")
         .select("*")
         .eq("telegram_id", telegram_id)
@@ -30,7 +30,7 @@ async def get_user_by_telegram_id(telegram_id: int) -> Optional[User]:
 async def get_user_by_uuid(user_id: str) -> Optional[User]:
     """Возвращает пользователя по внутреннему UUID."""
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("users")
         .select("*")
         .eq("id", user_id)
@@ -51,7 +51,7 @@ async def create_user(data: UserCreate) -> User:
 
     # 1. Создать пользователя
     user_res = (
-        supabase_admin
+        get_supabase_admin()
         .table("users")
         .insert({
             "id": user_id,
@@ -107,7 +107,7 @@ async def get_or_create_user(
 async def update_user_field(user_id: str, **fields) -> User:
     """Обновляет произвольные поля профиля пользователя."""
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("users")
         .update(fields)
         .eq("id", user_id)
