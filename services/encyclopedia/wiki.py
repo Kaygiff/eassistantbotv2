@@ -67,10 +67,7 @@ async def get_article(query: str, language: str = "ru") -> str:
         if len(extract) > 500:
             extract = extract[:500].rsplit(".", 1)[0] + "."
 
-        page_url = data.get("content_urls", {}).get("desktop", {}).get("page", "")
         text = f"📚 *{title}*\n\n{extract}"
-        if page_url:
-            text += f"\n\n🔗 [Подробнее]({page_url})"
 
         await redis.setex(cache_key, CACHE_TTL, text)
         return text
@@ -78,3 +75,4 @@ async def get_article(query: str, language: str = "ru") -> str:
     except Exception as e:
         logger.error(f"[Encyclopedia] Error for '{query}': {e}")
         return "❌ Не удалось получить информацию."
+        
