@@ -1,0 +1,11 @@
+-- Таблица кэша музыки
+CREATE TABLE IF NOT EXISTS music_cache (
+    youtube_id  TEXT PRIMARY KEY,
+    title       TEXT,
+    artist      TEXT,
+    storage_url TEXT NOT NULL,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Индекс для поиска по названию (ilike)
+CREATE INDEX IF NOT EXISTS idx_music_cache_title ON music_cache (title);

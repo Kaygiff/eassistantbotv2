@@ -86,9 +86,11 @@ async def handle_image_gen(ctx: BrainContext, bot) -> None:
 
     await bot.send_chat_action(ctx.chat_id, "upload_photo")
     from services.image.generator import generate_image
-    image_url = await generate_image(prompt)
-    if image_url:
-        await bot.send_photo(ctx.chat_id, image_url)
+    from aiogram.types import BufferedInputFile
+    image_bytes = await generate_image(prompt)
+    if image_bytes:
+        photo = BufferedInputFile(image_bytes, filename="image.png")
+        await bot.send_photo(ctx.chat_id, photo)
     else:
         await bot.send_message(ctx.chat_id, t(ctx.language, "common.error"))
 
