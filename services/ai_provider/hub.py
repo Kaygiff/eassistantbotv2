@@ -23,12 +23,8 @@ from typing import Any
 
 from services.ai_provider.providers.openai import OpenAIProvider
 from services.ai_provider.providers.mistral import MistralProvider
-from services.ai_provider.providers.deepseek import DeepSeekProvider
 from services.ai_provider.providers.groq import GroqProvider
 from services.ai_provider.providers.cohere import CohereProvider
-from services.ai_provider.providers.perplexity import PerplexityProvider
-from services.ai_provider.providers.qwen import QwenProvider
-from services.ai_provider.providers.yi import YiProvider
 
 logger = logging.getLogger(__name__)
 
@@ -78,12 +74,8 @@ class AIProviderHub:
         self._providers = [
             OpenAIProvider(),
             MistralProvider(),
-            DeepSeekProvider(),
             GroqProvider(),
             CohereProvider(),
-            PerplexityProvider(),
-            QwenProvider(),
-            YiProvider(),
         ]
         self._breakers = {p.name: CircuitBreaker(p.name) for p in self._providers}
 
