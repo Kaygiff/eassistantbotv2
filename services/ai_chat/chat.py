@@ -95,7 +95,7 @@ async def get_ai_response(
         )
     except RuntimeError as e:
         logger.error(f"[AIChat] All providers failed: {e}")
-        from i18n import t
+        from core.i18n.loader import t
         return t(language, "common.error")
 
     elapsed_ms = round((time.monotonic() - start) * 1000)
