@@ -90,14 +90,43 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
             await bot.send_message(ctx.chat_id, t(ctx.language, "common.banned"))
         return
 
-    # 5. Голосовое → STT
+    # 5. Голосовое/видео → STT
+    # Транскрибируем всегда — чтобы люди могли прочитать вместо прослушивания.
+    # Если в тексте есть имя бота или world-команда — дополнительно обрабатываем.
     if ctx.is_voice and ctx.voice_file_id:
         from services.voice.stt import transcribe_voice
         transcribed = await transcribe_voice(ctx.voice_file_id, ctx.language, bot)
-        if transcribed:
-            ctx.text = transcribed
+        if not transcribed:
+            return  # не удалось распознать — молча выходим
+        ctx.text = transcribed
+        await bot.send_message(
+            ctx.chat_id,
+            f"🎤 _«{transcribed}»_",
+            parse_mode="Markdown",
+            reply_to_message_id=ctx.message_id,
+        )
+        # Проверяем: есть ли обращение по имени или world-команда
+        addressed, clean_text = _extract_assistant_address(ctx.text, user.assistant_name)
+        if addressed:
+            ctx.text = clean_text
+            intent = await classify(ctx.text, ctx.language)
+            ctx.set_intent(intent)
         else:
+            # Нет имени — проверяем world-команды (/ban, /warn и т.д.)
+            intent = await classify(ctx.text, ctx.language)
+            ctx.set_intent(intent)
+            if ctx.intent not in GROUP_WORLD_INTENTS:
+                return  # просто транскрипция, дальше не идём
+        if ctx.intent not in GROUP_ALLOWED_INTENTS:
             return
+        handler = _handlers.get(ctx.intent) or _handlers.get(Intent.AI_CHAT)
+        if handler:
+            try:
+                await handler(ctx, bot)
+            except Exception as e:
+                logger.exception(f"[GroupRouter] Voice handler error: {e}")
+                await bot.send_message(ctx.chat_id, t(ctx.language, "common.error"))
+        return  # голосовое полностью обработано
 
     # 6. Определяем режим: обращение по имени или нет
     addressed, clean_text = _extract_assistant_address(ctx.text, user.assistant_name)
