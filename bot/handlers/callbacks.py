@@ -66,8 +66,46 @@ async def cb_profile(callback: CallbackQuery) -> None:
     ctx = await _get_ctx_and_user(callback)
 
     if action == "edit":
-        from bot.brain.handlers.profile import handle_profile_edit
-        await handle_profile_edit(ctx, callback.message.bot)
+        # Если есть третья часть — это выбор конкретного поля
+        if len(parts) > 2:
+            field = parts[2]
+            from api.auth.session import set_fsm_state
+            prompts = {
+                "nickname": "✏️ Введи новый никнейм (максимум 50 символов):",
+                "bio": "📝 Напиши что-нибудь о себе (максимум 300 символов):",
+                "birthday": "🎂 Введи дату рождения в формате ДД.ММ.ГГГГ\nНапример: 15.03.1995",
+                "language": None,  # отдельная логика
+                "assistant_name": "🤖 Введи новое имя ассистента (максимум 50 символов):",
+            }
+            if field == "language":
+                from core.i18n.loader import get_language_keyboard
+                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                buttons = get_language_keyboard()
+                keyboard = InlineKeyboardMarkup(
+                    inline_keyboard=[[InlineKeyboardButton(text=b["text"], callback_data=b["callback_data"])]
+                                     for b in buttons]
+                )
+                await callback.message.edit_text("🌐 Выбери язык:", reply_markup=keyboard)
+            elif field in prompts and prompts[field]:
+                await set_fsm_state(str(ctx.user.id), f"settings:{field}")
+                await callback.message.edit_text(prompts[field])
+            else:
+                logger.warning("Unknown profile edit field: %s", field)
+        else:
+            # Показываем меню редактирования, редактируя текущее сообщение
+            from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="✏️ Никнейм", callback_data="profile:edit:nickname")],
+                [InlineKeyboardButton(text="📝 О себе", callback_data="profile:edit:bio")],
+                [InlineKeyboardButton(text="🎂 День рождения", callback_data="profile:edit:birthday")],
+                [InlineKeyboardButton(text="🌐 Язык", callback_data="profile:edit:language")],
+                [InlineKeyboardButton(text="🤖 Имя ассистента", callback_data="profile:edit:assistant_name")],
+            ])
+            await callback.message.edit_text(
+                "✏️ *Редактирование профиля*\n\nЧто хочешь изменить?",
+                parse_mode="Markdown",
+                reply_markup=keyboard,
+            )
     await callback.answer()
 
 
