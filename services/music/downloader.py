@@ -76,10 +76,12 @@ async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
             }).execute()
         )
 
-        # 6. Отправляем пользователю
+        # 6. Отправляем пользователю — байтами чтобы Telegram принял title/performer
+        from aiogram.types import BufferedInputFile
+        audio_bytes = BufferedInputFile(audio_data, filename=f"{artist} - {title}.mp3")
         await bot.send_audio(
             chat_id,
-            audio=cdn_url,
+            audio=audio_bytes,
             title=title,
             performer=artist,
         )
