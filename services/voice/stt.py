@@ -24,7 +24,7 @@ async def transcribe_via_whisper(file_path: str, language: str) -> str | None:
         return None
     try:
         import openai
-        client = openai.AsyncOpenAI(api_key=key)
+        client = openai.AsyncOpenAI(api_key=key, max_retries=0)
         whisper_lang = LANG_TO_WHISPER.get(language, "ru")
         with open(file_path, "rb") as f:
             response = await client.audio.transcriptions.create(
