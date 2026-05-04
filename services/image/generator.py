@@ -63,12 +63,33 @@ async def generate_via_stability(prompt: str) -> bytes | None:
         return None
 
 
+async def _translate_to_english(prompt: str) -> str:
+    """Переводит промпт на английский через AI hub (Mistral)."""
+    try:
+        from services.ai_provider.hub import get_hub
+        hub = get_hub()
+        result, _ = await hub.chat(
+            messages=[{"role": "user", "content": prompt}],
+            system="Translate the user text to English for an image generation prompt. Return ONLY the translated text, nothing else.",
+            max_tokens=200,
+            temperature=0.3,
+        )
+        return result.strip()
+    except Exception as e:
+        logger.warning(f"[ImageGen] Translation error: {e}")
+        return prompt
+
+
 async def generate_image(prompt: str) -> bytes | None:
     """
     Генерирует изображение по промпту.
+    Переводит на английский, затем генерирует.
     Возвращает байты изображения или None при ошибке.
     """
-    img = await generate_via_dalle(prompt)
+    english_prompt = await _translate_to_english(prompt)
+    logger.info(f"[ImageGen] Translated prompt: {english_prompt}")
+
+    img = await generate_via_dalle(english_prompt)
     if img:
         return img
-    return await generate_via_stability(prompt)
+    return await generate_via_stability(english_prompt)
