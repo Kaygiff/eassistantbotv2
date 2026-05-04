@@ -121,7 +121,7 @@ async def cb_pet(callback: CallbackQuery) -> None:
         from api.auth.session import set_fsm_state, set_fsm_data
         await set_fsm_state(str(ctx.user.id), "pet:naming")
         await set_fsm_data(str(ctx.user.id), {"species": species})
-        from i18n import t
+        from core.i18n.loader import t
         await callback.message.edit_text(t(ctx.language, "pets.name_pet"))
     elif action == "feed":
         from bot.brain.handlers.pet import handle_pet_feed
@@ -153,7 +153,7 @@ async def cb_casino(callback: CallbackQuery) -> None:
     }
     ctx.set_intent(intent_map.get(game, Intent.CASINO_OPEN))
 
-    from i18n import t
+    from core.i18n.loader import t
     await callback.message.edit_text(t(ctx.language, "casino.enter_bet"))
     await callback.answer()
 
@@ -165,7 +165,7 @@ async def cb_settings(callback: CallbackQuery) -> None:
     ctx = await _get_ctx_and_user(callback)
 
     if action == "language":
-        from i18n import get_language_keyboard
+        from core.i18n.loader import get_language_keyboard
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
         buttons = get_language_keyboard()
         keyboard = InlineKeyboardMarkup(
