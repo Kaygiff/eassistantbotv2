@@ -30,7 +30,13 @@ async def list_users(
     query = supabase_admin.table("users").select("*").order("created_at", desc=True)
 
     if search:
-        query = query.ilike("username", f"%{search}%")
+        try:
+            tg_id = int(search)
+            query = query.eq("telegram_id", tg_id)
+        except ValueError:
+            query = query.or_(
+                f"username.ilike.%{search}%,first_name.ilike.%{search}%"
+            )
     if language:
         query = query.eq("language", language)
     if is_banned is not None:
