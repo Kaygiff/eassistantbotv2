@@ -146,6 +146,7 @@ PRIVATE_ONLY_INTENTS = {
 # (имя которое пользователь задал боту при онбординге, например "Альфа, найди музыку")
 # ---------------------------------------------------------------------------
 MICROSERVICE_INTENTS = {
+    Intent.AI_CHAT,
     Intent.MUSIC_SEARCH, Intent.WEATHER, Intent.TRANSLATE,
     Intent.ENCYCLOPEDIA, Intent.BOOK_SEARCH, Intent.ANIME_SEARCH,
     Intent.IMAGE_GEN, Intent.VOICE_TO_TEXT,
@@ -154,7 +155,6 @@ MICROSERVICE_INTENTS = {
 
 # World-функции — работают в группе без обращения по имени
 GROUP_WORLD_INTENTS = {
-    Intent.AI_CHAT,
     Intent.GAME_QUIZ, Intent.GAME_DICE, Intent.GAME_TRUTH_DARE,
     Intent.GAME_WOULD_YOU, Intent.GAME_RIDDLE,
     Intent.ACTION_DO, Intent.RELATIONSHIP_PROPOSE, Intent.MARRIAGE_PROPOSE,
