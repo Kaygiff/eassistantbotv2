@@ -98,6 +98,10 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
         transcribed = await transcribe_voice(ctx.voice_file_id, ctx.language, bot)
         if not transcribed:
             return  # не удалось распознать — молча выходим
+        # Whisper добавляет кавычки и пунктуацию — чистим чтобы "Бишкек." не ломало запросы
+        transcribed = re.sub(r'[«»""„"\']+', '', transcribed)  # убираем кавычки
+        transcribed = transcribed.rstrip('.,!?;: ')               # убираем пунктуацию в конце
+        transcribed = transcribed.strip()
         ctx.text = transcribed
         await bot.send_message(
             ctx.chat_id,
