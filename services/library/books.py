@@ -12,7 +12,6 @@ GOOGLE_BOOKS_KEY = os.getenv("GOOGLE_BOOKS_KEY")
 
 
 async def search_books(query: str, language: str = "ru") -> str:
-    """Ищет самую популярную книгу по запросу."""
     try:
         params = {
             "q": query,
@@ -32,23 +31,14 @@ async def search_books(query: str, language: str = "ru") -> str:
         if not items:
             return f"🔍 Книги по запросу *{query}* не найдены."
 
-        # Берём первую (самую релевантную)
         info = items[0].get("volumeInfo", {})
         title = info.get("title", "Без названия")
         authors = ", ".join(info.get("authors", ["Неизвестен"]))
-        year = info.get("publishedDate", "")[:4]
-        rating = info.get("averageRating")
-        description = info.get("description", "")
-        if len(description) > 300:
-            description = description[:300].rsplit(" ", 1)[0] + "..."
+        preview = info.get("previewLink", "")
 
         text = f"📖 *{title}*\n👤 {authors}"
-        if year:
-            text += f" · {year}"
-        if rating:
-            text += f" · ⭐ {rating}"
-        if description:
-            text += f"\n\n{description}"
+        if preview:
+            text += f"\n\n[Читать]({preview})"
 
         return text
 
