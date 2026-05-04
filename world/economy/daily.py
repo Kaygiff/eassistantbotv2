@@ -7,7 +7,7 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone, timedelta
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from world.economy.wallet import credit
 from core.i18n import t
 
@@ -29,7 +29,7 @@ async def claim_daily_bonus(user_id: str, language: str = "ru") -> str:
     now = datetime.now(timezone.utc)
 
     res = (
-        supabase_admin.table("daily_bonuses")
+        get_supabase_admin().table("daily_bonuses")
         .select("*")
         .eq("user_id", user_id)
         .maybe_single()
@@ -39,7 +39,7 @@ async def claim_daily_bonus(user_id: str, language: str = "ru") -> str:
 
     if not record:
         # Первый раз — создаём запись
-        supabase_admin.table("daily_bonuses").insert({
+        get_supabase_admin().table("daily_bonuses").insert({
             "user_id": user_id,
             "streak_days": 0,
         }).execute()
@@ -60,7 +60,7 @@ async def claim_daily_bonus(user_id: str, language: str = "ru") -> str:
         # Пропустили день — сброс стрика
         if now.date() > last_dt.date() + timedelta(days=1):
             streak = 0
-            supabase_admin.table("daily_bonuses").update({
+            get_supabase_admin().table("daily_bonuses").update({
                 "streak_days": 0
             }).eq("user_id", user_id).execute()
 
@@ -68,10 +68,10 @@ async def claim_daily_bonus(user_id: str, language: str = "ru") -> str:
     amount = _calc_bonus(new_streak)
 
     # Обновляем запись
-    supabase_admin.table("daily_bonuses").update({
+    get_supabase_admin().table("daily_bonuses").update({
         "streak_days": new_streak,
         "last_bonus_at": now.isoformat(),
-        "total_bonuses_earned": supabase_admin.table("daily_bonuses")
+        "total_bonuses_earned": get_supabase_admin().table("daily_bonuses")
             .select("total_bonuses_earned")
             .eq("user_id", user_id)
             .maybe_single()

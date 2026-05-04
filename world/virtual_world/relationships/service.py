@@ -7,7 +7,7 @@ import uuid
 import logging
 from typing import Optional
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from core.models.user import User
 from bot.brain.context import BrainContext
 from api.auth.session import get_fsm_state, set_fsm_state, set_fsm_data, get_fsm_data, clear_fsm_state, clear_fsm_data
@@ -23,7 +23,7 @@ def _ordered_pair(a: str, b: str) -> tuple[str, str]:
 
 async def get_current_relationship(user_id: str) -> Optional[dict]:
     res = (
-        supabase_admin.table("relationships")
+        get_supabase_admin().table("relationships")
         .select("*")
         .or_(f"user_a_id.eq.{user_id},user_b_id.eq.{user_id}")
         .maybe_single()
@@ -42,7 +42,7 @@ async def propose_dating(initiator: User, target: User, language: str, bot) -> s
         return t(language, "relationships.already_in_relation")
 
     # Проверяем чёрный список
-    bl = supabase_admin.table("blacklist").select("id").eq("blocker_id", target_id).eq("blocked_id", init_id).maybe_single().execute()
+    bl = get_supabase_admin().table("blacklist").select("id").eq("blocker_id", target_id).eq("blocked_id", init_id).maybe_single().execute()
     if bl.data:
         return t(language, "common.access_denied")
 
@@ -71,7 +71,7 @@ async def get_relationship_status(user_id: str, language: str) -> str:
         return "💔 Ты сейчас свободен(а)."
 
     partner_id = rel["user_b_id"] if rel["user_a_id"] == user_id else rel["user_a_id"]
-    partner = supabase_admin.table("users").select("first_name, username").eq("id", partner_id).maybe_single().execute()
+    partner = get_supabase_admin().table("users").select("first_name, username").eq("id", partner_id).maybe_single().execute()
     partner_name = partner.data.get("first_name") or f"@{partner.data.get('username')}" if partner.data else "Неизвестно"
 
     status = rel["status"]
@@ -92,7 +92,7 @@ async def breakup(user_id: str, language: str) -> str:
     if not rel:
         return "💔 У тебя нет активных отношений."
 
-    supabase_admin.table("relationships").delete().eq("id", rel["id"]).execute()
+    get_supabase_admin().table("relationships").delete().eq("id", rel["id"]).execute()
 
     partner_id = rel["user_b_id"] if rel["user_a_id"] == user_id else rel["user_a_id"]
     await notify_user(partner_id, "💔 Ваши отношения завершены.")
@@ -134,7 +134,7 @@ async def divorce(user_id: str, language: str) -> str:
     if not rel or rel["status"] != "married":
         return "📝 Вы не состоите в браке."
 
-    supabase_admin.table("relationships").delete().eq("id", rel["id"]).execute()
+    get_supabase_admin().table("relationships").delete().eq("id", rel["id"]).execute()
 
     partner_id = rel["user_b_id"] if rel["user_a_id"] == user_id else rel["user_a_id"]
     await notify_user(partner_id, "📝 Ваш брак расторгнут.")
@@ -148,7 +148,7 @@ async def handle_relationship_callback(ctx: BrainContext, action: str, param: st
 
     if action == "accept_dating" and param:
         user_a_id, user_b_id = _ordered_pair(param, user_id)
-        supabase_admin.table("relationships").insert({
+        get_supabase_admin().table("relationships").insert({
             "id": str(uuid.uuid4()),
             "user_a_id": user_a_id,
             "user_b_id": user_b_id,
@@ -165,7 +165,7 @@ async def handle_relationship_callback(ctx: BrainContext, action: str, param: st
         rel = await get_current_relationship(user_id)
         if rel:
             from datetime import datetime, timezone
-            supabase_admin.table("relationships").update({
+            get_supabase_admin().table("relationships").update({
                 "status": "married",
                 "married_at": datetime.now(timezone.utc).isoformat(),
             }).eq("id", rel["id"]).execute()

@@ -12,13 +12,13 @@ async def _get_target_user(ctx: BrainContext, bot):
     """Извлекает целевого пользователя из reply или @username."""
     import re
     from api.auth.identity import get_user_by_telegram_id
-    from infra.db.supabase import supabase_admin
+    from infra.db.supabase import get_supabase_admin
 
     # Из @username в тексте
     match = re.search(r"@(\w+)", ctx.text)
     if match:
         username = match.group(1)
-        res = supabase_admin.table("users").select("*").eq("username", username).maybe_single().execute()
+        res = get_supabase_admin().table("users").select("*").eq("username", username).maybe_single().execute()
         if res.data:
             from core.models.user import User
             return User(**res.data)

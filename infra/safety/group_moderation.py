@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from api.audit.logger import log_action
 
 
@@ -48,7 +48,7 @@ async def warn_user(
     threshold = group_res.data["warn_threshold"] if group_res.data else 3
 
     # Добавляем варн
-    supabase_admin.table("group_warns").insert({
+    get_supabase_admin().table("group_warns").insert({
         "id": str(uuid.uuid4()),
         "group_id": group_id,
         "user_id": user_id,
@@ -75,7 +75,7 @@ async def warn_user(
 
 async def clear_warns(group_id: str, user_id: str) -> None:
     """Удаляет все предупреждения пользователя в группе."""
-    supabase_admin.table("group_warns").delete().eq("group_id", group_id).eq("user_id", user_id).execute()
+    get_supabase_admin().table("group_warns").delete().eq("group_id", group_id).eq("user_id", user_id).execute()
 
 
 async def get_group_member_role(group_id: str, user_id: str) -> Optional[str]:
@@ -103,7 +103,7 @@ async def can_moderate(group_id: str, user_id: str) -> bool:
 
 async def set_member_role(group_id: str, user_id: str, role: str) -> None:
     """Устанавливает роль участника группы."""
-    supabase_admin.table("group_members").upsert({
+    get_supabase_admin().table("group_members").upsert({
         "group_id": group_id,
         "user_id": user_id,
         "role": role,
@@ -127,7 +127,7 @@ async def ensure_group_exists(chat_id: int, title: str, owner_id: Optional[str] 
         return res.data["id"]
 
     group_id = str(uuid.uuid4())
-    supabase_admin.table("groups").insert({
+    get_supabase_admin().table("groups").insert({
         "id": group_id,
         "chat_id": chat_id,
         "title": title,

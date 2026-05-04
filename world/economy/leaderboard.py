@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import logging
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from infra.db.redis import get_redis
 
 logger = logging.getLogger(__name__)

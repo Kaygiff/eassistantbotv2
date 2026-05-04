@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 async def _get_target(ctx: BrainContext) -> tuple[str | None, str | None]:
     """Извлекает целевого пользователя из reply или @username."""
     from api.auth.identity import get_user_by_telegram_id
-    from infra.db.supabase import supabase_admin
+    from infra.db.supabase import get_supabase_admin
 
     if ctx.reply_to_user_telegram_id:
         user = await get_user_by_telegram_id(ctx.reply_to_user_telegram_id)
@@ -27,7 +27,7 @@ async def _get_target(ctx: BrainContext) -> tuple[str | None, str | None]:
 
     match = re.search(r"@(\w+)", ctx.text)
     if match:
-        res = supabase_admin.table("users").select("id, first_name, username").eq("username", match.group(1)).maybe_single().execute()
+        res = get_supabase_admin().table("users").select("id, first_name, username").eq("username", match.group(1)).maybe_single().execute()
         if res.data:
             name = res.data.get("first_name") or f"@{res.data.get('username')}"
             return res.data["id"], name
@@ -70,8 +70,8 @@ async def ban_user_in_group(ctx: BrainContext, bot) -> str:
     await ban_user(target_id, reason=reason, banned_by=str(ctx.user.id))
 
     try:
-        from infra.db.supabase import supabase_admin
-        user_res = supabase_admin.table("users").select("telegram_id").eq("id", target_id).maybe_single().execute()
+        from infra.db.supabase import get_supabase_admin
+        user_res = get_supabase_admin().table("users").select("telegram_id").eq("id", target_id).maybe_single().execute()
         if user_res.data:
             await bot.ban_chat_member(ctx.chat_id, user_res.data["telegram_id"])
     except Exception as e:
@@ -90,8 +90,8 @@ async def mute_user_in_group(ctx: BrainContext, bot) -> str:
     from aiogram.types import ChatPermissions
 
     try:
-        from infra.db.supabase import supabase_admin
-        user_res = supabase_admin.table("users").select("telegram_id").eq("id", target_id).maybe_single().execute()
+        from infra.db.supabase import get_supabase_admin
+        user_res = get_supabase_admin().table("users").select("telegram_id").eq("id", target_id).maybe_single().execute()
         if user_res.data:
             await bot.restrict_chat_member(
                 ctx.chat_id,
@@ -111,8 +111,8 @@ async def kick_user_from_group(ctx: BrainContext, bot) -> str:
         return "👥 Укажи пользователя."
 
     try:
-        from infra.db.supabase import supabase_admin
-        user_res = supabase_admin.table("users").select("telegram_id").eq("id", target_id).maybe_single().execute()
+        from infra.db.supabase import get_supabase_admin
+        user_res = get_supabase_admin().table("users").select("telegram_id").eq("id", target_id).maybe_single().execute()
         if user_res.data:
             await bot.ban_chat_member(ctx.chat_id, user_res.data["telegram_id"])
             await bot.unban_chat_member(ctx.chat_id, user_res.data["telegram_id"])

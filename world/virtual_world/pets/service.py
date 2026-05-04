@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 import logging
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from bot.brain.context import BrainContext
 from api.auth.session import get_fsm_data, clear_fsm_state, clear_fsm_data
 from core.i18n import t
@@ -17,7 +17,7 @@ HEAL_COST = 50  # Ecoins
 
 
 async def _get_pet(user_id: str) -> dict | None:
-    res = supabase_admin.table("pets").select("*").eq("user_id", user_id).maybe_single().execute()
+    res = get_supabase_admin().table("pets").select("*").eq("user_id", user_id).maybe_single().execute()
     return res.data
 
 
@@ -50,7 +50,7 @@ async def feed_pet(user_id: str, language: str) -> str:
         return "💀 Питомец умер."
 
     new_hunger = min(100, pet["hunger"] + 20)
-    supabase_admin.table("pets").update({"hunger": new_hunger}).eq("id", pet["id"]).execute()
+    get_supabase_admin().table("pets").update({"hunger": new_hunger}).eq("id", pet["id"]).execute()
     return t(language, "pets.fed", name=pet["name"])
 
 
@@ -62,7 +62,7 @@ async def play_with_pet(user_id: str, language: str) -> str:
         return "💀 Питомец умер."
 
     new_energy = min(100, pet["energy"] + 15)
-    supabase_admin.table("pets").update({"energy": new_energy}).eq("id", pet["id"]).execute()
+    get_supabase_admin().table("pets").update({"energy": new_energy}).eq("id", pet["id"]).execute()
     return t(language, "pets.played", name=pet["name"])
 
 
@@ -78,7 +78,7 @@ async def heal_pet(user_id: str, language: str) -> str:
     if not success:
         return t(language, "economy.insufficient_funds", balance=balance)
 
-    supabase_admin.table("pets").update({
+    get_supabase_admin().table("pets").update({
         "is_sick": False,
         "mood": "happy",
         "hunger": 50,
@@ -101,10 +101,10 @@ async def handle_pet_naming(ctx: BrainContext, bot) -> bool:
     species = data.get("species", "cat")
 
     # Удаляем старого питомца если есть
-    supabase_admin.table("pets").delete().eq("user_id", user_id).execute()
+    get_supabase_admin().table("pets").delete().eq("user_id", user_id).execute()
 
     # Создаём нового
-    supabase_admin.table("pets").insert({
+    get_supabase_admin().table("pets").insert({
         "id": str(uuid.uuid4()),
         "user_id": user_id,
         "name": name,

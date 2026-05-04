@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from api.auth import require_admin
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 

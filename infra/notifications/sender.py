@@ -87,9 +87,9 @@ async def notify_user(
     Удобная обёртка: отправляет уведомление по UUID пользователя.
     Получает telegram_id из Supabase.
     """
-    from infra.db.supabase import supabase_admin
+    from infra.db.supabase import get_supabase_admin
     res = (
-        supabase_admin.table("users")
+        get_supabase_admin().table("users")
         .select("telegram_id")
         .eq("id", user_id)
         .maybe_single()

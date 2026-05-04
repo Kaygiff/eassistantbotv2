@@ -66,8 +66,46 @@ async def cb_profile(callback: CallbackQuery) -> None:
     ctx = await _get_ctx_and_user(callback)
 
     if action == "edit":
-        from bot.brain.handlers.profile import handle_profile_edit
-        await handle_profile_edit(ctx, callback.message.bot)
+        # Если есть третья часть — это выбор конкретного поля
+        if len(parts) > 2:
+            field = parts[2]
+            from api.auth.session import set_fsm_state
+            prompts = {
+                "nickname": "✏️ Введи новый никнейм (максимум 50 символов):",
+                "bio": "📝 Напиши что-нибудь о себе (максимум 300 символов):",
+                "birthday": "🎂 Введи дату рождения в формате ДД.ММ.ГГГГ\nНапример: 15.03.1995",
+                "language": None,  # отдельная логика
+                "assistant_name": "🤖 Введи новое имя ассистента (максимум 50 символов):",
+            }
+            if field == "language":
+                from core.i18n.loader import get_language_keyboard
+                from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+                buttons = get_language_keyboard()
+                keyboard = InlineKeyboardMarkup(
+                    inline_keyboard=[[InlineKeyboardButton(text=b["text"], callback_data=b["callback_data"])]
+                                     for b in buttons]
+                )
+                await callback.message.edit_text("🌐 Выбери язык:", reply_markup=keyboard)
+            elif field in prompts and prompts[field]:
+                await set_fsm_state(str(ctx.user.id), f"settings:{field}")
+                await callback.message.edit_text(prompts[field])
+            else:
+                logger.warning("Unknown profile edit field: %s", field)
+        else:
+            # Показываем меню редактирования, редактируя текущее сообщение
+            from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="✏️ Никнейм", callback_data="profile:edit:nickname")],
+                [InlineKeyboardButton(text="📝 О себе", callback_data="profile:edit:bio")],
+                [InlineKeyboardButton(text="🎂 День рождения", callback_data="profile:edit:birthday")],
+                [InlineKeyboardButton(text="🌐 Язык", callback_data="profile:edit:language")],
+                [InlineKeyboardButton(text="🤖 Имя ассистента", callback_data="profile:edit:assistant_name")],
+            ])
+            await callback.message.edit_text(
+                "✏️ *Редактирование профиля*\n\nЧто хочешь изменить?",
+                parse_mode="Markdown",
+                reply_markup=keyboard,
+            )
     await callback.answer()
 
 
@@ -83,7 +121,7 @@ async def cb_pet(callback: CallbackQuery) -> None:
         from api.auth.session import set_fsm_state, set_fsm_data
         await set_fsm_state(str(ctx.user.id), "pet:naming")
         await set_fsm_data(str(ctx.user.id), {"species": species})
-        from i18n import t
+        from core.i18n.loader import t
         await callback.message.edit_text(t(ctx.language, "pets.name_pet"))
     elif action == "feed":
         from bot.brain.handlers.pet import handle_pet_feed
@@ -115,7 +153,7 @@ async def cb_casino(callback: CallbackQuery) -> None:
     }
     ctx.set_intent(intent_map.get(game, Intent.CASINO_OPEN))
 
-    from i18n import t
+    from core.i18n.loader import t
     await callback.message.edit_text(t(ctx.language, "casino.enter_bet"))
     await callback.answer()
 
@@ -127,7 +165,7 @@ async def cb_settings(callback: CallbackQuery) -> None:
     ctx = await _get_ctx_and_user(callback)
 
     if action == "language":
-        from i18n import get_language_keyboard
+        from core.i18n.loader import get_language_keyboard
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
         buttons = get_language_keyboard()
         keyboard = InlineKeyboardMarkup(
@@ -140,6 +178,52 @@ async def cb_settings(callback: CallbackQuery) -> None:
         from api.auth.session import set_fsm_state
         await set_fsm_state(str(ctx.user.id), "settings:assistant_name")
         await callback.message.edit_text("✏️ Введи новое имя ассистента:")
+
+    elif action == "profile":
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="👤 Никнейм", callback_data="settings:nickname")],
+            [InlineKeyboardButton(text="📝 О себе (bio)", callback_data="settings:bio")],
+            [InlineKeyboardButton(text="🎂 День рождения", callback_data="settings:birthday")],
+            [InlineKeyboardButton(text="🎭 Характер бота", callback_data="settings:personality")],
+        ])
+        await callback.message.edit_text(
+            "👤 *Редактирование профиля*\n\nЧто хочешь изменить?",
+            parse_mode="Markdown",
+            reply_markup=keyboard,
+        )
+
+    elif action == "nickname":
+        from api.auth.session import set_fsm_state
+        await set_fsm_state(str(ctx.user.id), "settings:nickname")
+        await callback.message.edit_text("👤 Введи новый никнейм (максимум 32 символа):")
+
+    elif action == "bio":
+        from api.auth.session import set_fsm_state
+        await set_fsm_state(str(ctx.user.id), "settings:bio")
+        await callback.message.edit_text("📝 Напиши что-нибудь о себе (максимум 300 символов):")
+
+    elif action == "birthday":
+        from api.auth.session import set_fsm_state
+        await set_fsm_state(str(ctx.user.id), "settings:birthday")
+        await callback.message.edit_text("🎂 Введи дату рождения в формате ДД.ММ.ГГГГ\nНапример: 15.03.1995")
+
+    elif action == "personality":
+        parts = callback.data.split(":")
+        if len(parts) > 2:
+            param = parts[2]
+            from api.auth.identity import update_user_field
+            await update_user_field(str(ctx.user.id), assistant_personality=param)
+            labels = {"kind": "😊 Добрый", "evil": "😈 Злой", "neutral": "😐 Нейтральный"}
+            await callback.message.edit_text(f"✅ Характер бота изменён: {labels.get(param, param)}")
+        else:
+            from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="😊 Добрый", callback_data="settings:personality:kind")],
+                [InlineKeyboardButton(text="😈 Злой", callback_data="settings:personality:evil")],
+                [InlineKeyboardButton(text="😐 Нейтральный", callback_data="settings:personality:neutral")],
+            ])
+            await callback.message.edit_text("🎭 Выбери характер бота:", reply_markup=keyboard)
 
     await callback.answer()
 

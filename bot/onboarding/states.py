@@ -1,11 +1,12 @@
 """
 onboarding/states.py — Все FSM-состояния приложения.
-Централизованный реестр чтобы избежать конфликтов между модулями.
 """
 
 # --- Онбординг ---
 ONBOARDING_LANGUAGE = "onboarding:language"
-ONBOARDING_NAME = "onboarding:name"
+ONBOARDING_BOT_NAME = "onboarding:bot_name"
+ONBOARDING_PERSONALITY = "onboarding:personality"
+ONBOARDING_NICKNAME = "onboarding:nickname"
 ONBOARDING_COMPLETE = "onboarding:complete"
 
 # --- Настройки профиля ---

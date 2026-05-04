@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from core.models.user import User
 
 
@@ -47,7 +47,7 @@ async def ban_user(
     if ban_until:
         update_data["ban_until"] = ban_until.isoformat()
 
-    supabase_admin.table("users").update(update_data).eq("id", user_id).execute()
+    get_supabase_admin().table("users").update(update_data).eq("id", user_id).execute()
 
     await log_ban(
         user_id=user_id,
@@ -59,7 +59,7 @@ async def ban_user(
 
 async def lift_ban(user_id: str) -> None:
     """Снимает блокировку с пользователя."""
-    supabase_admin.table("users").update({
+    get_supabase_admin().table("users").update({
         "is_banned": False,
         "ban_until": None,
         "ban_reason": None,

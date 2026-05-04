@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 
 
 async def log_action(
@@ -45,7 +45,7 @@ async def log_action(
         if geo:
             record["geo"] = geo
 
-        supabase_admin.table("audit_log").insert(record).execute()
+        get_supabase_admin().table("audit_log").insert(record).execute()
     except Exception as e:
         # Audit log не должен ломать основной флоу
         import logging

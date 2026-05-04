@@ -8,7 +8,7 @@ from __future__ import annotations
 import uuid
 from typing import Optional
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from core.models.user import User, UserCreate
 
 
@@ -66,13 +66,13 @@ async def create_user(data: UserCreate) -> User:
     user = User(**user_res.data[0])
 
     # 2. Создать кошелёк
-    supabase_admin.table("ecoin_wallets").insert({
+    get_supabase_admin().table("ecoin_wallets").insert({
         "user_id": user_id,
         "balance": 0,
     }).execute()
 
     # 3. Инициализировать daily_bonuses
-    supabase_admin.table("daily_bonuses").insert({
+    get_supabase_admin().table("daily_bonuses").insert({
         "user_id": user_id,
         "streak_days": 0,
     }).execute()

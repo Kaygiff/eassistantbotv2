@@ -8,7 +8,7 @@ import uuid
 import logging
 from datetime import datetime, timezone
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from api.auth.session import get_fsm_state, set_fsm_state, set_fsm_data, get_fsm_data, clear_fsm_state, clear_fsm_data
 from bot.brain.context import BrainContext
 
@@ -27,7 +27,7 @@ async def create_task_from_text(user_id: str, text: str, language: str) -> str:
         return "📝 Введи название задачи:"
 
     task_id = str(uuid.uuid4())
-    supabase_admin.table("tasks").insert({
+    get_supabase_admin().table("tasks").insert({
         "id": task_id,
         "user_id": user_id,
         "type": "todo",
@@ -42,7 +42,7 @@ async def create_task_from_text(user_id: str, text: str, language: str) -> str:
 async def get_task_list(user_id: str, language: str) -> str:
     """Возвращает список активных задач пользователя."""
     res = (
-        supabase_admin.table("tasks")
+        get_supabase_admin().table("tasks")
         .select("*")
         .eq("user_id", user_id)
         .eq("status", "pending")
@@ -73,7 +73,7 @@ async def mark_task_done(user_id: str, text: str, language: str) -> str:
     if match:
         task_num = int(match.group())
         res = (
-            supabase_admin.table("tasks")
+            get_supabase_admin().table("tasks")
             .select("id, title")
             .eq("user_id", user_id)
             .eq("status", "pending")
@@ -84,7 +84,7 @@ async def mark_task_done(user_id: str, text: str, language: str) -> str:
         tasks = res.data or []
         if 1 <= task_num <= len(tasks):
             task = tasks[task_num - 1]
-            supabase_admin.table("tasks").update({"status": "done"}).eq("id", task["id"]).execute()
+            get_supabase_admin().table("tasks").update({"status": "done"}).eq("id", task["id"]).execute()
             return f"✅ Задача выполнена:\n~~{task['title']}~~"
 
     return "❌ Задача не найдена. Используй номер из списка /tasks"
@@ -116,7 +116,7 @@ async def handle_task_fsm(ctx: BrainContext, bot, state: str) -> bool:
         if not text:
             return True
         task_id = str(uuid.uuid4())
-        supabase_admin.table("tasks").insert({
+        get_supabase_admin().table("tasks").insert({
             "id": task_id, "user_id": user_id,
             "type": "todo", "title": text,
             "priority": "medium", "status": "pending",
@@ -141,7 +141,7 @@ async def handle_task_fsm(ctx: BrainContext, bot, state: str) -> bool:
             return True
 
         task_id = str(uuid.uuid4())
-        supabase_admin.table("tasks").insert({
+        get_supabase_admin().table("tasks").insert({
             "id": task_id, "user_id": user_id,
             "type": "reminder", "title": title,
             "due_at": due_at.isoformat(),

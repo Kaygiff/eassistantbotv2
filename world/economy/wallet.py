@@ -8,7 +8,7 @@ import uuid
 import logging
 from typing import Optional
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from api.audit.logger import log_ecoin_transaction
 from bot.brain.context import BrainContext
 from api.auth.session import get_fsm_state, set_fsm_state, set_fsm_data, get_fsm_data, clear_fsm_state, clear_fsm_data
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 async def get_balance(user_id: str) -> int:
     """Возвращает текущий баланс пользователя."""
     res = (
-        supabase_admin.table("ecoin_wallets")
+        get_supabase_admin().table("ecoin_wallets")
         .select("balance")
         .eq("user_id", user_id)
         .maybe_single()
@@ -36,12 +36,12 @@ async def credit(user_id: str, amount: int, reason: str, related_id: str | None 
     balance = await get_balance(user_id)
     new_balance = balance + amount
 
-    supabase_admin.table("ecoin_wallets").update({
+    get_supabase_admin().table("ecoin_wallets").update({
         "balance": new_balance,
     }).eq("user_id", user_id).execute()
 
     tx_id = str(uuid.uuid4())
-    supabase_admin.table("ecoin_transactions").insert({
+    get_supabase_admin().table("ecoin_transactions").insert({
         "id": tx_id,
         "user_id": user_id,
         "type": "credit",
@@ -65,12 +65,12 @@ async def debit(user_id: str, amount: int, reason: str, related_id: str | None =
         return False, balance
 
     new_balance = balance - amount
-    supabase_admin.table("ecoin_wallets").update({
+    get_supabase_admin().table("ecoin_wallets").update({
         "balance": new_balance,
     }).eq("user_id", user_id).execute()
 
     tx_id = str(uuid.uuid4())
-    supabase_admin.table("ecoin_transactions").insert({
+    get_supabase_admin().table("ecoin_transactions").insert({
         "id": tx_id,
         "user_id": user_id,
         "type": "debit",
@@ -91,14 +91,14 @@ async def transfer_ecoins(
     language: str = "ru",
 ) -> str:
     """Переводит Ecoins от одного пользователя другому."""
-    from i18n import t
+    from core.i18n.loader import t
 
     if amount <= 0:
         return "❌ Сумма перевода должна быть больше 0."
 
     # Находим получателя
     res = (
-        supabase_admin.table("users")
+        get_supabase_admin().table("users")
         .select("id, username, first_name")
         .eq("username", to_username)
         .maybe_single()
@@ -123,7 +123,7 @@ async def transfer_ecoins(
 
     # Уведомляем получателя
     from infra.notifications.sender import notify_user
-    from_res = supabase_admin.table("users").select("username").eq("id", from_user_id).maybe_single().execute()
+    from_res = get_supabase_admin().table("users").select("username").eq("id", from_user_id).maybe_single().execute()
     from_username = from_res.data.get("username", "пользователь") if from_res.data else "пользователь"
     await notify_user(to_user_id, t(language, "economy.transfer_received", amount=amount, username=f"@{from_username}"))
 

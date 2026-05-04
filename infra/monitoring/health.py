@@ -9,7 +9,7 @@ import time
 from typing import Any
 
 from infra.db.redis import get_redis
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 
 
 async def check_redis() -> dict[str, Any]:
@@ -25,7 +25,7 @@ async def check_redis() -> dict[str, Any]:
 async def check_supabase() -> dict[str, Any]:
     try:
         start = time.monotonic()
-        supabase_admin.table("users").select("id").limit(1).execute()
+        get_supabase_admin().table("users").select("id").limit(1).execute()
         return {"status": "ok", "latency_ms": round((time.monotonic() - start) * 1000, 1)}
     except Exception as e:
         return {"status": "error", "error": str(e)}

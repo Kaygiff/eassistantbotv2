@@ -44,10 +44,10 @@ def send_broadcast(text: str, language: str | None = None, parse_mode: str = "Ma
     Массовая рассылка пользователям.
     language=None — всем, иначе фильтрует по языку.
     """
-    from infra.db.supabase import supabase_admin
+    from infra.db.supabase import get_supabase_admin
     from api.audit.logger import log_action
 
-    query = supabase_admin.table("users").select("telegram_id").eq("is_banned", False).limit(limit)
+    query = get_supabase_admin().table("users").select("telegram_id").eq("is_banned", False).limit(limit)
     if language:
         query = query.eq("language", language)
     res = query.execute()
@@ -89,10 +89,10 @@ def send_broadcast(text: str, language: str | None = None, parse_mode: str = "Ma
 @app.task(name="queue.tasks.send_reminder", queue="high")
 def send_reminder(task_id: str) -> None:
     """Отправляет напоминание пользователю."""
-    from infra.db.supabase import supabase_admin
+    from infra.db.supabase import get_supabase_admin
 
     res = (
-        supabase_admin.table("tasks")
+        get_supabase_admin().table("tasks")
         .select("*, users(telegram_id, language)")
         .eq("id", task_id)
         .maybe_single()
@@ -109,23 +109,23 @@ def send_reminder(task_id: str) -> None:
     if not telegram_id:
         return
 
-    from i18n import t
+    from core.i18n.loader import t
     text = f"⏰ *Напоминание*\n\n{task['title']}"
     send_single_notification.delay(telegram_id, text)
 
     # Помечаем как отправленное
-    supabase_admin.table("tasks").update({"reminder_sent": True}).eq("id", task_id).execute()
+    get_supabase_admin().table("tasks").update({"reminder_sent": True}).eq("id", task_id).execute()
 
 
 @app.task(name="queue.tasks.check_and_send_reminders", queue="high")
 def check_and_send_reminders() -> None:
     """Проверяет задачи с наступившим временем напоминания и ставит в очередь."""
     from datetime import datetime, timezone
-    from infra.db.supabase import supabase_admin
+    from infra.db.supabase import get_supabase_admin
 
     now = datetime.now(timezone.utc).isoformat()
     res = (
-        supabase_admin.table("tasks")
+        get_supabase_admin().table("tasks")
         .select("id")
         .eq("type", "reminder")
         .eq("status", "pending")
@@ -162,11 +162,11 @@ def reset_expired_streaks() -> None:
     которые пропустили день (last_bonus_at < вчера).
     """
     from datetime import datetime, timedelta, timezone
-    from infra.db.supabase import supabase_admin
+    from infra.db.supabase import get_supabase_admin
 
     yesterday = (datetime.now(timezone.utc) - timedelta(days=2)).isoformat()
     res = (
-        supabase_admin.table("daily_bonuses")
+        get_supabase_admin().table("daily_bonuses")
         .select("user_id")
         .lt("last_bonus_at", yesterday)
         .gt("streak_days", 0)
@@ -174,5 +174,5 @@ def reset_expired_streaks() -> None:
     )
     ids = [r["user_id"] for r in (res.data or [])]
     if ids:
-        supabase_admin.table("daily_bonuses").update({"streak_days": 0}).in_("user_id", ids).execute()
+        get_supabase_admin().table("daily_bonuses").update({"streak_days": 0}).in_("user_id", ids).execute()
     logger.info(f"[DailyBonus] Reset streaks for {len(ids)} users")

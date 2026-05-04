@@ -8,7 +8,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
 from api.auth import require_admin
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 
 router = APIRouter(prefix="/casino", tags=["casino"])
 
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/casino", tags=["casino"])
 @router.get("/stats")
 async def casino_stats(_=Depends(require_admin)):
     """Общая статистика казино."""
-    rounds = supabase_admin.table("casino_rounds").select("outcome, amount, payout, house_fee, game_type").execute()
+    rounds = get_supabase_admin().table("casino_rounds").select("outcome, amount, payout, house_fee, game_type").execute()
     data = rounds.data or []
 
     total_bet = sum(r["amount"] for r in data)

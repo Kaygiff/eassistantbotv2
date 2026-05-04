@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 import hashlib, hmac, os, random, uuid
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from world.economy.wallet import debit, credit
 from core.i18n import t
 
@@ -40,7 +40,7 @@ async def play_crash(user_id: str, bet: int, language: str) -> str:
         msg = t(language, "casino.loss", amount=bet)
         result_line = f"💥 Краш на *x{crash_at}* (ты вышел на *x{player_exit}*)"
 
-    supabase_admin.table("casino_rounds").insert({
+    get_supabase_admin().table("casino_rounds").insert({
         "id": str(uuid.uuid4()), "user_id": user_id, "game_type": "crash",
         "amount": bet, "payout": payout, "house_fee": 0, "outcome": outcome,
         "seed_hash": seed_hash, "result": {"crash_at": crash_at, "exit_at": player_exit},

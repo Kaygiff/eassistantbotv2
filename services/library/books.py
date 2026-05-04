@@ -6,18 +6,18 @@ from __future__ import annotations
 import os
 import logging
 import httpx
+from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
-GOOGLE_BOOKS_KEY = os.getenv("GOOGLE_TRANSLATE_KEY")  # тот же ключ GCP
+GOOGLE_BOOKS_KEY = os.getenv("GOOGLE_BOOKS_KEY")
 
 
 async def search_books(query: str, language: str = "ru") -> str:
-    """Ищет книги через Google Books и возвращает форматированный список."""
     try:
         params = {
             "q": query,
             "maxResults": 5,
-            "langRestrict": "ru" if language in ("ru", "kz", "by") else "en",
+            "orderBy": "relevance",
             "printType": "books",
         }
         if GOOGLE_BOOKS_KEY:
@@ -32,25 +32,19 @@ async def search_books(query: str, language: str = "ru") -> str:
         if not items:
             return f"🔍 Книги по запросу *{query}* не найдены."
 
-        lines = [f"📚 *Книги по запросу «{query}»:*\n"]
-        for item in items[:5]:
-            info = item.get("volumeInfo", {})
-            title = info.get("title", "Без названия")
-            authors = ", ".join(info.get("authors", ["Неизвестен"]))
-            year = info.get("publishedDate", "")[:4]
-            rating = info.get("averageRating")
-            preview = info.get("previewLink", "")
+        info = items[0].get("volumeInfo", {})
+        title = info.get("title", "Без названия")
+        authors = ", ".join(info.get("authors", ["Неизвестен"]))
+        preview = (
+            info.get("previewLink")
+            or info.get("infoLink")
+            or f"https://www.google.com/search?q={quote(title + ' ' + authors)}+читать+онлайн"
+        )
 
-            line = f"📖 *{title}*\n👤 {authors}"
-            if year:
-                line += f" · {year}"
-            if rating:
-                line += f" · ⭐ {rating}"
-            if preview:
-                line += f"\n🔗 [Читать]({preview})"
-            lines.append(line)
+        text = f"📖 *{title}*\n👤 {authors}"
+        text += f"\n\n[Читать онлайн]({preview})"
 
-        return "\n\n".join(lines)
+        return text
 
     except Exception as e:
         logger.error(f"[Books] Error for '{query}': {e}")

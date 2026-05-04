@@ -6,14 +6,14 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from api.auth import require_admin
 from api.feature_flags.flags import set_flag, invalidate_flag_cache
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 
 router = APIRouter(prefix="/flags", tags=["flags"])
 
 
 @router.get("/")
 async def list_flags(_=Depends(require_admin)):
-    res = supabase_admin.table("feature_flags").select("*").execute()
+    res = get_supabase_admin().table("feature_flags").select("*").execute()
     return res.data or []
 
 

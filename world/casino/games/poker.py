@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 import random, uuid
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from world.economy.wallet import debit, credit
 from core.i18n import t
 
@@ -54,7 +54,7 @@ async def play_poker(user_id: str, bet: int, language: str) -> str:
     else:
         msg = t(language, "casino.loss", amount=bet)
 
-    supabase_admin.table("casino_rounds").insert({
+    get_supabase_admin().table("casino_rounds").insert({
         "id": str(uuid.uuid4()), "user_id": user_id, "game_type": "poker",
         "amount": bet, "payout": payout, "house_fee": 0, "outcome": outcome,
         "result": {"hand": hand, "rank": rank_name, "multiplier": multiplier},

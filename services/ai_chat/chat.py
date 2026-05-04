@@ -9,7 +9,7 @@ import time
 import logging
 
 from infra.db.redis import get_redis, chat_history_key
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from services.ai_provider.hub import get_hub
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ async def save_to_redis(user_id: str, history: list[dict]) -> None:
 async def save_to_supabase(user_id: str, role: str, content: str, model: str | None, tokens: int | None, ms: int | None) -> None:
     """Сохраняет сообщение в полную историю Supabase."""
     try:
-        supabase_admin.table("chat_messages").insert({
+        get_supabase_admin().table("chat_messages").insert({
             "user_id": user_id,
             "role": role,
             "content": content,
@@ -95,7 +95,7 @@ async def get_ai_response(
         )
     except RuntimeError as e:
         logger.error(f"[AIChat] All providers failed: {e}")
-        from i18n import t
+        from core.i18n.loader import t
         return t(language, "common.error")
 
     elapsed_ms = round((time.monotonic() - start) * 1000)
@@ -123,7 +123,7 @@ async def clear_history(user_id: str) -> None:
 async def get_full_history(user_id: str, limit: int = 50) -> list[dict]:
     """Полная история из Supabase (для EAdmin и экспорта)."""
     res = (
-        supabase_admin.table("chat_messages")
+        get_supabase_admin().table("chat_messages")
         .select("*")
         .eq("user_id", user_id)
         .order("created_at", desc=True)

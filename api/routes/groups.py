@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from api.auth import require_admin
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from core.models.groups import Group
 
 router = APIRouter(prefix="/groups", tags=["groups"])
@@ -24,7 +24,7 @@ async def list_groups(
     _=Depends(require_admin),
 ):
     """Список всех зарегистрированных групп."""
-    query = supabase_admin.table("groups").select("*").order("created_at", desc=True)
+    query = get_supabase_admin().table("groups").select("*").order("created_at", desc=True)
     if search:
         query = query.ilike("title", f"%{search}%")
     res = query.range(offset, offset + limit - 1).execute()
@@ -33,7 +33,7 @@ async def list_groups(
 
 @router.get("/{group_id}", response_model=Group)
 async def get_group(group_id: UUID, _=Depends(require_admin)):
-    res = supabase_admin.table("groups").select("*").eq("id", str(group_id)).maybe_single().execute()
+    res = get_supabase_admin().table("groups").select("*").eq("id", str(group_id)).maybe_single().execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Group not found")
     return Group(**res.data)
@@ -76,7 +76,7 @@ async def update_group_settings(group_id: UUID, body: GroupSettingsUpdate, _=Dep
     update_data = {k: v for k, v in body.dict().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
-    supabase_admin.table("groups").update(update_data).eq("id", str(group_id)).execute()
+    get_supabase_admin().table("groups").update(update_data).eq("id", str(group_id)).execute()
     return {"ok": True}
 
 

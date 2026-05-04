@@ -3,14 +3,14 @@ groups/settings.py — Настройки и приветствие групп.
 """
 
 from __future__ import annotations
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from bot.brain.context import BrainContext
 from api.auth.session import set_fsm_state, clear_fsm_state
 
 
 async def get_group_settings_menu(group_id: str, language: str) -> tuple[str, object]:
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-    res = supabase_admin.table("groups").select("*").eq("id", group_id).maybe_single().execute()
+    res = get_supabase_admin().table("groups").select("*").eq("id", group_id).maybe_single().execute()
     group = res.data or {}
 
     text = (
@@ -34,4 +34,4 @@ async def set_welcome_message(ctx: BrainContext, bot) -> str:
 
 
 async def save_welcome_message(group_id: str, text: str) -> None:
-    supabase_admin.table("groups").update({"welcome_message": text}).eq("id", group_id).execute()
+    get_supabase_admin().table("groups").update({"welcome_message": text}).eq("id", group_id).execute()

@@ -1,16 +1,18 @@
 """
 brain/classifier.py — Классификатор интентов.
-Определяет intent по тексту пользователя.
 
-Стратегия:
-1. Быстрая проверка по ключевым словам (без AI, мгновенно)
-2. Если не определён — GPT-4o mini для точной классификации
-3. Fallback → Intent.AI_CHAT (не Unknown, чтобы не терять запрос)
+Pipeline:
+  1. Regex-паттерны (быстро, гибко — ловит глаголы, вопросы, падежи)
+  2. Brain AI (Hub) → определяет сервис ИЛИ решает что это AI_CHAT
+  3. CLARIFICATION → только если Brain AI совсем не понял
+
+Brain AI и AI Chat — разные сущности:
+  - Brain AI: классификатор, не ведёт диалог, только маршрутизирует
+  - AI Chat: разговорный агент с историей (services/ai_chat/chat.py)
 """
 
 from __future__ import annotations
 import re
-import json
 import logging
 from typing import Optional
 
@@ -18,175 +20,245 @@ from bot.brain.intent import Intent
 
 logger = logging.getLogger(__name__)
 
+NEEDS_CLARIFICATION = "__needs_clarification__"
+
 # ---------------------------------------------------------------------------
-# Карта ключевых слов → интент
-# Порядок важен: более специфичные правила — выше
+# ПАТТЕРНЫ → интент
+# re.search() по тексту в нижнем регистре
+# Порядок важен: специфичные — выше
 # ---------------------------------------------------------------------------
-KEYWORD_MAP: list[tuple[list[str], Intent]] = [
-    # Системные
-    (["/start", "начать", "старт"], Intent.START),
-    (["/help", "помощь", "помоги мне", "что умеешь", "команды"], Intent.HELP),
-    (["/settings", "настройки", "настройка"], Intent.SETTINGS),
+PATTERN_MAP: list[tuple[str, Intent]] = [
 
-    # Профиль
-    (["/profile", "мой профиль", "профиль", "моя анкета"], Intent.PROFILE_VIEW),
-    (["изменить профиль", "редактировать профиль", "поменять имя", "сменить имя ассистента"], Intent.PROFILE_EDIT),
+    # --- Системные ---
+    (r"^/start\b|^старт$|^начать$", Intent.START),
+    (r"^/help\b|помог|что умеешь|список команд|что ты умеешь|команды", Intent.HELP),
+    (r"^/settings\b|настройк|настроить бота", Intent.SETTINGS),
 
-    # Экономика
-    (["/balance", "баланс", "мои монеты", "сколько монет", "ecoins", "экоины"], Intent.BALANCE),
-    (["/daily", "ежедневный бонус", "бонус дня", "получить бонус", "дейли"], Intent.DAILY_BONUS),
-    (["перевести монеты", "отправить монеты", "перевод экоинов", "/transfer"], Intent.TRANSFER),
-    (["/referral", "реферальная", "пригласить друга", "моя ссылка", "реф"], Intent.REFERRAL),
+    # --- Профиль ---
+    (r"^/profile\b|мой профил|моя анкет|посмотреть профил", Intent.PROFILE_VIEW),
+    (r"(измени|редактир|поменя|сменить|обнови).*(профил|имя|никнейм|ассистент)", Intent.PROFILE_EDIT),
 
-    # Питомец
-    (["/pet", "мой питомец", "питомец", "тамагочи"], Intent.PET_STATUS),
-    (["покормить питомца", "покорми", "дай поесть питомцу"], Intent.PET_FEED),
-    (["поиграть с питомцем", "поиграй с питомцем", "игра с питомцем"], Intent.PET_PLAY),
-    (["вылечить питомца", "лечи питомца", "питомец болен"], Intent.PET_HEAL),
-    (["завести питомца", "новый питомец", "хочу питомца"], Intent.PET_NEW),
+    # --- Экономика ---
+    (r"^/balance\b|мо[её]? баланс|мой баланс|сколько.*(монет|экоин|ecoins)|покажи баланс|мои монет", Intent.BALANCE),
+    (r"^/daily\b|ежедневн|бонус дня|получить бонус|дейли|дать бонус", Intent.DAILY_BONUS),
+    (r"(перевест|отправ|перекин).*(монет|экоин|ecoins)|^/transfer\b", Intent.TRANSFER),
+    (r"^/referral\b|реферал|пригласи|моя ссылка|реф.ссылка", Intent.REFERRAL),
 
-    # Отношения
-    (["предложить встречаться", "давай встречаться", "будь моей", "будь моим"], Intent.RELATIONSHIP_PROPOSE),
-    (["мои отношения", "статус отношений", "с кем я встречаюсь"], Intent.RELATIONSHIP_STATUS),
-    (["расстаться", "разорвать отношения", "хватит встречаться"], Intent.RELATIONSHIP_BREAKUP),
-    (["предложение руки", "выйти замуж", "жениться", "замуж за меня", "женись на мне"], Intent.MARRIAGE_PROPOSE),
-    (["развод", "развестись", "хочу развода"], Intent.MARRIAGE_DIVORCE),
-    (["добавить в семью", "стать братом", "стать сестрой", "стать отцом", "усыновить"], Intent.FAMILY_ADD),
-    (["моя семья", "семейное дерево", "список семьи"], Intent.FAMILY_VIEW),
+    # --- Питомец ---
+    (r"^/pet\b|мой питомец|состояние питомца|как питомец|питомец жив", Intent.PET_STATUS),
+    (r"(покорм|накорм|дай есть|дай поесть).*(питомц|ему|её)|питомец голод", Intent.PET_FEED),
+    (r"(поиграй|поигра|игра).*(питомц|с ним|с ней)|питомец скуча", Intent.PET_PLAY),
+    (r"(вылеч|лечи|полечи|heal).*(питомц|его|её)|питомец бол", Intent.PET_HEAL),
+    (r"завест.*(питомц|кот|пёс|кролик|хомяк|дракон|лис)|купить питомц|хочу питомц|новый питомец", Intent.PET_NEW),
 
-    # Действия
-    (["обнять", "поцеловать", "погладить", "ударить", "подарить", "укусить",
-      "погладь", "обними", "поцелуй", "ударь"], Intent.ACTION_DO),
+    # --- Отношения ---
+    (r"(предлож|давай|хочу).*(встречаться|дружить|быть вместе)|будь мо[её][йм]", Intent.RELATIONSHIP_PROPOSE),
+    (r"мои отношения|с кем.*(встречаюсь|дружу)|статус отношений", Intent.RELATIONSHIP_STATUS),
+    (r"расстан|разорв|хватит встречаться|брось меня|расход", Intent.RELATIONSHIP_BREAKUP),
+    (r"(предлож|выйти|хочу).*(замуж|жениться|пожениться)|женись|замуж за меня|предложение руки", Intent.MARRIAGE_PROPOSE),
+    (r"развод|развест|хочу развод|подать на развод", Intent.MARRIAGE_DIVORCE),
+    (r"(добав|стать|хочу быть).*(брат|сестр|отц|мать|усынов|семь)", Intent.FAMILY_ADD),
+    (r"моя семья|семейное дерево|список семьи|семья", Intent.FAMILY_VIEW),
 
-    # Чёрный список
-    (["заблокировать пользователя", "добавить в чс", "чёрный список добавить"], Intent.BLACKLIST_ADD),
-    (["разблокировать", "убрать из чс", "чёрный список убрать"], Intent.BLACKLIST_REMOVE),
+    # --- Действия ---
+    (r"обним|поцелу|погладь|ударь|подари|укуси|обнять|поцеловать|погладить|ударить", Intent.ACTION_DO),
 
-    # События
-    (["создать событие", "новое событие", "/event create", "организовать встречу"], Intent.EVENT_CREATE),
-    (["список событий", "ближайшие события", "/events"], Intent.EVENT_LIST),
-    (["участвовать в событии", "присоединиться к событию"], Intent.EVENT_JOIN),
+    # --- Чёрный список ---
+    (r"(заблокир|добав).*(пользовател|чс|чёрн)|чёрный список", Intent.BLACKLIST_ADD),
+    (r"(разблокир|убра).*(пользовател|чс|чёрн)", Intent.BLACKLIST_REMOVE),
 
-    # Казино
-    (["/casino", "казино", "открыть казино"], Intent.CASINO_OPEN),
-    (["слоты", "крутить слоты", "однорукий бандит", "/slots"], Intent.CASINO_SLOTS),
-    (["рулетка", "крутить рулетку", "/roulette"], Intent.CASINO_ROULETTE),
-    (["блэкджек", "blackjack", "двадцать одно", "/blackjack"], Intent.CASINO_BLACKJACK),
-    (["краш", "crash", "/crash"], Intent.CASINO_CRASH),
-    (["покер", "poker", "/poker"], Intent.CASINO_POKER),
+    # --- События ---
+    (r"(создай|создать|новое|организ).*(событи|встреч|меропри)|^/event\b", Intent.EVENT_CREATE),
+    (r"(список|ближайш|покажи).*(событи|встреч)|^/events\b", Intent.EVENT_LIST),
+    (r"(участвовать|участвую|присоединить|хочу на).*(событи|встреч)", Intent.EVENT_JOIN),
 
-    # Мини-игры
-    (["викторина", "quiz", "/quiz", "вопрос"], Intent.GAME_QUIZ),
-    (["кубик", "бросить кубик", "/dice", "dice"], Intent.GAME_DICE),
-    (["правда или действие", "/truth", "/dare"], Intent.GAME_TRUTH_DARE),
-    (["что бы ты выбрал", "что лучше", "/wouldyou"], Intent.GAME_WOULD_YOU),
-    (["загадка", "загадай загадку", "/riddle"], Intent.GAME_RIDDLE),
+    # --- Казино ---
+    (r"^/casino\b|открой казино|хочу в казино|казино", Intent.CASINO_OPEN),
+    (r"^/slots\b|слоты|крути слоты|однорукий бандит|хочу слоты", Intent.CASINO_SLOTS),
+    (r"^/roulette\b|рулетк|крути рулетку|поставь на рулетку", Intent.CASINO_ROULETTE),
+    (r"^/blackjack\b|блэкджек|blackjack|двадцать одно", Intent.CASINO_BLACKJACK),
+    (r"^/crash\b|краш|crash game|игра краш", Intent.CASINO_CRASH),
+    (r"^/poker\b|покер|poker|сыграй в покер", Intent.CASINO_POKER),
 
-    # Медиасервисы
-    (["найди музыку", "скачай музыку", "включи", "поставь песню", "музыка",
-      "трек", "скачать песню"], Intent.MUSIC_SEARCH),
-    (["погода", "прогноз погоды", "какая погода", "температура", "/weather"], Intent.WEATHER),
-    (["переведи", "перевод", "translate", "как сказать по"], Intent.TRANSLATE),
-    (["генерировать изображение", "нарисуй", "создай картинку", "сгенерируй"], Intent.IMAGE_GEN),
-    (["что такое", "расскажи о", "кто такой", "кто такая", "энциклопедия", "wikipedia"], Intent.ENCYCLOPEDIA),
-    (["найди книгу", "рекомендуй книгу", "книги", "/book"], Intent.BOOK_SEARCH),
-    (["найди аниме", "аниме", "anime", "/anime"], Intent.ANIME_SEARCH),
+    # --- Мини-игры ---
+    (r"^/quiz\b|викторина|quiz|задай вопрос|тест на знания", Intent.GAME_QUIZ),
+    (r"^/dice\b|кубик|брось кубик|dice|кинь кубик", Intent.GAME_DICE),
+    (r"правда или действие|^/truth\b|^/dare\b|truth or dare", Intent.GAME_TRUTH_DARE),
+    (r"что бы ты выбрал|что лучше|^/wouldyou\b|выбор между", Intent.GAME_WOULD_YOU),
+    (r"загадк|загадай|^/riddle\b|задай загадку", Intent.GAME_RIDDLE),
 
-    # Задачи
-    (["создать задачу", "добавить задачу", "новая задача", "/todo"], Intent.TASK_CREATE),
-    (["мои задачи", "список задач", "/tasks"], Intent.TASK_LIST),
-    (["задача выполнена", "отметить задачу", "сделано"], Intent.TASK_DONE),
-    (["напомни", "установи напоминание", "напоминание", "/remind"], Intent.REMINDER_CREATE),
+    # --- Медиасервисы ---
+    (r"(найди|скачай|включи|поставь|хочу послушать|поищи|сыграй).*(музык|трек|песн|song|music)|хочу послушать|музыкальн|включи.*(рок|джаз|поп|рэп|хип.хоп)", Intent.MUSIC_SEARCH),
+    (r"(какая|какой|узнай|скажи|покажи|будет).*(погода|погоду|температур|осадки|дождь|снег|ветер)|(какой|какая).*(прогноз|погода)|прогноз на (завтра|неделю|сегодня)|прогноз погоды|погода в|^/weather\b", Intent.WEATHER),
+    (r"(как сказать|как будет|как переводится|переведи|перевод|переводи).*(на |по )|как по-(русски|английски|немецки|французски|испански|китайски|японски)|как сказать .* по|translate|^/translate\b", Intent.TRANSLATE),
+    (r"нарисуй|сгенерируй|создай картинк|сделай картинк|изобрази|генерировать изображение", Intent.IMAGE_GEN),
+    (r"(что такое|кто такой|кто такая|расскажи о|объясни|что значит|значение слова|wiki|энциклопедия)", Intent.ENCYCLOPEDIA),
+    (r"(найди|рекоменд|посоветуй|хочу читать|ищу).*(книг|автор|роман|повест)|^/book\b", Intent.BOOK_SEARCH),
+    (r"(найди|рекоменд|посоветуй|хочу смотреть|ищу).*(аниме|anime)|^/anime\b", Intent.ANIME_SEARCH),
 
-    # Модерация групп
-    (["/warn", "выдать варн", "предупреждение"], Intent.GROUP_WARN),
-    (["/ban", "забанить", "бан пользователя"], Intent.GROUP_BAN),
-    (["/mute", "заглушить", "мут"], Intent.GROUP_MUTE),
-    (["/kick", "кикнуть", "выгнать"], Intent.GROUP_KICK),
-    (["/groupsettings", "настройки группы"], Intent.GROUP_SETTINGS),
-    (["/stats", "статистика группы"], Intent.GROUP_STATS),
-    (["/setwelcome", "приветствие группы", "настроить приветствие"], Intent.GROUP_WELCOME),
+    # --- Задачи ---
+    (r"(создай|добавь|новая|запиши|поставь).*(задач|todo|дело|цель)|^/todo\b", Intent.TASK_CREATE),
+    (r"(мои|список|покажи|все).*(задач|todo|дела)|^/tasks\b", Intent.TASK_LIST),
+    (r"(выполнил|сделал|готово|закрой|отметь).*(задач|дело|пункт)|задача выполнена", Intent.TASK_DONE),
+    (r"(напомни|напоминание|установи напоминание|не забудь|remind)|^/remind\b", Intent.REMINDER_CREATE),
+
+    # --- AI чат — явный запрос на разговор ---
+    (r"^/ai\b|^/chat\b|поговори со мной|давай поговорим|пообщайся|поболтай", Intent.AI_CHAT),
+
+    # --- Модерация групп ---
+    (r"^/warn\b|выдай варн|предупредить пользователя", Intent.GROUP_WARN),
+    (r"^/ban\b|забань|бан пользователя|заблокировать в группе", Intent.GROUP_BAN),
+    (r"^/mute\b|заглуши|выдай мут|замьютить", Intent.GROUP_MUTE),
+    (r"^/kick\b|кикни|выгони|удали из группы", Intent.GROUP_KICK),
+    (r"^/groupsettings\b|настройки группы", Intent.GROUP_SETTINGS),
+    (r"^/stats\b|статистика группы|активность группы", Intent.GROUP_STATS),
+    (r"^/setwelcome\b|приветствие группы|настроить приветствие", Intent.GROUP_WELCOME),
 ]
 
+# Компилируем паттерны один раз при загрузке модуля
+_COMPILED: list[tuple[re.Pattern, Intent]] = [
+    (re.compile(pattern, re.IGNORECASE | re.UNICODE), intent)
+    for pattern, intent in PATTERN_MAP
+]
 
-def classify_by_keywords(text: str) -> Optional[Intent]:
+# ---------------------------------------------------------------------------
+# Подсказки сервисов
+# ---------------------------------------------------------------------------
+SERVICE_HINTS = """🌤 Погода — «какая погода в Москве»
+🎵 Музыка — «найди музыку [название]»
+🌐 Перевод — «переведи [текст] на английский»
+🖼 Картинка — «нарисуй [описание]»
+📚 Энциклопедия — «что такое [слово]»
+📖 Книги — «найди книгу [название]»
+🎌 Аниме — «найди аниме [название]»
+📝 Задача — «создай задачу [название]»
+⏰ Напоминание — «напомни [о чём] [дата время]»
+🎰 Казино — «казино» или /casino
+💰 Баланс — «баланс» или /balance
+🐾 Питомец — «питомец» или /pet
+💬 Просто поговорить — /ai"""
+
+
+def classify_by_patterns(text: str) -> Optional[Intent]:
     """
-    Быстрая классификация по ключевым словам.
-    Работает без AI — O(n) по размеру карты.
+    Классификация через regex-паттерны.
+    Гибче ключевых слов — ловит глаголы, вопросительные формы, падежи.
     """
-    text_lower = text.lower().strip()
-    for keywords, intent in KEYWORD_MAP:
-        for kw in keywords:
-            if kw in text_lower:
-                return intent
+    for pattern, intent in _COMPILED:
+        if pattern.search(text):
+            return intent
     return None
 
 
-async def classify_by_ai(text: str, language: str = "ru") -> Intent:
+async def classify_by_brain_ai(text: str, language: str = "ru") -> "Intent | str":
     """
-    Классификация через GPT-4o mini.
-    Используется только когда ключевые слова не помогли.
-    Возвращает Intent или Intent.AI_CHAT как fallback.
+    Brain AI — определяет к какому СЕРВИСУ относится запрос,
+    или решает что это разговорный AI_CHAT.
+
+    Возвращает Intent или NEEDS_CLARIFICATION.
+    НЕ является AI-чатом — только маршрутизатор.
     """
-    import os
-    import openai
+    from services.ai_provider.hub import get_hub
 
-    client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    service_intents = [
+        i.value for i in Intent
+        if i not in (Intent.UNKNOWN, Intent.CLARIFICATION)
+    ]
+    intent_list = ", ".join(service_intents)
 
-    intent_values = [i.value for i in Intent if i not in (Intent.UNKNOWN,)]
-    intent_list = ", ".join(intent_values)
+    system_prompt = (
+        f"You are a request router for a Telegram bot. "
+        f"Your ONLY job: map the user message to one service name.\n\n"
+        f"Available services: {intent_list}\n\n"
+        f"Rules:\n"
+        f"- Return ONLY the service name, nothing else (e.g. 'weather')\n"
+        f"- Casual conversation, greetings, math questions, general knowledge, jokes, emotions → return 'ai_chat'\n"
+        f"- Message clearly matches a service → return that service name\n"
+        f"- Completely unclear, unrelated to any service AND not conversational → return 'needs_clarification'\n"
+        f"- User language: {language}"
+    )
 
-    system_prompt = f"""You are an intent classifier for a Telegram bot assistant.
-Classify the user's message into exactly one intent from this list:
-{intent_list}
-
-Rules:
-- If the message is a general question or conversation → ai_chat
-- If unsure → ai_chat
-- Return ONLY the intent string, nothing else.
-- Language of user: {language}"""
-
+    hub = get_hub()
     try:
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": text},
-            ],
-            max_tokens=20,
+        response_text, provider = await hub.chat(
+            messages=[{"role": "user", "content": text}],
+            system=system_prompt,
+            max_tokens=15,
             temperature=0,
         )
-        result = response.choices[0].message.content.strip().lower()
-        # Валидируем что вернули допустимый Intent
+        result = response_text.strip().lower().replace("-", "_")
+        logger.debug(f"[BrainAI] '{text}' → '{result}' via {provider}")
+
+        if result == "needs_clarification":
+            return NEEDS_CLARIFICATION
+
         try:
             return Intent(result)
         except ValueError:
-            return Intent.AI_CHAT
+            return NEEDS_CLARIFICATION
+
     except Exception as e:
-        logger.warning(f"AI classification failed: {e}")
-        return Intent.AI_CHAT
+        logger.warning(f"[BrainAI] Failed: {e}")
+        return NEEDS_CLARIFICATION
+
+
+async def build_clarification_message(text: str, language: str = "ru") -> str:
+    """
+    Генерирует подсказку когда запрос совсем непонятен.
+    Служебное сообщение — НЕ AI_CHAT диалог.
+    """
+    from services.ai_provider.hub import get_hub
+
+    system_prompt = (
+        f"Ты помощник Telegram-бота. Пользователь написал непонятный запрос.\n"
+        f"Напиши КОРОТКИЙ ответ (2-3 строки максимум):\n"
+        f"1. Одна фраза — что не понял\n"
+        f"2. 1-2 конкретных варианта что он мог иметь в виду\n\n"
+        f"Доступные сервисы:\n{SERVICE_HINTS}\n\n"
+        f"Отвечай на языке: {language}. Без markdown. Дружелюбно и коротко."
+    )
+
+    hub = get_hub()
+    try:
+        response_text, _ = await hub.chat(
+            messages=[{"role": "user", "content": f"Запрос: {text}"}],
+            system=system_prompt,
+            max_tokens=120,
+            temperature=0.4,
+        )
+        return response_text.strip()
+    except Exception as e:
+        logger.warning(f"[BrainAI] Clarification failed: {e}")
+        return (
+            "🤔 Не совсем понял запрос.\n\n"
+            "Напиши /help чтобы увидеть всё что я умею,\n"
+            "или /ai чтобы просто поговорить."
+        )
 
 
 async def classify(text: str, language: str = "ru") -> Intent:
     """
     Главная функция классификации.
-    1. Ключевые слова (быстро)
-    2. AI (точно, но медленнее)
-    3. Fallback → AI_CHAT
+
+    1. Regex-паттерны → Intent (без AI, гибко)
+    2. Brain AI → Intent.AI_CHAT | конкретный Intent
+    3. Совсем непонятно → Intent.CLARIFICATION
     """
     if not text or not text.strip():
-        return Intent.AI_CHAT
+        return Intent.UNKNOWN
 
-    # Команды Telegram начинаются с /
-    if text.startswith("/"):
-        intent = classify_by_keywords(text)
-        if intent:
-            return intent
-
-    # Сначала быстрая проверка
-    intent = classify_by_keywords(text)
+    # 1. Паттерны
+    intent = classify_by_patterns(text)
     if intent:
+        logger.debug(f"[Classifier] pattern → {intent.value}")
         return intent
 
-    # Если не определили — спрашиваем AI
-    return await classify_by_ai(text, language)
+    # 2. Brain AI
+    result = await classify_by_brain_ai(text, language)
+    if result != NEEDS_CLARIFICATION:
+        logger.debug(f"[Classifier] brain_ai → {result.value}")
+        return result
+
+    # 3. Нужно уточнение
+    logger.debug(f"[Classifier] clarification needed: '{text}'")
+    return Intent.CLARIFICATION

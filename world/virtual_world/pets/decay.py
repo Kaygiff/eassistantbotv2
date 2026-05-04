@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from infra.notifications.sender import notify_user
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ async def process_single_pet(pet: dict[str, Any]) -> None:
     else:
         updates["mood"] = "neutral"
 
-    supabase_admin.table("pets").update(updates).eq("id", pet["id"]).execute()
+    get_supabase_admin().table("pets").update(updates).eq("id", pet["id"]).execute()
 
 
 async def process_all_pets() -> int:
@@ -70,7 +70,7 @@ async def process_all_pets() -> int:
     Возвращает количество обработанных питомцев.
     Вызывается из queue/tasks.pet_decay_tick.
     """
-    res = supabase_admin.table("pets").select("*").eq("is_dead", False).execute()
+    res = get_supabase_admin().table("pets").select("*").eq("is_dead", False).execute()
     pets = res.data or []
 
     for pet in pets:

@@ -8,7 +8,7 @@ import uuid
 import logging
 from datetime import datetime, timezone, timedelta
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from infra.db.redis import get_redis, cooldown_key
 from bot.brain.context import BrainContext
 from infra.notifications.sender import notify_user
@@ -73,7 +73,7 @@ async def perform_action(ctx: BrainContext, bot) -> str | None:
         import re
         match = re.search(r"@(\w+)", ctx.text)
         if match:
-            res = supabase_admin.table("users").select("*").eq("username", match.group(1)).maybe_single().execute()
+            res = get_supabase_admin().table("users").select("*").eq("username", match.group(1)).maybe_single().execute()
             if res.data:
                 from core.models.user import User
                 target = User(**res.data)
@@ -87,7 +87,7 @@ async def perform_action(ctx: BrainContext, bot) -> str | None:
         return "🤔 Нельзя выполнить действие на себя."
 
     # Проверяем чёрный список
-    bl = supabase_admin.table("blacklist").select("id").eq("blocker_id", target_id).eq("blocked_id", initiator_id).maybe_single().execute()
+    bl = get_supabase_admin().table("blacklist").select("id").eq("blocker_id", target_id).eq("blocked_id", initiator_id).maybe_single().execute()
     if bl.data:
         return "🚫 Этот пользователь заблокировал тебя."
 
@@ -96,7 +96,7 @@ async def perform_action(ctx: BrainContext, bot) -> str | None:
         return f"⏳ Подожди немного перед следующим *{action_type}*!"
 
     # Логируем действие
-    supabase_admin.table("actions_log").insert({
+    get_supabase_admin().table("actions_log").insert({
         "id": str(uuid.uuid4()),
         "initiator_id": initiator_id,
         "target_id": target_id,

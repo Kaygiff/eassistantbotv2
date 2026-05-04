@@ -93,16 +93,25 @@ async def process(ctx: BrainContext, bot: Any) -> None:
     # 6. Классификация intent
     if ctx.intent == Intent.UNKNOWN:
         intent = await classify(ctx.text, ctx.language)
-        ctx.set_intent(intent, confidence="ai" if intent != Intent.AI_CHAT else "fallback")
-    
+        ctx.set_intent(intent, confidence="keyword" if intent != Intent.CLARIFICATION else "clarification")
+
     logger.info(f"[Brain] {ctx}")
 
-    # 7. Маршрутизация к хэндлеру
+    # 7. Уточнение — Brain AI не смог определить сервис
+    if ctx.intent == Intent.CLARIFICATION:
+        from bot.brain.classifier import build_clarification_message
+        clarification = await build_clarification_message(ctx.text, ctx.language)
+        await bot.send_message(ctx.chat_id, clarification)
+        return
+
+    # 8. Маршрутизация к хэндлеру
     handler = _handlers.get(ctx.intent)
 
     if handler is None:
-        # Fallback — всё непонятное идёт в AI-чат
-        handler = _handlers.get(Intent.AI_CHAT)
+        # Хэндлер не найден — не падаем в AI_CHAT, сообщаем об ошибке
+        logger.warning(f"[Brain] No handler for intent={ctx.intent.value}")
+        await bot.send_message(ctx.chat_id, t(ctx.language, "common.error"))
+        return
 
     if handler:
         try:
@@ -112,8 +121,6 @@ async def process(ctx: BrainContext, bot: Any) -> None:
             from infra.monitoring.metrics import capture_exception
             capture_exception(e, context={"intent": ctx.intent.value, "user_id": ctx.user_id})
             await bot.send_message(ctx.chat_id, t(ctx.language, "common.error"))
-    else:
-        await bot.send_message(ctx.chat_id, t(ctx.language, "common.error"))
 
 
 def get_registered_intents() -> list[str]:

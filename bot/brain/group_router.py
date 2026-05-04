@@ -100,7 +100,7 @@ async def handle_new_chat_member(ctx: BrainContext, bot, new_member_telegram_id:
     if not ctx.group_id:
         return
 
-    from infra.db.supabase import supabase_admin
+    from infra.db.supabase import get_supabase_admin
     res = (
         supabase_admin
         .table("groups")

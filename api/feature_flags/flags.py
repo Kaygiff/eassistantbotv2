@@ -10,7 +10,7 @@ import logging
 from typing import Any, Optional
 
 from infra.db.redis import get_redis, feature_flag_key
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ async def set_flag(flag_name: str, enabled: bool) -> None:
     Устанавливает значение флага в Supabase и сбрасывает кэш.
     Вызывается из EAdmin.
     """
-    supabase_admin.table("feature_flags").upsert({
+    get_supabase_admin().table("feature_flags").upsert({
         "name": flag_name,
         "enabled": enabled,
     }).execute()

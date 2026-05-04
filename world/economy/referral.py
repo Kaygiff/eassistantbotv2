@@ -8,7 +8,7 @@ import os
 import uuid
 import hashlib
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from world.economy.wallet import credit
 
 REFERRAL_BONUS = int(os.getenv("REFERRAL_BONUS", 100))
@@ -29,7 +29,7 @@ async def get_referral_info(user_id: str, telegram_id: int, language: str) -> st
 
     # Считаем рефералов
     res = (
-        supabase_admin.table("referrals")
+        get_supabase_admin().table("referrals")
         .select("id, bonus_paid, total_commission_earned", count="exact")
         .eq("referrer_id", user_id)
         .execute()
@@ -57,7 +57,7 @@ async def process_referral(referee_telegram_id: int, ref_code: str) -> None:
     Вызывается из auth/identity.py при первом /start с параметром ref_code.
     """
     # Находим реферера по коду
-    all_users = supabase_admin.table("users").select("id, telegram_id").execute()
+    all_users = get_supabase_admin().table("users").select("id, telegram_id").execute()
     referrer = None
     for user in (all_users.data or []):
         if generate_ref_code(user["telegram_id"]) == ref_code:
@@ -69,7 +69,7 @@ async def process_referral(referee_telegram_id: int, ref_code: str) -> None:
 
     # Находим реферала
     referee = (
-        supabase_admin.table("users")
+        get_supabase_admin().table("users")
         .select("id")
         .eq("telegram_id", referee_telegram_id)
         .maybe_single()
@@ -83,7 +83,7 @@ async def process_referral(referee_telegram_id: int, ref_code: str) -> None:
 
     # Проверяем что реферал ещё не зарегистрирован через эту ссылку
     existing = (
-        supabase_admin.table("referrals")
+        get_supabase_admin().table("referrals")
         .select("id")
         .eq("referee_id", referee_id)
         .maybe_single()
@@ -93,7 +93,7 @@ async def process_referral(referee_telegram_id: int, ref_code: str) -> None:
         return
 
     # Создаём запись
-    supabase_admin.table("referrals").insert({
+    get_supabase_admin().table("referrals").insert({
         "id": str(uuid.uuid4()),
         "referrer_id": referrer_id,
         "referee_id": referee_id,

@@ -7,7 +7,7 @@ import uuid
 import logging
 from datetime import datetime, timezone
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from bot.brain.context import BrainContext
 from api.auth.session import set_fsm_state, set_fsm_data, get_fsm_data, clear_fsm_state, clear_fsm_data
 
@@ -25,7 +25,7 @@ async def get_events_list(chat_id: int, language: str) -> str:
     from datetime import timezone
     now = datetime.now(timezone.utc).isoformat()
     res = (
-        supabase_admin.table("events")
+        get_supabase_admin().table("events")
         .select("*, users!creator_id(first_name, username)")
         .eq("chat_id", chat_id)
         .gte("event_at", now)
@@ -58,7 +58,7 @@ async def join_event(ctx: BrainContext, bot) -> str:
     # Упрощённо — берём первое предстоящее событие
     now = datetime.now(timezone.utc).isoformat()
     res = (
-        supabase_admin.table("events")
+        get_supabase_admin().table("events")
         .select("id, title")
         .eq("chat_id", ctx.chat_id)
         .gte("event_at", now)
@@ -72,7 +72,7 @@ async def join_event(ctx: BrainContext, bot) -> str:
     event = res.data[0]
     user_id = str(ctx.user.id)
 
-    supabase_admin.table("event_participants").upsert({
+    get_supabase_admin().table("event_participants").upsert({
         "event_id": event["id"],
         "user_id": user_id,
         "status": "accepted",
@@ -109,7 +109,7 @@ async def handle_event_fsm(ctx: BrainContext, bot, state: str) -> bool:
         data = await get_fsm_data(user_id)
         description = text if text != "-" else None
 
-        supabase_admin.table("events").insert({
+        get_supabase_admin().table("events").insert({
             "id": str(uuid.uuid4()),
             "creator_id": user_id,
             "chat_id": ctx.chat_id,

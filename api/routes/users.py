@@ -10,7 +10,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from core.models.user import User
 from api.auth import require_admin
 
@@ -27,7 +27,7 @@ async def list_users(
     _=Depends(require_admin),
 ):
     """Список пользователей с фильтрацией."""
-    query = supabase_admin.table("users").select("*").order("created_at", desc=True)
+    query = get_supabase_admin().table("users").select("*").order("created_at", desc=True)
 
     if search:
         try:
@@ -49,7 +49,7 @@ async def list_users(
 @router.get("/{user_id}", response_model=User)
 async def get_user(user_id: UUID, _=Depends(require_admin)):
     """Получить пользователя по UUID."""
-    res = supabase_admin.table("users").select("*").eq("id", str(user_id)).maybe_single().execute()
+    res = get_supabase_admin().table("users").select("*").eq("id", str(user_id)).maybe_single().execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="User not found")
     return User(**res.data)
@@ -81,7 +81,7 @@ async def unban_user(user_id: UUID, _=Depends(require_admin)):
 @router.get("/{user_id}/wallet")
 async def get_wallet(user_id: UUID, _=Depends(require_admin)):
     """Получить кошелёк пользователя."""
-    res = supabase_admin.table("ecoin_wallets").select("*").eq("user_id", str(user_id)).maybe_single().execute()
+    res = get_supabase_admin().table("ecoin_wallets").select("*").eq("user_id", str(user_id)).maybe_single().execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Wallet not found")
     return res.data
@@ -95,7 +95,7 @@ async def get_transactions(
 ):
     """История транзакций пользователя."""
     res = (
-        supabase_admin.table("ecoin_transactions")
+        get_supabase_admin().table("ecoin_transactions")
         .select("*")
         .eq("user_id", str(user_id))
         .order("created_at", desc=True)

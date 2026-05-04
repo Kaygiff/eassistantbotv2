@@ -22,9 +22,9 @@ _stopwords_cache: list[str] = []
 
 async def load_stopwords() -> None:
     """Загружает стоп-слова из Supabase в память (кэш)."""
-    from infra.db.supabase import supabase_admin
+    from infra.db.supabase import get_supabase_admin
     try:
-        res = supabase_admin.table("stopwords").select("word").execute()
+        res = get_supabase_admin().table("stopwords").select("word").execute()
         global _stopwords_cache
         _stopwords_cache = [row["word"].lower() for row in (res.data or [])]
     except Exception as e:

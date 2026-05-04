@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 import json
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from bot.brain.context import BrainContext
 
 
 async def start_quiz(ctx: BrainContext, bot) -> None:
     res = (
-        supabase_admin.table("quiz_questions")
+        get_supabase_admin().table("quiz_questions")
         .select("*")
         .eq("language", ctx.language)
         .limit(100)

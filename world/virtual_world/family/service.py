@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 import logging
 
-from infra.db.supabase import supabase_admin
+from infra.db.supabase import get_supabase_admin
 from bot.brain.context import BrainContext
 from infra.notifications.sender import notify_user
 
@@ -44,7 +44,7 @@ async def add_family_member(ctx: BrainContext, bot) -> str:
     if not match:
         return "👥 Укажи пользователя через @username"
 
-    res = supabase_admin.table("users").select("id, first_name, username").eq("username", match.group(1)).maybe_single().execute()
+    res = get_supabase_admin().table("users").select("id, first_name, username").eq("username", match.group(1)).maybe_single().execute()
     if not res.data:
         return "🔍 Пользователь не найден."
 
@@ -56,7 +56,7 @@ async def add_family_member(ctx: BrainContext, bot) -> str:
 
     # Проверяем не существует ли уже связь
     existing = (
-        supabase_admin.table("family_relations")
+        get_supabase_admin().table("family_relations")
         .select("id")
         .or_(f"and(initiator_id.eq.{initiator_id},target_id.eq.{target_id}),and(initiator_id.eq.{target_id},target_id.eq.{initiator_id})")
         .maybe_single()
@@ -68,7 +68,7 @@ async def add_family_member(ctx: BrainContext, bot) -> str:
     mirror_role = ROLE_PAIRS.get(role, "родственник")
 
     # Создаём запись со статусом pending
-    supabase_admin.table("family_relations").insert({
+    get_supabase_admin().table("family_relations").insert({
         "id": str(uuid.uuid4()),
         "initiator_id": initiator_id,
         "target_id": target_id,
@@ -92,7 +92,7 @@ async def add_family_member(ctx: BrainContext, bot) -> str:
 async def get_family_tree(user_id: str, language: str) -> str:
     """Возвращает список семейных связей пользователя."""
     res = (
-        supabase_admin.table("family_relations")
+        get_supabase_admin().table("family_relations")
         .select("*, users!initiator_id(first_name, username), users!target_id(first_name, username)")
         .or_(f"initiator_id.eq.{user_id},target_id.eq.{user_id}")
         .eq("status", "active")
