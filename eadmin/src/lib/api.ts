@@ -60,8 +60,13 @@ export const fetchDashboard = () => api.get<{
 
 // Users
 export const fetchUsers = (params?: { limit?: number; offset?: number; search?: string; is_banned?: boolean }) => {
-  const qs = new URLSearchParams(params as Record<string, string>).toString()
-  return api.get<User[]>(`/api/v1/users/${qs ? `?${qs}` : ''}`)
+  const qs = new URLSearchParams()
+  if (params?.limit !== undefined) qs.set('limit', String(params.limit))
+  if (params?.offset !== undefined) qs.set('offset', String(params.offset))
+  if (params?.search) qs.set('search', params.search)
+  if (params?.is_banned !== undefined) qs.set('is_banned', String(params.is_banned))
+  const query = qs.toString()
+  return api.get<User[]>(`/api/v1/users/${query ? `?${query}` : ''}`)
 }
 export const banUser = (id: string, reason?: string) =>
   api.post(`/api/v1/users/${id}/ban`, { reason })
