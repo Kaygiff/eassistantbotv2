@@ -62,7 +62,7 @@ async def handle_book_search(ctx: BrainContext, bot) -> None:
 
     from services.library.books import search_books
     text = await search_books(query, ctx.language)
-    await bot.send_message(ctx.chat_id, text, parse_mode="Markdown")
+    await bot.send_message(ctx.chat_id, text, parse_mode="Markdown", disable_web_page_preview=True)
 
 
 @register(Intent.ANIME_SEARCH)
