@@ -1,17 +1,12 @@
-from api.auth.identity import get_user_by_telegram_id, get_or_create_user, update_user_field
-from api.auth.session import get_session, set_session, update_session, get_fsm_state, set_fsm_state, clear_fsm_state
-
-"""
-JWT авторизация для EAdmin REST API.
-"""
-
 from __future__ import annotations
 import os
-from typing import Annotated
 
 from fastapi import Depends, HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
+
+from api.auth.identity import get_user_by_telegram_id, get_or_create_user, update_user_field
+from api.auth.session import get_session, set_session, update_session, get_fsm_state, set_fsm_state, clear_fsm_state
 
 SECRET_KEY = os.getenv("EADMIN_SECRET_KEY", "change-me")
 ALGORITHM = "HS256"
