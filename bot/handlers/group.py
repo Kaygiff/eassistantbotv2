@@ -10,9 +10,9 @@ from aiogram import Router, F
 from aiogram.types import Message, ChatMemberUpdated
 from aiogram.filters import Command
 
-from brain.context import BrainContext
-from brain.intent import Intent
-from brain.group_router import process_group_message, handle_new_chat_member, handle_member_left
+from bot.brain.context import BrainContext
+from bot.brain.intent import Intent
+from bot.brain.group_router import process_group_message, handle_new_chat_member, handle_member_left
 
 logger = logging.getLogger(__name__)
 

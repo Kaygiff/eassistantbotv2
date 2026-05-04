@@ -9,7 +9,7 @@ import logging
 
 import httpx
 
-from db.redis import get_redis, weather_cache_key
+from infra.db.redis import get_redis, weather_cache_key
 
 logger = logging.getLogger(__name__)
 OWM_KEY = os.getenv("OPENWEATHERMAP_API_KEY")

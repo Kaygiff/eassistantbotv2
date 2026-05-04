@@ -4,7 +4,7 @@ api/routes/admin.py — Административные действия чер
 
 from fastapi import APIRouter, Depends
 from api.auth import require_admin
-from db.supabase import supabase_admin
+from infra.db.supabase import supabase_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 

@@ -10,9 +10,9 @@ from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.filters import Command
 
-from brain.context import BrainContext
-from brain.intent import Intent
-from brain.router import process
+from bot.brain.context import BrainContext
+from bot.brain.intent import Intent
+from bot.brain.router import process
 
 logger = logging.getLogger(__name__)
 
@@ -120,8 +120,8 @@ def _build_context(message: Message) -> BrainContext:
 
 @private_router.message(Command("top"))
 async def cmd_top(message: Message) -> None:
-    from economy.leaderboard import get_leaderboard_text
-    from auth.identity import get_user_by_telegram_id
+    from world.economy.leaderboard import get_leaderboard_text
+    from api.auth.identity import get_user_by_telegram_id
     user = await get_user_by_telegram_id(message.from_user.id)
     lang = user.language if user else "ru"
     text = await get_leaderboard_text(limit=10, language=lang)

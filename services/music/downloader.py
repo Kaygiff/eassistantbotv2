@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
     """Ищет трек по запросу и отправляет аудио в чат."""
     from i18n import t
-    from db.supabase import supabase_admin
-    from db.storage import upload_file, file_exists, get_public_url
+    from infra.db.supabase import supabase_admin
+    from infra.db.storage import upload_file, file_exists, get_public_url
 
     # 1. Ищем в кэше
     cached = await _find_cached(query)
@@ -75,7 +75,7 @@ async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
 
 async def _find_cached(query: str) -> dict | None:
     """Ищет трек в кэше по названию."""
-    from db.supabase import supabase_admin
+    from infra.db.supabase import supabase_admin
     res = (
         supabase_admin.table("music_cache")
         .select("*")

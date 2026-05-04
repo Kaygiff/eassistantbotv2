@@ -8,9 +8,9 @@ import json
 import time
 import logging
 
-from db.redis import get_redis, chat_history_key
-from db.supabase import supabase_admin
-from ai_provider.hub import get_hub
+from infra.db.redis import get_redis, chat_history_key
+from infra.db.supabase import supabase_admin
+from services.ai_provider.hub import get_hub
 
 logger = logging.getLogger(__name__)
 

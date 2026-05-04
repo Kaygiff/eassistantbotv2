@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from api.auth import require_admin
-from db.supabase import supabase_admin
-from models.groups import Group
+from infra.db.supabase import supabase_admin
+from core.models.groups import Group
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 
@@ -83,6 +83,6 @@ async def update_group_settings(group_id: UUID, body: GroupSettingsUpdate, _=Dep
 @router.delete("/{group_id}/warns/{user_id}")
 async def clear_user_warns(group_id: UUID, user_id: UUID, _=Depends(require_admin)):
     """Очищает все варны пользователя в группе."""
-    from safety.group_moderation import clear_warns
+    from infra.safety.group_moderation import clear_warns
     await clear_warns(str(group_id), str(user_id))
     return {"ok": True}

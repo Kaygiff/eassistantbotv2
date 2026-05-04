@@ -10,8 +10,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from monitoring.metrics import init_sentry, init_logging
-from monitoring.health import get_health
+from infra.monitoring.metrics import init_sentry, init_logging
+from infra.monitoring.health import get_health
 from bot.webhook import webhook_router
 
 
@@ -20,9 +20,9 @@ async def lifespan(app: FastAPI):
     init_logging()
     init_sentry()
 
-    from brain.dispatcher import register_all_handlers
-    from brain.editor import load_rules_into_classifier
-    from safety.content_moderation import load_stopwords
+    from bot.brain.dispatcher import register_all_handlers
+    from bot.brain.editor import load_rules_into_classifier
+    from infra.safety.content_moderation import load_stopwords
 
     register_all_handlers()
     await load_rules_into_classifier()

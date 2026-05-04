@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from api.auth import require_admin
-from db.supabase import supabase_admin
+from infra.db.supabase import supabase_admin
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -29,7 +29,7 @@ class SingleNotificationRequest(BaseModel):
 
 @router.post("/broadcast")
 async def broadcast(body: BroadcastRequest, _=Depends(require_admin)):
-    from queue.tasks import send_broadcast
+    from infra.queue.tasks import send_broadcast
     send_broadcast.delay(
         text=body.text,
         language=body.language,
@@ -41,7 +41,7 @@ async def broadcast(body: BroadcastRequest, _=Depends(require_admin)):
 
 @router.post("/send")
 async def send_single(body: SingleNotificationRequest, _=Depends(require_admin)):
-    from queue.tasks import send_single_notification
+    from infra.queue.tasks import send_single_notification
     send_single_notification.delay(
         telegram_id=body.telegram_id,
         text=body.text,

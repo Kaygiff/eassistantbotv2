@@ -10,8 +10,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from db.supabase import supabase_admin
-from models.user import User
+from infra.db.supabase import supabase_admin
+from core.models.user import User
 from api.auth import require_admin
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -63,7 +63,7 @@ class BanRequest(BaseModel):
 @router.post("/{user_id}/ban")
 async def ban_user(user_id: UUID, body: BanRequest, _=Depends(require_admin)):
     """Заблокировать пользователя."""
-    from safety.user_ban import ban_user as do_ban
+    from infra.safety.user_ban import ban_user as do_ban
     from datetime import datetime
     ban_until = datetime.fromisoformat(body.ban_until) if body.ban_until else None
     await do_ban(str(user_id), reason=body.reason, ban_until=ban_until, banned_by="admin")
@@ -73,7 +73,7 @@ async def ban_user(user_id: UUID, body: BanRequest, _=Depends(require_admin)):
 @router.post("/{user_id}/unban")
 async def unban_user(user_id: UUID, _=Depends(require_admin)):
     """Разблокировать пользователя."""
-    from safety.user_ban import lift_ban
+    from infra.safety.user_ban import lift_ban
     await lift_ban(str(user_id))
     return {"ok": True}
 

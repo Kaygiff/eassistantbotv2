@@ -4,7 +4,7 @@ api/routes/stats.py — Аналитика и статистика для EAdmin
 
 from fastapi import APIRouter, Depends, Query
 from api.auth import require_admin
-from db.supabase import supabase_admin
+from infra.db.supabase import supabase_admin
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 

@@ -8,9 +8,9 @@ import uuid
 import logging
 from datetime import datetime, timezone
 
-from db.supabase import supabase_admin
-from auth.session import get_fsm_state, set_fsm_state, set_fsm_data, get_fsm_data, clear_fsm_state, clear_fsm_data
-from brain.context import BrainContext
+from infra.db.supabase import supabase_admin
+from api.auth.session import get_fsm_state, set_fsm_state, set_fsm_data, get_fsm_data, clear_fsm_state, clear_fsm_data
+from bot.brain.context import BrainContext
 
 logger = logging.getLogger(__name__)
 

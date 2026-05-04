@@ -8,7 +8,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
 from api.auth import require_admin
-from db.supabase import supabase_admin
+from infra.db.supabase import supabase_admin
 
 router = APIRouter(prefix="/casino", tags=["casino"])
 

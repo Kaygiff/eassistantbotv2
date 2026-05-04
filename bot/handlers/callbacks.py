@@ -17,8 +17,8 @@ callback_router = Router()
 
 async def _get_ctx_and_user(callback: CallbackQuery):
     """Получает пользователя для callback."""
-    from auth.identity import get_user_by_telegram_id
-    from brain.context import BrainContext
+    from api.auth.identity import get_user_by_telegram_id
+    from bot.brain.context import BrainContext
 
     user = await get_user_by_telegram_id(callback.from_user.id)
     lang = user.language if user else "ru"
@@ -39,7 +39,7 @@ async def _get_ctx_and_user(callback: CallbackQuery):
 @callback_router.callback_query(F.data.startswith("lang:"))
 async def cb_language(callback: CallbackQuery) -> None:
     lang = callback.data.split(":")[1]
-    from auth.identity import get_user_by_telegram_id, update_user_field
+    from api.auth.identity import get_user_by_telegram_id, update_user_field
     user = await get_user_by_telegram_id(callback.from_user.id)
     if user:
         await update_user_field(str(user.id), language=lang)
@@ -54,7 +54,7 @@ async def cb_onboarding(callback: CallbackQuery) -> None:
     action = parts[1]
     ctx = await _get_ctx_and_user(callback)
 
-    from onboarding.flow import handle_onboarding_callback
+    from bot.onboarding.flow import handle_onboarding_callback
     await handle_onboarding_callback(ctx, callback, action, parts[2] if len(parts) > 2 else None)
 
 
@@ -66,7 +66,7 @@ async def cb_profile(callback: CallbackQuery) -> None:
     ctx = await _get_ctx_and_user(callback)
 
     if action == "edit":
-        from brain.handlers.profile import handle_profile_edit
+        from bot.brain.handlers.profile import handle_profile_edit
         await handle_profile_edit(ctx, callback.message.bot)
     await callback.answer()
 
@@ -80,19 +80,19 @@ async def cb_pet(callback: CallbackQuery) -> None:
 
     if action == "new" and len(parts) > 2:
         species = parts[2]
-        from auth.session import set_fsm_state, set_fsm_data
+        from api.auth.session import set_fsm_state, set_fsm_data
         await set_fsm_state(str(ctx.user.id), "pet:naming")
         await set_fsm_data(str(ctx.user.id), {"species": species})
         from i18n import t
         await callback.message.edit_text(t(ctx.language, "pets.name_pet"))
     elif action == "feed":
-        from brain.handlers.pet import handle_pet_feed
+        from bot.brain.handlers.pet import handle_pet_feed
         await handle_pet_feed(ctx, callback.message.bot)
     elif action == "play":
-        from brain.handlers.pet import handle_pet_play
+        from bot.brain.handlers.pet import handle_pet_play
         await handle_pet_play(ctx, callback.message.bot)
     elif action == "heal":
-        from brain.handlers.pet import handle_pet_heal
+        from bot.brain.handlers.pet import handle_pet_heal
         await handle_pet_heal(ctx, callback.message.bot)
 
     await callback.answer()
@@ -105,7 +105,7 @@ async def cb_casino(callback: CallbackQuery) -> None:
     ctx = await _get_ctx_and_user(callback)
     ctx.text = f"/{game}"
 
-    from brain.intent import Intent
+    from bot.brain.intent import Intent
     intent_map = {
         "slots": Intent.CASINO_SLOTS,
         "roulette": Intent.CASINO_ROULETTE,
@@ -137,7 +137,7 @@ async def cb_settings(callback: CallbackQuery) -> None:
         await callback.message.edit_text("🌐 Выбери язык:", reply_markup=keyboard)
 
     elif action == "assistant_name":
-        from auth.session import set_fsm_state
+        from api.auth.session import set_fsm_state
         await set_fsm_state(str(ctx.user.id), "settings:assistant_name")
         await callback.message.edit_text("✏️ Введи новое имя ассистента:")
 
@@ -151,7 +151,7 @@ async def cb_relationship(callback: CallbackQuery) -> None:
     action = parts[1]
     ctx = await _get_ctx_and_user(callback)
 
-    from virtual_world.relationships.service import handle_relationship_callback
+    from world.virtual_world.relationships.service import handle_relationship_callback
     text = await handle_relationship_callback(ctx, action, parts[2] if len(parts) > 2 else None)
     if text:
         await callback.message.edit_text(text, parse_mode="Markdown")

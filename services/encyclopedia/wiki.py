@@ -8,7 +8,7 @@ import logging
 
 import httpx
 
-from db.redis import get_redis, encyclopedia_cache_key
+from infra.db.redis import get_redis, encyclopedia_cache_key
 
 logger = logging.getLogger(__name__)
 CACHE_TTL = 3600

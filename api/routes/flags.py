@@ -5,8 +5,8 @@ api/routes/flags.py — Feature Flags API для EAdmin.
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from api.auth import require_admin
-from feature_flags.flags import set_flag, invalidate_flag_cache
-from db.supabase import supabase_admin
+from api.feature_flags.flags import set_flag, invalidate_flag_cache
+from infra.db.supabase import supabase_admin
 
 router = APIRouter(prefix="/flags", tags=["flags"])
 

@@ -12,10 +12,10 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
-from monitoring.metrics import init_sentry, init_logging
-from brain.dispatcher import register_all_handlers
-from brain.editor import load_rules_into_classifier
-from safety.content_moderation import load_stopwords
+from infra.monitoring.metrics import init_sentry, init_logging
+from bot.brain.dispatcher import register_all_handlers
+from bot.brain.editor import load_rules_into_classifier
+from infra.safety.content_moderation import load_stopwords
 from bot.handlers.private import private_router
 from bot.handlers.group import group_router
 from bot.handlers.callbacks import callback_router

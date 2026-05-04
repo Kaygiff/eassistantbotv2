@@ -6,7 +6,7 @@ CRUD для кастомных правил классификатора.
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from api.auth import require_admin
-from brain.editor import get_all_rules, update_rule, delete_rule, get_editor_stats, load_rules_into_classifier
+from bot.brain.editor import get_all_rules, update_rule, delete_rule, get_editor_stats, load_rules_into_classifier
 
 router = APIRouter(prefix="/brain", tags=["brain"])
 
