@@ -8,7 +8,7 @@ import logging
 import httpx
 
 logger = logging.getLogger(__name__)
-GOOGLE_BOOKS_KEY = os.getenv("GOOGLE_TRANSLATE_KEY")  # тот же ключ GCP
+GOOGLE_BOOKS_KEY = os.getenv("GOOGLE_BOOKS_KEY")  # тот же ключ GCP
 
 
 async def search_books(query: str, language: str = "ru") -> str:
