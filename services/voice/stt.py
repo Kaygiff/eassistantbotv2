@@ -51,6 +51,8 @@ async def transcribe_via_assemblyai(file_path: str) -> str | None:
             config = aai.TranscriptionConfig(speech_model=aai.SpeechModel.universal)
             transcriber = aai.Transcriber(config=config)
             transcript = transcriber.transcribe(file_path)
+            if transcript.error:
+                raise RuntimeError(transcript.error)
             return transcript.text
 
         loop = asyncio.get_event_loop()
