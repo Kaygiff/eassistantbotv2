@@ -46,7 +46,8 @@ async def transcribe_via_assemblyai(file_path: str) -> str | None:
     try:
         import assemblyai as aai
         aai.settings.api_key = ASSEMBLYAI_KEY
-        transcriber = aai.Transcriber()
+        config = aai.TranscriptionConfig(speech_model=aai.SpeechModel.universal)
+        transcriber = aai.Transcriber(config=config)
         transcript = transcriber.transcribe(file_path)
         return transcript.text
     except Exception as e:
