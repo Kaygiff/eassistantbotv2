@@ -18,6 +18,11 @@ WIKI_LANG_MAP = {
     "tj": "ru", "tm": "ru", "kg": "ru", "en": "en",
 }
 
+HEADERS = {
+    "Accept": "application/json",
+    "User-Agent": "EAssistantBot/2.0 (Telegram bot; https://t.me/eassistantbot)",
+}
+
 
 async def get_article(query: str, language: str = "ru") -> str:
     """Возвращает краткую справку из Wikipedia."""
@@ -31,13 +36,11 @@ async def get_article(query: str, language: str = "ru") -> str:
     wiki_lang = WIKI_LANG_MAP.get(language, "ru")
 
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=10.0, headers=HEADERS) as client:
             resp = await client.get(
                 f"https://{wiki_lang}.wikipedia.org/api/rest_v1/page/summary/{query}",
-                headers={"Accept": "application/json"},
             )
             if resp.status_code == 404:
-                # Пробуем поиск
                 search_resp = await client.get(
                     f"https://{wiki_lang}.wikipedia.org/w/api.php",
                     params={"action": "query", "list": "search", "srsearch": query, "format": "json", "srlimit": 1},
@@ -61,7 +64,6 @@ async def get_article(query: str, language: str = "ru") -> str:
         if not extract:
             return f"🔍 По запросу *{query}* ничего не найдено."
 
-        # Обрезаем до 500 символов
         if len(extract) > 500:
             extract = extract[:500].rsplit(".", 1)[0] + "."
 
