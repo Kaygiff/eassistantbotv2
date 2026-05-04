@@ -16,6 +16,10 @@ LANG_TO_WHISPER = {
     "tm": "tk", "kg": "ky", "by": "be", "en": "en",
 }
 
+LANG_TO_ASSEMBLYAI = {
+    "ru": "ru", "kz": "kk", "uz": "uz", "en": "en",
+}
+
 
 async def transcribe_via_whisper(file_path: str, language: str) -> str | None:
     """Транскрибирует через OpenAI Whisper."""
@@ -38,7 +42,7 @@ async def transcribe_via_whisper(file_path: str, language: str) -> str | None:
         return None
 
 
-async def transcribe_via_assemblyai(file_path: str) -> str | None:
+async def transcribe_via_assemblyai(file_path: str, language: str = "ru") -> str | None:
     """Транскрибирует через AssemblyAI (синхронный SDK в executor)."""
     key = os.getenv("ASSEMBLYAI_KEY") or os.getenv("ASSEMBLYAI_API_KEY")
     if not key:
@@ -48,7 +52,11 @@ async def transcribe_via_assemblyai(file_path: str) -> str | None:
 
         def _transcribe():
             aai.settings.api_key = key
-            config = aai.TranscriptionConfig(speech_model=aai.SpeechModel.universal)
+            lang_code = LANG_TO_ASSEMBLYAI.get(language, "ru")
+            config = aai.TranscriptionConfig(
+                speech_model=aai.SpeechModel.best,
+                language_code=lang_code,
+            )
             transcriber = aai.Transcriber(config=config)
             transcript = transcriber.transcribe(file_path)
             if transcript.error:
@@ -81,7 +89,7 @@ async def transcribe_voice(file_id: str, language: str, bot) -> str | None:
         # Fallback — AssemblyAI
         if not text:
             logger.info("[STT] Whisper unavailable, trying AssemblyAI...")
-            text = await transcribe_via_assemblyai(tmp_path)
+            text = await transcribe_via_assemblyai(tmp_path, language)
 
         os.unlink(tmp_path)
         return text
