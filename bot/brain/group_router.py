@@ -2,15 +2,20 @@
 brain/group_router.py — Роутер для групповых чатов.
 Отличается от приватного роутера:
 - Проверяет регистрацию пользователя (не онбордит в группе)
-- Ограничивает доступные интенты
+- Логика двух режимов:
+    * МИКРОСЕРВИСЫ (музыка, погода, перевод и т.д.) — только если сообщение
+      начинается с имени ассистента пользователя (assistant_name).
+      Пример: "Альфа, найди музыку Coldplay"
+    * WORLD-функции (игры, отношения, модерация и т.д.) — без обращения по имени
 - Логирует вступление новых участников
 - Отправляет приветственное сообщение
 """
 
 from __future__ import annotations
 import logging
+import re
 
-from bot.brain.intent import Intent, GROUP_ALLOWED_INTENTS
+from bot.brain.intent import Intent, GROUP_ALLOWED_INTENTS, GROUP_WORLD_INTENTS, MICROSERVICE_INTENTS
 from bot.brain.classifier import classify
 from bot.brain.context import BrainContext
 from bot.brain.router import process as private_process, _handlers
@@ -20,6 +25,35 @@ from infra.safety.group_moderation import ensure_group_exists
 from core.i18n import t
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_assistant_address(text: str, assistant_name: str) -> tuple[bool, str]:
+    """
+    Проверяет, начинается ли сообщение с имени ассистента.
+    Возвращает (addressed, clean_text) где:
+      - addressed=True если обращение найдено
+      - clean_text — текст без имени и знаков препинания после него
+
+    Примеры:
+      "Альфа, найди музыку" → (True, "найди музыку")
+      "Альфа найди музыку"  → (True, "найди музыку")
+      "альфа: переведи это" → (True, "переведи это")
+      "просто текст"        → (False, "просто текст")
+    """
+    if not assistant_name or assistant_name == "Ассистент":
+        return False, text
+
+    # Паттерн: имя в начале строки + опциональный разделитель (, : - или пробел)
+    pattern = re.compile(
+        r"^" + re.escape(assistant_name) + r"\s*[,:\-]?\s*",
+        re.IGNORECASE | re.UNICODE,
+    )
+    match = pattern.match(text.strip())
+    if match:
+        clean = text.strip()[match.end():].strip()
+        return True, clean
+
+    return False, text
 
 
 async def process_group_message(ctx: BrainContext, bot) -> None:
@@ -65,19 +99,48 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
         else:
             return
 
-    # 6. Классификация интента
-    if ctx.intent == Intent.UNKNOWN:
-        intent = await classify(ctx.text, ctx.language)
-        ctx.set_intent(intent)
+    # 6. Определяем режим: обращение по имени или нет
+    addressed, clean_text = _extract_assistant_address(ctx.text, user.assistant_name)
 
-    # 7. Проверка: разрешён ли интент в группе
-    if ctx.intent not in GROUP_ALLOWED_INTENTS:
-        await bot.send_message(ctx.chat_id, t(ctx.language, "common.only_private"))
-        return
+    if addressed:
+        # Режим МИКРОСЕРВИСОВ: классифицируем очищенный текст (без имени)
+        ctx.extra["addressed_by_name"] = True
+        original_text = ctx.text
+        ctx.text = clean_text  # классифицируем без имени бота
 
-    logger.info(f"[GroupRouter] {ctx}")
+        if ctx.intent == Intent.UNKNOWN:
+            intent = await classify(ctx.text, ctx.language)
+            ctx.set_intent(intent)
 
-    # 8. Маршрутизация — используем тот же реестр хэндлеров
+        # Если классификатор вернул world-интент при обращении по имени —
+        # всё равно пропускаем (пользователь явно обратился к боту)
+        if ctx.intent not in GROUP_ALLOWED_INTENTS:
+            ctx.text = original_text
+            await bot.send_message(ctx.chat_id, t(ctx.language, "common.only_private"))
+            return
+
+    else:
+        # Режим WORLD: классифицируем полный текст, но микросервисы НЕ вызываем
+        if ctx.intent == Intent.UNKNOWN:
+            intent = await classify(ctx.text, ctx.language)
+            ctx.set_intent(intent)
+
+        # Микросервисы без обращения по имени — игнорируем молча
+        if ctx.intent in MICROSERVICE_INTENTS:
+            logger.debug(
+                f"[GroupRouter] Microservice intent={ctx.intent.value} ignored "
+                f"(no assistant name address) in group {ctx.chat_id}"
+            )
+            return
+
+        # Остальные world-интенты проверяем по общему списку
+        if ctx.intent not in GROUP_WORLD_INTENTS:
+            await bot.send_message(ctx.chat_id, t(ctx.language, "common.only_private"))
+            return
+
+    logger.info(f"[GroupRouter] {ctx} addressed={addressed}")
+
+    # 7. Маршрутизация — используем тот же реестр хэндлеров
     handler = _handlers.get(ctx.intent)
     if handler is None:
         handler = _handlers.get(Intent.AI_CHAT)
