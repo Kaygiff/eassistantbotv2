@@ -59,9 +59,7 @@ async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
         title = track.get("title", query)
         artist = track.get("artist", "")
 
-        # Читаемое имя файла чтобы Telegram показывал название а не цифры
-        safe_title = "".join(c for c in title if c.isalnum() or c in " _-")[:50].strip()
-        storage_path = f"music/{safe_title}_{track_id}.mp3"
+        storage_path = f"music/{track_id}.mp3"
 
         cdn_url = await upload_file(audio_data, storage_path, "audio/mpeg")
 
