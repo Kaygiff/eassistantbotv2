@@ -91,6 +91,9 @@ class Intent(str, Enum):
     SETTINGS = "settings"
     UNKNOWN = "unknown"
 
+    # --- Служебные (не хэндлеры, обрабатываются в router.py) ---
+    CLARIFICATION = "clarification"   # Brain AI не смог определить сервис
+
 
 # Категории интентов для быстрой проверки
 CASINO_INTENTS = {
