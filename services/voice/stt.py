@@ -44,17 +44,46 @@ async def transcribe_via_assemblyai(file_path: str, language: str = "ru") -> str
     if not key:
         return None
     try:
-        import assemblyai as aai
+        import httpx
 
         def _transcribe():
-            aai.settings.api_key = key
+            headers = {"authorization": key}
+
+            # 1. Загружаем файл
+            with open(file_path, "rb") as f:
+                upload_resp = httpx.post(
+                    "https://api.assemblyai.com/v2/upload",
+                    headers=headers,
+                    content=f.read(),
+                )
+            upload_resp.raise_for_status()
+            audio_url = upload_resp.json()["upload_url"]
+
+            # 2. Создаём транскрипцию
             lang_code = LANG_TO_ASSEMBLYAI.get(language, "ru")
-            config = aai.TranscriptionConfig(language_code=lang_code)
-            transcriber = aai.Transcriber(config=config)
-            transcript = transcriber.transcribe(file_path)
-            if transcript.error:
-                raise RuntimeError(transcript.error)
-            return transcript.text
+            transcript_resp = httpx.post(
+                "https://api.assemblyai.com/v2/transcript",
+                headers=headers,
+                json={"audio_url": audio_url, "language_code": lang_code},
+            )
+            transcript_resp.raise_for_status()
+            transcript_id = transcript_resp.json()["id"]
+
+            # 3. Поллинг результата
+            import time
+            for _ in range(60):
+                result = httpx.get(
+                    f"https://api.assemblyai.com/v2/transcript/{transcript_id}",
+                    headers=headers,
+                )
+                data = result.json()
+                if data["status"] == "completed":
+                    return data.get("text", "")
+                elif data["status"] == "error":
+                    raise RuntimeError(data.get("error", "Unknown error"))
+                time.sleep(2)
+
+            raise RuntimeError("AssemblyAI timeout")
 
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, _transcribe)
