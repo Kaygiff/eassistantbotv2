@@ -54,7 +54,7 @@ async def transcribe_via_assemblyai(file_path: str, language: str = "ru") -> str
             aai.settings.api_key = key
             lang_code = LANG_TO_ASSEMBLYAI.get(language, "ru")
             config = aai.TranscriptionConfig(
-                speech_model=aai.SpeechModel.best,
+                speech_models=aai.SpeechModel.best,
                 language_code=lang_code,
             )
             transcriber = aai.Transcriber(config=config)
