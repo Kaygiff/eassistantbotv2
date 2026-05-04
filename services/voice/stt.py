@@ -5,13 +5,11 @@ services/voice/stt.py — Speech-to-Text.
 
 from __future__ import annotations
 import os
+import asyncio
 import logging
 import tempfile
 
 logger = logging.getLogger(__name__)
-
-OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-ASSEMBLYAI_KEY = os.getenv("ASSEMBLYAI_API_KEY")
 
 LANG_TO_WHISPER = {
     "ru": "ru", "kz": "kk", "uz": "uz", "tj": "tg",
@@ -21,11 +19,12 @@ LANG_TO_WHISPER = {
 
 async def transcribe_via_whisper(file_path: str, language: str) -> str | None:
     """Транскрибирует через OpenAI Whisper."""
-    if not OPENAI_KEY:
+    key = os.getenv("OPENAI_API_KEY")
+    if not key:
         return None
     try:
         import openai
-        client = openai.AsyncOpenAI(api_key=OPENAI_KEY)
+        client = openai.AsyncOpenAI(api_key=key)
         whisper_lang = LANG_TO_WHISPER.get(language, "ru")
         with open(file_path, "rb") as f:
             response = await client.audio.transcriptions.create(
@@ -40,16 +39,23 @@ async def transcribe_via_whisper(file_path: str, language: str) -> str | None:
 
 
 async def transcribe_via_assemblyai(file_path: str) -> str | None:
-    """Транскрибирует через AssemblyAI."""
-    if not ASSEMBLYAI_KEY:
+    """Транскрибирует через AssemblyAI (синхронный SDK в executor)."""
+    key = os.getenv("ASSEMBLYAI_KEY") or os.getenv("ASSEMBLYAI_API_KEY")
+    if not key:
         return None
     try:
         import assemblyai as aai
-        aai.settings.api_key = ASSEMBLYAI_KEY
-        config = aai.TranscriptionConfig(speech_model=aai.SpeechModel.universal)
-        transcriber = aai.Transcriber(config=config)
-        transcript = transcriber.transcribe(file_path)
-        return transcript.text
+
+        def _transcribe():
+            aai.settings.api_key = key
+            config = aai.TranscriptionConfig(speech_model=aai.SpeechModel.universal)
+            transcriber = aai.Transcriber(config=config)
+            transcript = transcriber.transcribe(file_path)
+            return transcript.text
+
+        loop = asyncio.get_event_loop()
+        text = await loop.run_in_executor(None, _transcribe)
+        return text
     except Exception as e:
         logger.warning(f"[STT] AssemblyAI error: {e}")
         return None
@@ -61,7 +67,6 @@ async def transcribe_voice(file_id: str, language: str, bot) -> str | None:
     Возвращает текст или None при ошибке.
     """
     try:
-        # Скачиваем файл от Telegram
         file = await bot.get_file(file_id)
         with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as tmp:
             tmp_path = tmp.name
@@ -73,11 +78,10 @@ async def transcribe_voice(file_id: str, language: str, bot) -> str | None:
 
         # Fallback — AssemblyAI
         if not text:
+            logger.info("[STT] Whisper unavailable, trying AssemblyAI...")
             text = await transcribe_via_assemblyai(tmp_path)
 
-        import os
         os.unlink(tmp_path)
-
         return text
 
     except Exception as e:
