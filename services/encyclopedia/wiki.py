@@ -75,4 +75,3 @@ async def get_article(query: str, language: str = "ru") -> str:
     except Exception as e:
         logger.error(f"[Encyclopedia] Error for '{query}': {e}")
         return "❌ Не удалось получить информацию."
-        
