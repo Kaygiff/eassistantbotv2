@@ -141,6 +141,52 @@ async def cb_settings(callback: CallbackQuery) -> None:
         await set_fsm_state(str(ctx.user.id), "settings:assistant_name")
         await callback.message.edit_text("✏️ Введи новое имя ассистента:")
 
+    elif action == "profile":
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="👤 Никнейм", callback_data="settings:nickname")],
+            [InlineKeyboardButton(text="📝 О себе (bio)", callback_data="settings:bio")],
+            [InlineKeyboardButton(text="🎂 День рождения", callback_data="settings:birthday")],
+            [InlineKeyboardButton(text="🎭 Характер бота", callback_data="settings:personality")],
+        ])
+        await callback.message.edit_text(
+            "👤 *Редактирование профиля*\n\nЧто хочешь изменить?",
+            parse_mode="Markdown",
+            reply_markup=keyboard,
+        )
+
+    elif action == "nickname":
+        from api.auth.session import set_fsm_state
+        await set_fsm_state(str(ctx.user.id), "settings:nickname")
+        await callback.message.edit_text("👤 Введи новый никнейм (максимум 32 символа):")
+
+    elif action == "bio":
+        from api.auth.session import set_fsm_state
+        await set_fsm_state(str(ctx.user.id), "settings:bio")
+        await callback.message.edit_text("📝 Напиши что-нибудь о себе (максимум 300 символов):")
+
+    elif action == "birthday":
+        from api.auth.session import set_fsm_state
+        await set_fsm_state(str(ctx.user.id), "settings:birthday")
+        await callback.message.edit_text("🎂 Введи дату рождения в формате ДД.ММ.ГГГГ\nНапример: 15.03.1995")
+
+    elif action == "personality":
+        parts = callback.data.split(":")
+        if len(parts) > 2:
+            param = parts[2]
+            from api.auth.identity import update_user_field
+            await update_user_field(str(ctx.user.id), assistant_personality=param)
+            labels = {"kind": "😊 Добрый", "evil": "😈 Злой", "neutral": "😐 Нейтральный"}
+            await callback.message.edit_text(f"✅ Характер бота изменён: {labels.get(param, param)}")
+        else:
+            from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="😊 Добрый", callback_data="settings:personality:kind")],
+                [InlineKeyboardButton(text="😈 Злой", callback_data="settings:personality:evil")],
+                [InlineKeyboardButton(text="😐 Нейтральный", callback_data="settings:personality:neutral")],
+            ])
+            await callback.message.edit_text("🎭 Выбери характер бота:", reply_markup=keyboard)
+
     await callback.answer()
 
 
