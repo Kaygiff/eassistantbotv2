@@ -114,17 +114,20 @@ async def ensure_group_exists(chat_id: int, title: str, owner_id: Optional[str] 
     """
     Создаёт запись группы если она ещё не существует.
     Возвращает UUID группы.
+
+    Использует .limit(1) вместо .maybe_single() чтобы избежать 406
+    когда в БД оказалось несколько записей с одинаковым chat_id.
     """
     res = (
         get_supabase_admin()
         .table("groups")
         .select("id")
         .eq("chat_id", chat_id)
-        .maybe_single()
+        .limit(1)
         .execute()
     )
-    if res.data:
-        return res.data["id"]
+    if res and res.data:
+        return res.data[0]["id"]
 
     group_id = str(uuid.uuid4())
     get_supabase_admin().table("groups").insert({
