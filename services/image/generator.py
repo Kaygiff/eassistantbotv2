@@ -5,6 +5,7 @@ services/image/generator.py — Генерация изображений.
 
 from __future__ import annotations
 import os
+import base64
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,11 +14,12 @@ OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 STABILITY_KEY = os.getenv("STABILITY_API_KEY")
 
 
-async def generate_via_dalle(prompt: str) -> str | None:
-    """Генерирует изображение через DALL-E 3."""
+async def generate_via_dalle(prompt: str) -> bytes | None:
+    """Генерирует изображение через DALL-E 3, возвращает байты."""
     if not OPENAI_KEY:
         return None
     try:
+        import httpx
         import openai
         client = openai.AsyncOpenAI(api_key=OPENAI_KEY)
         response = await client.images.generate(
@@ -27,14 +29,17 @@ async def generate_via_dalle(prompt: str) -> str | None:
             quality="standard",
             n=1,
         )
-        return response.data[0].url
+        url = response.data[0].url
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(url)
+            return resp.content
     except Exception as e:
         logger.warning(f"[ImageGen] DALL-E error: {e}")
         return None
 
 
-async def generate_via_stability(prompt: str) -> str | None:
-    """Генерирует изображение через Stability AI."""
+async def generate_via_stability(prompt: str) -> bytes | None:
+    """Генерирует изображение через Stability AI, возвращает байты."""
     if not STABILITY_KEY:
         return None
     try:
@@ -46,28 +51,27 @@ async def generate_via_stability(prompt: str) -> str | None:
                 json={
                     "text_prompts": [{"text": prompt, "weight": 1}],
                     "cfg_scale": 7,
-                    "height": 1024,
-                    "width": 1024,
+                    "height": 512,
+                    "width": 512,
                     "samples": 1,
                     "steps": 30,
                 },
             )
             resp.raise_for_status()
             data = resp.json()
-            # Возвращаем base64 изображение как data URL
             img_b64 = data["artifacts"][0]["base64"]
-            return f"data:image/png;base64,{img_b64}"
+            return base64.b64decode(img_b64)
     except Exception as e:
         logger.warning(f"[ImageGen] Stability error: {e}")
         return None
 
 
-async def generate_image(prompt: str) -> str | None:
+async def generate_image(prompt: str) -> bytes | None:
     """
     Генерирует изображение по промпту.
-    Возвращает URL или None при ошибке.
+    Возвращает байты изображения или None при ошибке.
     """
-    url = await generate_via_dalle(prompt)
-    if url:
-        return url
+    img = await generate_via_dalle(prompt)
+    if img:
+        return img
     return await generate_via_stability(prompt)
