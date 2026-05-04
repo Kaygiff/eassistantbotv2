@@ -87,6 +87,7 @@ async def process(ctx: BrainContext, bot: Any) -> None:
         transcribed = await transcribe_voice(ctx.voice_file_id, ctx.language, bot)
         if transcribed:
             ctx.text = transcribed
+            await bot.send_message(ctx.chat_id, f"🎤 _«{transcribed}»_", parse_mode="Markdown")
         else:
             await bot.send_message(ctx.chat_id, "🎤 Не удалось распознать голосовое сообщение. Попробуй ещё раз или напиши текстом.")
             return
