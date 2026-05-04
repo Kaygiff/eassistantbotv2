@@ -91,7 +91,7 @@ async def transfer_ecoins(
     language: str = "ru",
 ) -> str:
     """Переводит Ecoins от одного пользователя другому."""
-    from i18n import t
+    from core.i18n.loader import t
 
     if amount <= 0:
         return "❌ Сумма перевода должна быть больше 0."
