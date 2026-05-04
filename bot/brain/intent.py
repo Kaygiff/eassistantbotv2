@@ -141,15 +141,35 @@ PRIVATE_ONLY_INTENTS = {
     Intent.IMAGE_GEN, Intent.VOICE_TO_TEXT,
 }
 
-# Интенты доступные в группах
-GROUP_ALLOWED_INTENTS = {
-    Intent.AI_CHAT, Intent.MUSIC_SEARCH, Intent.WEATHER,
-    Intent.TRANSLATE, Intent.ENCYCLOPEDIA, Intent.BOOK_SEARCH, Intent.ANIME_SEARCH,
+# ---------------------------------------------------------------------------
+# Микросервисы — в группе вызываются ТОЛЬКО при обращении по имени ассистента
+# (имя которое пользователь задал боту при онбординге, например "Альфа, найди музыку")
+# ---------------------------------------------------------------------------
+MICROSERVICE_INTENTS = {
+    Intent.MUSIC_SEARCH, Intent.WEATHER, Intent.TRANSLATE,
+    Intent.ENCYCLOPEDIA, Intent.BOOK_SEARCH, Intent.ANIME_SEARCH,
+    Intent.IMAGE_GEN, Intent.VOICE_TO_TEXT,
+    Intent.TASK_CREATE, Intent.TASK_LIST, Intent.TASK_DONE, Intent.REMINDER_CREATE,
+}
+
+# World-функции — работают в группе без обращения по имени
+GROUP_WORLD_INTENTS = {
+    Intent.AI_CHAT,
     Intent.GAME_QUIZ, Intent.GAME_DICE, Intent.GAME_TRUTH_DARE,
     Intent.GAME_WOULD_YOU, Intent.GAME_RIDDLE,
     Intent.ACTION_DO, Intent.RELATIONSHIP_PROPOSE, Intent.MARRIAGE_PROPOSE,
     Intent.EVENT_CREATE, Intent.EVENT_LIST, Intent.EVENT_JOIN,
     Intent.GROUP_WARN, Intent.GROUP_BAN, Intent.GROUP_MUTE,
     Intent.GROUP_KICK, Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
-    Intent.HELP,
+    Intent.HELP, Intent.BALANCE, Intent.DAILY_BONUS,
+    Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL,
+    Intent.CASINO_OPEN, Intent.CASINO_SLOTS, Intent.CASINO_ROULETTE,
+    Intent.CASINO_BLACKJACK, Intent.CASINO_CRASH, Intent.CASINO_POKER,
+    Intent.RELATIONSHIP_STATUS, Intent.RELATIONSHIP_BREAKUP,
+    Intent.MARRIAGE_DIVORCE, Intent.FAMILY_ADD, Intent.FAMILY_VIEW,
+    Intent.BLACKLIST_ADD, Intent.BLACKLIST_REMOVE,
+    Intent.PROFILE_VIEW,
 }
+
+# Все интенты разрешённые в группах (объединение)
+GROUP_ALLOWED_INTENTS = GROUP_WORLD_INTENTS | MICROSERVICE_INTENTS
