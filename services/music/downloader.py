@@ -119,7 +119,8 @@ async def _download_track(query: str) -> dict | None:
     cookies_path = _write_cookies_file(tmp_dir)
 
     ydl_opts = {
-        "format": "140/bestaudio/best",
+        "format": "bestaudio/best",
+        "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"}],
         "outtmpl": f"{tmp_dir}/%(id)s.%(ext)s",
         "quiet": True,
         "no_warnings": True,
