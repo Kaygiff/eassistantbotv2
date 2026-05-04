@@ -88,7 +88,8 @@ async def process(ctx: BrainContext, bot: Any) -> None:
         if transcribed:
             ctx.text = transcribed
         else:
-            return  # STT сервис сам отправит сообщение об ошибке
+            await bot.send_message(ctx.chat_id, "🎤 Не удалось распознать голосовое сообщение. Попробуй ещё раз или напиши текстом.")
+            return
 
     # 6. Классификация intent
     if ctx.intent == Intent.UNKNOWN:
