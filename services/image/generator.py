@@ -46,7 +46,7 @@ async def generate_via_stability(prompt: str) -> bytes | None:
         import httpx
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(
-                "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image",
+                "https://api.stability.ai/v1/generation/stable-diffusion-v1-6/text-to-image",
                 headers={"Authorization": f"Bearer {STABILITY_KEY}", "Accept": "application/json"},
                 json={
                     "text_prompts": [{"text": prompt, "weight": 1}],
@@ -57,7 +57,9 @@ async def generate_via_stability(prompt: str) -> bytes | None:
                     "steps": 30,
                 },
             )
-            resp.raise_for_status()
+            if resp.status_code != 200:
+                logger.warning(f"[ImageGen] Stability raw error: {resp.text}")
+                resp.raise_for_status()
             data = resp.json()
             img_b64 = data["artifacts"][0]["base64"]
             return base64.b64decode(img_b64)
