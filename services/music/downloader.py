@@ -13,12 +13,24 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+YOUTUBE_COOKIES = os.getenv("YOUTUBE_COOKIES", "")
+
+
+def _write_cookies_file(tmp_dir: str) -> str | None:
+    """Записывает cookies из переменной окружения во временный файл."""
+    if not YOUTUBE_COOKIES:
+        return None
+    cookies_path = os.path.join(tmp_dir, "cookies.txt")
+    with open(cookies_path, "w") as f:
+        f.write(YOUTUBE_COOKIES)
+    return cookies_path
+
 
 async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
     """Ищет трек по запросу и отправляет аудио в чат."""
     from core.i18n.loader import t
     from infra.db.supabase import supabase_admin
-    from infra.db.storage import upload_file, file_exists, get_public_url
+    from infra.db.storage import upload_file
 
     # 1. Ищем в кэше
     cached = await _find_cached(query)
@@ -65,7 +77,6 @@ async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
             performer=track_info.get("artist", ""),
         )
 
-        # Удаляем временный файл
         os.unlink(track_info["file_path"])
 
     except Exception as e:
@@ -96,6 +107,7 @@ async def _download_track(query: str) -> dict | None:
     import yt_dlp
 
     tmp_dir = tempfile.mkdtemp()
+    cookies_path = _write_cookies_file(tmp_dir)
 
     ydl_opts = {
         "format": "bestaudio/best",
@@ -108,8 +120,11 @@ async def _download_track(query: str) -> dict | None:
         "quiet": True,
         "no_warnings": True,
         "default_search": "ytsearch1",
-        "max_filesize": 50 * 1024 * 1024,  # 50MB лимит
+        "max_filesize": 50 * 1024 * 1024,
     }
+
+    if cookies_path:
+        ydl_opts["cookiefile"] = cookies_path
 
     loop = asyncio.get_event_loop()
 
