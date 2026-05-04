@@ -6,6 +6,7 @@ services/music/downloader.py — Поиск и отправка музыки ч�
 
 from __future__ import annotations
 import asyncio
+import glob
 import logging
 import os
 import tempfile
@@ -29,7 +30,7 @@ def _write_cookies_file(tmp_dir: str) -> str | None:
 async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
     """Ищет трек по запросу и отправляет аудио в чат."""
     from core.i18n.loader import t
-    from infra.db.supabase import supabase_admin
+    from infra.db.supabase import get_supabase_admin
     from infra.db.storage import upload_file
 
     # 1. Ищем в кэше
@@ -62,12 +63,17 @@ async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
         cdn_url = await upload_file(audio_data, storage_path, "audio/mpeg")
 
         # 4. Кэшируем в Supabase
-        supabase_admin.table("music_cache").upsert({
-            "youtube_id": track_info["youtube_id"],
-            "title": track_info.get("title"),
-            "artist": track_info.get("artist"),
-            "storage_url": cdn_url,
-        }).execute()
+        supabase_admin = get_supabase_admin()
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            None,
+            lambda: supabase_admin.table("music_cache").upsert({
+                "youtube_id": track_info["youtube_id"],
+                "title": track_info.get("title"),
+                "artist": track_info.get("artist"),
+                "storage_url": cdn_url,
+            }).execute()
+        )
 
         # 5. Отправляем пользователю
         await bot.send_audio(
@@ -86,9 +92,12 @@ async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
 
 async def _find_cached(query: str) -> dict | None:
     """Ищет трек в кэше по названию."""
-    from infra.db.supabase import supabase_admin
-    res = (
-        supabase_admin.table("music_cache")
+    from infra.db.supabase import get_supabase_admin
+    supabase_admin = get_supabase_admin()
+    loop = asyncio.get_event_loop()
+    res = await loop.run_in_executor(
+        None,
+        lambda: supabase_admin.table("music_cache")
         .select("*")
         .ilike("title", f"%{query}%")
         .limit(1)
@@ -101,7 +110,7 @@ async def _find_cached(query: str) -> dict | None:
 
 async def _download_track(query: str) -> dict | None:
     """
-    Скачивает трек через yt-dlp в временный файл.
+    Скачивает трек через yt-dlp во временный файл.
     Возвращает dict с file_path, youtube_id, title, artist.
     """
     import yt_dlp
@@ -133,8 +142,16 @@ async def _download_track(query: str) -> dict | None:
     try:
         info = await loop.run_in_executor(None, _extract)
         youtube_id = info.get("id", "unknown")
-        ext = info.get("ext", "m4a")
-        file_path = f"{tmp_dir}/{youtube_id}.{ext}"
+
+        # Ищем реальный скачанный файл (yt-dlp может изменить расширение)
+        files = glob.glob(f"{tmp_dir}/{youtube_id}.*")
+        # Исключаем файл cookies
+        files = [f for f in files if not f.endswith("cookies.txt")]
+        if not files:
+            logger.warning(f"[Music] File not found after download for id={youtube_id}")
+            return None
+
+        file_path = files[0]
 
         return {
             "youtube_id": youtube_id,
