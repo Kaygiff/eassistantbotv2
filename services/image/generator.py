@@ -39,30 +39,24 @@ async def generate_via_dalle(prompt: str) -> bytes | None:
 
 
 async def generate_via_stability(prompt: str) -> bytes | None:
-    """Генерирует изображение через Stability AI, возвращает байты."""
+    """Генерирует изображение через Stability AI v2beta, возвращает байты."""
     if not STABILITY_KEY:
         return None
     try:
         import httpx
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(
-                "https://api.stability.ai/v1/generation/stable-diffusion-v1-6/text-to-image",
-                headers={"Authorization": f"Bearer {STABILITY_KEY}", "Accept": "application/json"},
-                json={
-                    "text_prompts": [{"text": prompt, "weight": 1}],
-                    "cfg_scale": 7,
-                    "height": 512,
-                    "width": 512,
-                    "samples": 1,
-                    "steps": 30,
+                "https://api.stability.ai/v2beta/stable-image/generate/core",
+                headers={
+                    "Authorization": f"Bearer {STABILITY_KEY}",
+                    "Accept": "image/*",
                 },
+                data={"prompt": prompt, "output_format": "jpeg"},
             )
             if resp.status_code != 200:
                 logger.warning(f"[ImageGen] Stability raw error: {resp.text}")
                 resp.raise_for_status()
-            data = resp.json()
-            img_b64 = data["artifacts"][0]["base64"]
-            return base64.b64decode(img_b64)
+            return resp.content
     except Exception as e:
         logger.warning(f"[ImageGen] Stability error: {e}")
         return None
