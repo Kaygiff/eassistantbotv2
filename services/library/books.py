@@ -8,7 +8,7 @@ import logging
 import httpx
 
 logger = logging.getLogger(__name__)
-GOOGLE_BOOKS_KEY = os.getenv("GOOGLE_BOOKS_KEY")  # тот же ключ GCP
+GOOGLE_BOOKS_KEY = os.getenv("GOOGLE_BOOKS_KEY")
 
 
 async def search_books(query: str, language: str = "ru") -> str:
@@ -39,12 +39,16 @@ async def search_books(query: str, language: str = "ru") -> str:
             authors = ", ".join(info.get("authors", ["Неизвестен"]))
             year = info.get("publishedDate", "")[:4]
             rating = info.get("averageRating")
+            preview = info.get("previewLink", "")
 
             line = f"📖 *{title}*\n👤 {authors}"
             if year:
                 line += f" · {year}"
             if rating:
                 line += f" · ⭐ {rating}"
+            if preview:
+                # \u200b — нулевой пробел, убирает превью Telegram но ссылка кликабельна
+                line += f"\n\u200b[Читать]({preview})"
             lines.append(line)
 
         return "\n\n".join(lines)
