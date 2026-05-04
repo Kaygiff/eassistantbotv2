@@ -17,7 +17,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Обновляем yt-dlp до последней версии (важно для актуальных форматов YouTube)
-RUN pip install --no-cache-dir --upgrade yt-dlp
+RUN pip install --no-cache-dir --upgrade "yt-dlp>=2025.1.1"
 
 # Copy source
 COPY . .
