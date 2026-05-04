@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
     """Ищет трек по запросу и отправляет аудио в чат."""
-    from i18n import t
+    from core.i18n.loader import t
     from infra.db.supabase import supabase_admin
     from infra.db.storage import upload_file, file_exists, get_public_url
 
