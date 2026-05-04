@@ -109,7 +109,7 @@ def send_reminder(task_id: str) -> None:
     if not telegram_id:
         return
 
-    from i18n import t
+    from core.i18n.loader import t
     text = f"⏰ *Напоминание*\n\n{task['title']}"
     send_single_notification.delay(telegram_id, text)
 
