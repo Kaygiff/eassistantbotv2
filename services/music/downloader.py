@@ -110,13 +110,8 @@ async def _download_track(query: str) -> dict | None:
     cookies_path = _write_cookies_file(tmp_dir)
 
     ydl_opts = {
-        "format": "bestaudio/best", "format_sort": ["abr", "asr"],
+        "format": "140/bestaudio/best",
         "outtmpl": f"{tmp_dir}/%(id)s.%(ext)s",
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-            "preferredquality": "192",
-        }],
         "quiet": True,
         "no_warnings": True,
         "default_search": "ytsearch1",
@@ -138,7 +133,8 @@ async def _download_track(query: str) -> dict | None:
     try:
         info = await loop.run_in_executor(None, _extract)
         youtube_id = info.get("id", "unknown")
-        file_path = f"{tmp_dir}/{youtube_id}.mp3"
+        ext = info.get("ext", "m4a")
+        file_path = f"{tmp_dir}/{youtube_id}.{ext}"
 
         return {
             "youtube_id": youtube_id,
