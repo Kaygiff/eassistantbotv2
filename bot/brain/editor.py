@@ -156,7 +156,7 @@ async def get_editor_stats() -> dict[str, Any]:
     Возвращает статистику Brain Editor для EAdmin дашборда.
     """
     from bot.brain.router import get_registered_intents
-    from bot.brain.classifier import KEYWORD_MAP
+    from bot.brain.classifier import PATTERN_MAP
 
     return {
         "total_intents": len(get_registered_intents()),
