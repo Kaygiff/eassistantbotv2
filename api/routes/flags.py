@@ -2,17 +2,17 @@
 api/routes/flags.py — Feature Flags API для EAdmin.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from api.auth import require_admin
-from feature_flags.flags import get_all_rules, set_flag, invalidate_flag_cache
+from feature_flags.flags import set_flag, invalidate_flag_cache
 from db.supabase import supabase_admin
 
 router = APIRouter(prefix="/flags", tags=["flags"])
 
 
 @router.get("/")
-async def list_flags(_=require_admin):
+async def list_flags(_=Depends(require_admin)):
     res = supabase_admin.table("feature_flags").select("*").execute()
     return res.data or []
 
@@ -22,17 +22,12 @@ class FlagUpdate(BaseModel):
 
 
 @router.put("/{flag_name}")
-async def update_flag(flag_name: str, body: FlagUpdate, _=require_admin):
+async def update_flag(flag_name: str, body: FlagUpdate, _=Depends(require_admin)):
     await set_flag(flag_name, body.enabled)
     return {"ok": True, "flag": flag_name, "enabled": body.enabled}
 
 
 @router.delete("/{flag_name}/cache")
-async def clear_flag_cache(flag_name: str, _=require_admin):
+async def clear_flag_cache(flag_name: str, _=Depends(require_admin)):
     await invalidate_flag_cache(flag_name)
     return {"ok": True}
-
-
-async def get_all_rules():
-    res = supabase_admin.table("feature_flags").select("*").execute()
-    return res.data or []

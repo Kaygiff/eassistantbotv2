@@ -5,7 +5,7 @@ api/routes/casino.py — API статистики казино для EAdmin.
 from __future__ import annotations
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
 from api.auth import require_admin
 from db.supabase import supabase_admin
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/casino", tags=["casino"])
 
 
 @router.get("/stats")
-async def casino_stats(_=require_admin):
+async def casino_stats(_=Depends(require_admin)):
     """Общая статистика казино."""
     rounds = supabase_admin.table("casino_rounds").select("outcome, amount, payout, house_fee, game_type").execute()
     data = rounds.data or []
@@ -51,7 +51,7 @@ async def list_rounds(
     limit: int = Query(100, le=500),
     game_type: Optional[str] = None,
     outcome: Optional[str] = None,
-    _=require_admin,
+    _=Depends(require_admin),
 ):
     """Список раундов казино с фильтрацией."""
     query = (
@@ -73,7 +73,7 @@ async def list_rounds(
 async def casino_leaderboard(
     game_type: Optional[str] = None,
     limit: int = Query(20, le=100),
-    _=require_admin,
+    _=Depends(require_admin),
 ):
     """Таблица лидеров казино."""
     query = (

@@ -2,7 +2,7 @@
 api/routes/stats.py — Аналитика и статистика для EAdmin.
 """
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from api.auth import require_admin
 from db.supabase import supabase_admin
 
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/stats", tags=["stats"])
 
 
 @router.get("/users/growth")
-async def users_growth(days: int = Query(30, le=365), _=require_admin):
+async def users_growth(days: int = Query(30, le=365), _=Depends(require_admin)):
     """Рост пользователей по дням."""
     from datetime import datetime, timedelta, timezone
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
@@ -25,7 +25,7 @@ async def users_growth(days: int = Query(30, le=365), _=require_admin):
 
 
 @router.get("/economy/volume")
-async def economy_volume(days: int = Query(7, le=90), _=require_admin):
+async def economy_volume(days: int = Query(7, le=90), _=Depends(require_admin)):
     """Объём транзакций Ecoins."""
     from datetime import datetime, timedelta, timezone
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
@@ -39,7 +39,7 @@ async def economy_volume(days: int = Query(7, le=90), _=require_admin):
 
 
 @router.get("/casino/rounds")
-async def casino_rounds(days: int = Query(7, le=90), _=require_admin):
+async def casino_rounds(days: int = Query(7, le=90), _=Depends(require_admin)):
     """Статистика раундов казино."""
     from datetime import datetime, timedelta, timezone
     since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
@@ -53,7 +53,7 @@ async def casino_rounds(days: int = Query(7, le=90), _=require_admin):
 
 
 @router.get("/languages")
-async def language_distribution(_=require_admin):
+async def language_distribution(_=Depends(require_admin)):
     """Распределение пользователей по языкам."""
     res = supabase_admin.table("users").select("language").execute()
     from collections import Counter

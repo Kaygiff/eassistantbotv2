@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from api.auth import require_admin
@@ -21,7 +21,7 @@ async def list_groups(
     limit: int = Query(50, le=200),
     offset: int = Query(0, ge=0),
     search: Optional[str] = None,
-    _=require_admin,
+    _=Depends(require_admin),
 ):
     """Список всех зарегистрированных групп."""
     query = supabase_admin.table("groups").select("*").order("created_at", desc=True)
@@ -32,7 +32,7 @@ async def list_groups(
 
 
 @router.get("/{group_id}", response_model=Group)
-async def get_group(group_id: UUID, _=require_admin):
+async def get_group(group_id: UUID, _=Depends(require_admin)):
     res = supabase_admin.table("groups").select("*").eq("id", str(group_id)).maybe_single().execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Group not found")
@@ -40,7 +40,7 @@ async def get_group(group_id: UUID, _=require_admin):
 
 
 @router.get("/{group_id}/members")
-async def get_members(group_id: UUID, _=require_admin):
+async def get_members(group_id: UUID, _=Depends(require_admin)):
     res = (
         supabase_admin
         .table("group_members")
@@ -52,7 +52,7 @@ async def get_members(group_id: UUID, _=require_admin):
 
 
 @router.get("/{group_id}/warns")
-async def get_warns(group_id: UUID, _=require_admin):
+async def get_warns(group_id: UUID, _=Depends(require_admin)):
     res = (
         supabase_admin
         .table("group_warns")
@@ -72,7 +72,7 @@ class GroupSettingsUpdate(BaseModel):
 
 
 @router.patch("/{group_id}/settings")
-async def update_group_settings(group_id: UUID, body: GroupSettingsUpdate, _=require_admin):
+async def update_group_settings(group_id: UUID, body: GroupSettingsUpdate, _=Depends(require_admin)):
     update_data = {k: v for k, v in body.dict().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
@@ -81,7 +81,7 @@ async def update_group_settings(group_id: UUID, body: GroupSettingsUpdate, _=req
 
 
 @router.delete("/{group_id}/warns/{user_id}")
-async def clear_user_warns(group_id: UUID, user_id: UUID, _=require_admin):
+async def clear_user_warns(group_id: UUID, user_id: UUID, _=Depends(require_admin)):
     """Очищает все варны пользователя в группе."""
     from safety.group_moderation import clear_warns
     await clear_warns(str(group_id), str(user_id))

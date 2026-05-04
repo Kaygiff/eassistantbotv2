@@ -1,12 +1,11 @@
 """
 api/routes/notifications.py — API рассылок через EAdmin.
-Позволяет отправлять сообщения всем или конкретным пользователям.
 """
 
 from __future__ import annotations
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from api.auth import require_admin
@@ -17,9 +16,9 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 class BroadcastRequest(BaseModel):
     text: str
-    language: Optional[str] = None        # None = всем, "ru" = только русским
+    language: Optional[str] = None
     parse_mode: str = "Markdown"
-    limit: int = 1000                      # Максимум за один запрос
+    limit: int = 1000
 
 
 class SingleNotificationRequest(BaseModel):
@@ -29,11 +28,7 @@ class SingleNotificationRequest(BaseModel):
 
 
 @router.post("/broadcast")
-async def broadcast(body: BroadcastRequest, _=require_admin):
-    """
-    Ставит задачу массовой рассылки в очередь Celery.
-    Не блокирует API — рассылка идёт асинхронно.
-    """
+async def broadcast(body: BroadcastRequest, _=Depends(require_admin)):
     from queue.tasks import send_broadcast
     send_broadcast.delay(
         text=body.text,
@@ -45,8 +40,7 @@ async def broadcast(body: BroadcastRequest, _=require_admin):
 
 
 @router.post("/send")
-async def send_single(body: SingleNotificationRequest, _=require_admin):
-    """Отправляет сообщение конкретному пользователю по telegram_id."""
+async def send_single(body: SingleNotificationRequest, _=Depends(require_admin)):
     from queue.tasks import send_single_notification
     send_single_notification.delay(
         telegram_id=body.telegram_id,
@@ -57,8 +51,7 @@ async def send_single(body: SingleNotificationRequest, _=require_admin):
 
 
 @router.get("/history")
-async def notification_history(limit: int = 50, _=require_admin):
-    """История отправленных рассылок из audit_log."""
+async def notification_history(limit: int = 50, _=Depends(require_admin)):
     res = (
         supabase_admin
         .table("audit_log")

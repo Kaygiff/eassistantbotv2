@@ -2,7 +2,7 @@
 api/routes/admin.py — Административные действия через EAdmin.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from api.auth import require_admin
 from db.supabase import supabase_admin
 
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.get("/dashboard")
-async def dashboard(_=require_admin):
+async def dashboard(_=Depends(require_admin)):
     """Общая статистика для главного дашборда EAdmin."""
     users_count = supabase_admin.table("users").select("id", count="exact").execute().count or 0
     banned_count = supabase_admin.table("users").select("id", count="exact").eq("is_banned", True).execute().count or 0

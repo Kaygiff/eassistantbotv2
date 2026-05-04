@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from db.supabase import supabase_admin
@@ -24,7 +24,7 @@ async def list_users(
     search: Optional[str] = None,
     language: Optional[str] = None,
     is_banned: Optional[bool] = None,
-    _=require_admin,
+    _=Depends(require_admin),
 ):
     """Список пользователей с фильтрацией."""
     query = supabase_admin.table("users").select("*").order("created_at", desc=True)
@@ -41,7 +41,7 @@ async def list_users(
 
 
 @router.get("/{user_id}", response_model=User)
-async def get_user(user_id: UUID, _=require_admin):
+async def get_user(user_id: UUID, _=Depends(require_admin)):
     """Получить пользователя по UUID."""
     res = supabase_admin.table("users").select("*").eq("id", str(user_id)).maybe_single().execute()
     if not res.data:
@@ -51,11 +51,11 @@ async def get_user(user_id: UUID, _=require_admin):
 
 class BanRequest(BaseModel):
     reason: Optional[str] = None
-    ban_until: Optional[str] = None  # ISO datetime или None для постоянного бана
+    ban_until: Optional[str] = None
 
 
 @router.post("/{user_id}/ban")
-async def ban_user(user_id: UUID, body: BanRequest, _=require_admin):
+async def ban_user(user_id: UUID, body: BanRequest, _=Depends(require_admin)):
     """Заблокировать пользователя."""
     from safety.user_ban import ban_user as do_ban
     from datetime import datetime
@@ -65,7 +65,7 @@ async def ban_user(user_id: UUID, body: BanRequest, _=require_admin):
 
 
 @router.post("/{user_id}/unban")
-async def unban_user(user_id: UUID, _=require_admin):
+async def unban_user(user_id: UUID, _=Depends(require_admin)):
     """Разблокировать пользователя."""
     from safety.user_ban import lift_ban
     await lift_ban(str(user_id))
@@ -73,7 +73,7 @@ async def unban_user(user_id: UUID, _=require_admin):
 
 
 @router.get("/{user_id}/wallet")
-async def get_wallet(user_id: UUID, _=require_admin):
+async def get_wallet(user_id: UUID, _=Depends(require_admin)):
     """Получить кошелёк пользователя."""
     res = supabase_admin.table("ecoin_wallets").select("*").eq("user_id", str(user_id)).maybe_single().execute()
     if not res.data:
@@ -85,7 +85,7 @@ async def get_wallet(user_id: UUID, _=require_admin):
 async def get_transactions(
     user_id: UUID,
     limit: int = Query(50, le=200),
-    _=require_admin,
+    _=Depends(require_admin),
 ):
     """История транзакций пользователя."""
     res = (
