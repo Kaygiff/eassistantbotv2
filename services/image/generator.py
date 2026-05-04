@@ -51,6 +51,7 @@ async def generate_via_stability(prompt: str) -> bytes | None:
                     "Authorization": f"Bearer {STABILITY_KEY}",
                     "Accept": "image/*",
                 },
+                files={"none": (None, "")},
                 data={"prompt": prompt, "output_format": "jpeg"},
             )
             if resp.status_code != 200:
