@@ -68,20 +68,27 @@ async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
         storage_path = f"music/{track_id}.mp3"
         cdn_url = await upload_file(audio_data, storage_path, "audio/mpeg")
 
-        # Кэшируем
-        from infra.db.supabase import get_supabase_admin
-        supabase_admin = get_supabase_admin()
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(
-            None,
-            lambda: supabase_admin.table("music_cache").upsert({
-                "youtube_id": track_id,
-                "title": title,
-                "artist": artist,
-                "storage_url": cdn_url,
-            }).execute()
-        )
+        # Кэшируем — конфликт дубля не должен ронять отправку
+        try:
+            from infra.db.supabase import get_supabase_admin
+            supabase_admin = get_supabase_admin()
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(
+                None,
+                lambda: supabase_admin.table("music_cache").upsert(
+                    {
+                        "youtube_id": track_id,
+                        "title": title,
+                        "artist": artist,
+                        "storage_url": cdn_url,
+                    },
+                    on_conflict="youtube_id",
+                ).execute()
+            )
+        except Exception as cache_err:
+            logger.warning(f"[Music] Cache upsert skipped: {cache_err}")
 
+        # Отправляем всегда — независимо от результата кэширования
         from aiogram.types import BufferedInputFile
         audio_bytes = BufferedInputFile(audio_data, filename=f"{artist} - {title}.mp3")
         await bot.send_audio(
