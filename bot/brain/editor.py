@@ -111,7 +111,7 @@ async def load_rules_into_classifier() -> int:
     Вызывается при старте приложения и после обновлений через EAdmin.
     Возвращает количество загруженных правил.
     """
-    from bot.brain.classifier import KEYWORD_MAP
+    from bot.brain.classifier import PATTERN_MAP
     from bot.brain.intent import Intent
 
     # Сначала проверяем кэш
@@ -127,21 +127,21 @@ async def load_rules_into_classifier() -> int:
     if not rules_data:
         return 0
 
-    # Применяем кастомные правила — добавляем в начало KEYWORD_MAP
+    # Применяем кастомные правила — добавляем в начало PATTERN_MAP
     # (более высокий приоритет чем дефолтные)
     injected = 0
     for intent_str, keywords in rules_data.items():
         try:
             intent = Intent(intent_str)
             # Проверяем нет ли уже такого правила
-            existing_intents = [i for _, i in KEYWORD_MAP]
+            existing_intents = [i for _, i in PATTERN_MAP]
             if intent not in existing_intents:
-                KEYWORD_MAP.insert(0, (keywords, intent))
+                PATTERN_MAP.insert(0, (keywords, intent))
             else:
                 # Обновляем существующее
-                for idx, (kws, i) in enumerate(KEYWORD_MAP):
+                for idx, (kws, i) in enumerate(PATTERN_MAP):
                     if i == intent:
-                        KEYWORD_MAP[idx] = (keywords, intent)
+                        PATTERN_MAP[idx] = (keywords, intent)
                         break
             injected += 1
         except ValueError:
@@ -160,7 +160,7 @@ async def get_editor_stats() -> dict[str, Any]:
 
     return {
         "total_intents": len(get_registered_intents()),
-        "total_keyword_rules": len(KEYWORD_MAP),
+        "total_keyword_rules": len(PATTERN_MAP),
         "custom_rules_count": len(await get_all_rules()),
         "cache_active": (await get_cached_rules()) is not None,
     }
