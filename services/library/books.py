@@ -12,12 +12,12 @@ GOOGLE_BOOKS_KEY = os.getenv("GOOGLE_BOOKS_KEY")
 
 
 async def search_books(query: str, language: str = "ru") -> str:
-    """Ищет книги через Google Books и возвращает форматированный список."""
+    """Ищет самую популярную книгу по запросу."""
     try:
         params = {
             "q": query,
             "maxResults": 5,
-            "langRestrict": "ru" if language in ("ru", "kz", "by") else "en",
+            "orderBy": "relevance",
             "printType": "books",
         }
         if GOOGLE_BOOKS_KEY:
@@ -32,26 +32,25 @@ async def search_books(query: str, language: str = "ru") -> str:
         if not items:
             return f"🔍 Книги по запросу *{query}* не найдены."
 
-        lines = [f"📚 *Книги по запросу «{query}»:*\n"]
-        for item in items[:5]:
-            info = item.get("volumeInfo", {})
-            title = info.get("title", "Без названия")
-            authors = ", ".join(info.get("authors", ["Неизвестен"]))
-            year = info.get("publishedDate", "")[:4]
-            rating = info.get("averageRating")
-            preview = info.get("previewLink", "")
+        # Берём первую (самую релевантную)
+        info = items[0].get("volumeInfo", {})
+        title = info.get("title", "Без названия")
+        authors = ", ".join(info.get("authors", ["Неизвестен"]))
+        year = info.get("publishedDate", "")[:4]
+        rating = info.get("averageRating")
+        description = info.get("description", "")
+        if len(description) > 300:
+            description = description[:300].rsplit(" ", 1)[0] + "..."
 
-            line = f"📖 *{title}*\n👤 {authors}"
-            if year:
-                line += f" · {year}"
-            if rating:
-                line += f" · ⭐ {rating}"
-            if preview:
-                # \u200b — нулевой пробел, убирает превью Telegram но ссылка кликабельна
-                line += f"\n\u200b[Читать]({preview})"
-            lines.append(line)
+        text = f"📖 *{title}*\n👤 {authors}"
+        if year:
+            text += f" · {year}"
+        if rating:
+            text += f" · ⭐ {rating}"
+        if description:
+            text += f"\n\n{description}"
 
-        return "\n\n".join(lines)
+        return text
 
     except Exception as e:
         logger.error(f"[Books] Error for '{query}': {e}")
