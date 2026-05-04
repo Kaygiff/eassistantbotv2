@@ -56,7 +56,13 @@ async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
     try:
         audio_data = Path(file_path).read_bytes()
         track_id = str(track["id"])
-        storage_path = f"music/{track_id}.mp3"
+        title = track.get("title", query)
+        artist = track.get("artist", "")
+
+        # Читаемое имя файла чтобы Telegram показывал название а не цифры
+        safe_title = "".join(c for c in title if c.isalnum() or c in " _-")[:50].strip()
+        storage_path = f"music/{safe_title}_{track_id}.mp3"
+
         cdn_url = await upload_file(audio_data, storage_path, "audio/mpeg")
 
         # 5. Кэшируем
@@ -66,8 +72,8 @@ async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
             None,
             lambda: supabase_admin.table("music_cache").upsert({
                 "youtube_id": track_id,
-                "title": track.get("title"),
-                "artist": track.get("artist"),
+                "title": title,
+                "artist": artist,
                 "storage_url": cdn_url,
             }).execute()
         )
@@ -76,8 +82,8 @@ async def search_and_send(chat_id: int, query: str, language: str, bot) -> None:
         await bot.send_audio(
             chat_id,
             audio=cdn_url,
-            title=track.get("title", query),
-            performer=track.get("artist", ""),
+            title=title,
+            performer=artist,
         )
 
         os.unlink(file_path)
@@ -135,7 +141,6 @@ async def _search_track(query: str) -> dict | None:
 
 async def _get_stream_url(transcodings: list) -> str | None:
     """Получает прямую ссылку на аудио поток."""
-    # Ищем прогрессивный mp3 поток
     progressive = None
     for t in transcodings:
         fmt = t.get("format", {})
