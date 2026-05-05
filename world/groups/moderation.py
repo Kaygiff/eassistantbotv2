@@ -82,50 +82,16 @@ def _format_duration(td: timedelta) -> str:
 async def _get_target(ctx: BrainContext, bot=None) -> tuple[Optional[str], Optional[str], Optional[int]]:
     """
     Возвращает (user_uuid, display_name, telegram_id).
-    Ищет по reply → @username (БД → Telegram API fallback).
-    user_uuid может быть None если пользователь не зарегистрирован в боте.
+    Работает только через reply на сообщение.
     """
     from api.auth.identity import get_user_by_telegram_id
-    from infra.db.supabase import get_supabase_admin
 
     if ctx.reply_to_user_telegram_id:
         user = await get_user_by_telegram_id(ctx.reply_to_user_telegram_id)
         if user:
             name = user.first_name or f"@{user.username}"
             return str(user.id), name, user.telegram_id
-        return None, f"tg:{ctx.reply_to_user_telegram_id}", ctx.reply_to_user_telegram_id
-
-    match = re.search(r"@(\w+)", ctx.text)
-    if match:
-        username = match.group(1)
-        try:
-            res = (
-                get_supabase_admin()
-                .table("users")
-                .select("id, first_name, username, telegram_id")
-                .eq("username", username)
-                .maybe_single()
-                .execute()
-            )
-            if res and res.data:
-                name = res.data.get("first_name") or f"@{res.data.get('username')}"
-                return res.data["id"], name, res.data["telegram_id"]
-        except Exception:
-            pass
-
-        logger.info(f"[_get_target] bot={bot}, username={username}, trying Telegram API")
-        if bot:
-            try:
-                # aiogram требует int для user_id, используем username через get_chat
-                from aiogram.types import ChatMemberMember
-                chat = await bot.get_chat(f"@{username}")
-                member = await bot.get_chat_member(ctx.chat_id, chat.id)
-                tg_user = member.user
-                name = tg_user.first_name or f"@{username}"
-                logger.info(f"[_get_target] Telegram API found: {name}, id={tg_user.id}")
-                return None, name, tg_user.id
-            except Exception as e:
-                logger.error(f"[_get_target] Telegram API failed: {e}")
+        return None, f"id:{ctx.reply_to_user_telegram_id}", ctx.reply_to_user_telegram_id
 
     return None, None, None
 
