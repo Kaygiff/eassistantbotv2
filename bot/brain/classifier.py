@@ -126,7 +126,7 @@ PATTERN_MAP: list[tuple[str, Intent]] = [
     (r"^/demote\b|\bпонизить\b|понижение\b|разжаловать\b|\bdemote\b|снять роль", Intent.GROUP_DEMOTE),
     # Настройки / статистика / приветствие
     (r"^/groupsettings\b|настройки группы", Intent.GROUP_SETTINGS),
-    (r"^/stats\b|статистика группы|активность группы", Intent.GROUP_STATS),
+    (r"^/stats\b|\bстатистика\b|активность группы", Intent.GROUP_STATS),
     (r"^/setwelcome\b|приветствие группы|настроить приветствие", Intent.GROUP_WELCOME),
     # Роль / администраторы — ВЫШЕ профиля чтобы не перехватывался
     (r"^/role\b|моя роль|какая моя роль|кто я в группе|мой статус в группе|мои права в группе", Intent.GROUP_ROLE),
