@@ -79,10 +79,11 @@ def _format_duration(td: timedelta) -> str:
 # Получение цели (reply или @username)
 # ---------------------------------------------------------------------------
 
-async def _get_target(ctx: BrainContext) -> tuple[Optional[str], Optional[str], Optional[int]]:
+async def _get_target(ctx: BrainContext, bot=None) -> tuple[Optional[str], Optional[str], Optional[int]]:
     """
     Возвращает (user_uuid, display_name, telegram_id).
-    Ищет по reply → @username.
+    Ищет по reply → @username (БД → Telegram API fallback).
+    user_uuid может быть None если пользователь не зарегистрирован в боте.
     """
     from api.auth.identity import get_user_by_telegram_id
     from infra.db.supabase import get_supabase_admin
@@ -92,20 +93,34 @@ async def _get_target(ctx: BrainContext) -> tuple[Optional[str], Optional[str], 
         if user:
             name = user.first_name or f"@{user.username}"
             return str(user.id), name, user.telegram_id
+        return None, f"tg:{ctx.reply_to_user_telegram_id}", ctx.reply_to_user_telegram_id
 
     match = re.search(r"@(\w+)", ctx.text)
     if match:
-        res = (
-            get_supabase_admin()
-            .table("users")
-            .select("id, first_name, username, telegram_id")
-            .eq("username", match.group(1))
-            .maybe_single()
-            .execute()
-        )
-        if res.data:
-            name = res.data.get("first_name") or f"@{res.data.get('username')}"
-            return res.data["id"], name, res.data["telegram_id"]
+        username = match.group(1)
+        try:
+            res = (
+                get_supabase_admin()
+                .table("users")
+                .select("id, first_name, username, telegram_id")
+                .eq("username", username)
+                .maybe_single()
+                .execute()
+            )
+            if res and res.data:
+                name = res.data.get("first_name") or f"@{res.data.get('username')}"
+                return res.data["id"], name, res.data["telegram_id"]
+        except Exception:
+            pass
+
+        if bot:
+            try:
+                member = await bot.get_chat_member(ctx.chat_id, f"@{username}")
+                tg_user = member.user
+                name = tg_user.first_name or f"@{username}"
+                return None, name, tg_user.id
+            except Exception:
+                pass
 
     return None, None, None
 
@@ -135,7 +150,7 @@ async def warn_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_WARN, bot):
         return ""
 
-    target_id, target_name, _ = await _get_target(ctx)
+    target_id, target_name, _ = await _get_target(ctx, bot)
     if not target_id:
         return "👥 Укажи пользователя через @username или ответь на его сообщение."
 
@@ -165,7 +180,7 @@ async def unwarn_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_WARN, bot):
         return ""
 
-    target_id, target_name, _ = await _get_target(ctx)
+    target_id, target_name, _ = await _get_target(ctx, bot)
     if not target_id:
         return "👥 Укажи пользователя."
 
@@ -178,7 +193,7 @@ async def clearwarns_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_WARN, bot):
         return ""
 
-    target_id, target_name, _ = await _get_target(ctx)
+    target_id, target_name, _ = await _get_target(ctx, bot)
     if not target_id:
         return "👥 Укажи пользователя."
 
@@ -187,7 +202,7 @@ async def clearwarns_user_in_group(ctx: BrainContext, bot) -> str:
 
 
 async def warns_user_in_group(ctx: BrainContext, bot) -> str:
-    target_id, target_name, _ = await _get_target(ctx)
+    target_id, target_name, _ = await _get_target(ctx, bot)
     if not target_id:
         # Если не указан — показываем свои варны
         target_id = ctx.user_id
@@ -232,7 +247,7 @@ async def mute_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_MUTE, bot):
         return ""
 
-    target_id, target_name, target_tg_id = await _get_target(ctx)
+    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id:
         return "👥 Укажи пользователя."
 
@@ -262,7 +277,7 @@ async def unmute_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_MUTE, bot):
         return ""
 
-    target_id, target_name, target_tg_id = await _get_target(ctx)
+    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id:
         return "👥 Укажи пользователя."
 
@@ -296,7 +311,7 @@ async def ban_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_BAN, bot):
         return ""
 
-    target_id, target_name, target_tg_id = await _get_target(ctx)
+    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id:
         return "👥 Укажи пользователя."
 
@@ -326,7 +341,7 @@ async def unban_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_BAN, bot):
         return ""
 
-    target_id, target_name, target_tg_id = await _get_target(ctx)
+    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id:
         return "👥 Укажи пользователя."
 
@@ -350,7 +365,7 @@ async def kick_user_from_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_KICK, bot):
         return ""
 
-    target_id, target_name, target_tg_id = await _get_target(ctx)
+    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id:
         return "👥 Укажи пользователя."
 
@@ -377,7 +392,7 @@ async def promote_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_PROMOTE, bot):
         return ""
 
-    target_id, target_name, _ = await _get_target(ctx)
+    target_id, target_name, _ = await _get_target(ctx, bot)
     if not target_id:
         return "👥 Укажи пользователя."
 
@@ -398,7 +413,7 @@ async def demote_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_PROMOTE, bot):
         return ""
 
-    target_id, target_name, _ = await _get_target(ctx)
+    target_id, target_name, _ = await _get_target(ctx, bot)
     if not target_id:
         return "👥 Укажи пользователя."
 
