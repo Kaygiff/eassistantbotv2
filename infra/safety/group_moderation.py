@@ -54,16 +54,20 @@ async def get_group_member_role(group_id: str, user_id: str) -> str:
     db = get_supabase_admin()
 
     # 1. Основной путь — через group_members
-    res = (
-        db.table("group_members")
-        .select("role")
-        .eq("group_id", group_id)
-        .eq("user_id", user_id)
-        .maybe_single()
-        .execute()
-    )
-    if res.data:
-        return res.data["role"]
+    # maybe_single() возвращает None если записи нет (406 от Supabase) — защищаемся
+    try:
+        res = (
+            db.table("group_members")
+            .select("role")
+            .eq("group_id", group_id)
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        if res and res.data:
+            return res.data["role"]
+    except Exception:
+        pass
 
     # 2. Fallback — может быть owner но запись не создана
     owner_res = (
