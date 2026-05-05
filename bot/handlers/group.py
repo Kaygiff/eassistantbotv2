@@ -40,6 +40,10 @@ async def handle_group_message(message: Message) -> None:
     ctx.language = user.language if user else "ru"
     ctx.extra["chat_title"] = message.chat.title or ""
 
+    # Заполняем reply_to_user_telegram_id если это ответ на сообщение
+    if message.reply_to_message and message.reply_to_message.from_user:
+        ctx.reply_to_user_telegram_id = message.reply_to_message.from_user.id
+
     await process_group_message(ctx, message.bot)
 
 
