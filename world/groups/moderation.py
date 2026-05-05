@@ -84,12 +84,12 @@ async def _check_permission(ctx: BrainContext, allowed_set: set, bot) -> bool:
         return False
     return True
 
-def _get_warn_threshold(group_id: str) -> int:
+async def _get_warn_threshold(group_id: str) -> int:
     from infra.db.supabase import get_supabase_admin
     res = get_supabase_admin().table("groups").select("warn_threshold").eq("id", group_id).maybe_single().execute()
     return res.data["warn_threshold"] if res.data else 3
 
-def _get_telegram_id(user_uuid: str) -> Optional[int]:
+async def _get_telegram_id(user_uuid: str) -> Optional[int]:
     from infra.db.supabase import get_supabase_admin
     res = get_supabase_admin().table("users").select("telegram_id").eq("id", user_uuid).maybe_single().execute()
     return res.data["telegram_id"] if res.data else None
@@ -108,7 +108,7 @@ async def warn_user_in_group(ctx: BrainContext, bot) -> str:
     if count >= threshold:
         await ban_from_group(ctx.group_id, target_id, ctx.user_id, reason=f"Автобан: {count} варнов")
         try:
-            tg_res = _get_telegram_id(target_id)
+            tg_res = await _get_telegram_id(target_id)
             if tg_res:
                 await bot.ban_chat_member(ctx.chat_id, tg_res)
         except Exception as e:
@@ -127,7 +127,7 @@ async def unwarn_user_in_group(ctx: BrainContext, bot) -> str:
     if not target_id:
         return f"⚠️ *{target_name}* не зарегистрирован в боте."
     remaining = await unwarn_user(ctx.group_id, target_id)
-    threshold = _get_warn_threshold(ctx.group_id)
+    threshold = await _get_warn_threshold(ctx.group_id)
     return f"✅ С *{target_name}* снято одно предупреждение. Осталось: [{remaining}/{threshold}]"
 
 async def clearwarns_user_in_group(ctx: BrainContext, bot) -> str:
@@ -149,7 +149,7 @@ async def warns_user_in_group(ctx: BrainContext, bot) -> str:
     if not target_id:
         return f"⚠️ *{target_name}* не зарегистрирован в боте."
     count = await get_warn_count(ctx.group_id, target_id)
-    threshold = _get_warn_threshold(ctx.group_id)
+    threshold = await _get_warn_threshold(ctx.group_id)
     return f"📋 Предупреждения *{target_name}*: [{count}/{threshold}]"
 
 # МУТ / РАЗМУТ
