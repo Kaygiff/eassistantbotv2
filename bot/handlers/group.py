@@ -42,14 +42,7 @@ async def handle_group_message(message: Message) -> None:
 
     # Заполняем reply_to_user_telegram_id если это ответ на сообщение
     if message.reply_to_message and message.reply_to_message.from_user:
-        reply_user = message.reply_to_message.from_user
-        ctx.reply_to_user_telegram_id = reply_user.id
-        # Сохраняем имя для случая когда пользователь не зарегистрирован в боте
-        ctx.extra["reply_to_user_name"] = (
-            reply_user.first_name
-            or (f"@{reply_user.username}" if reply_user.username else None)
-            or f"id:{reply_user.id}"
-        )
+        ctx.reply_to_user_telegram_id = message.reply_to_message.from_user.id
 
     await process_group_message(ctx, message.bot)
 
@@ -177,6 +170,12 @@ async def handle_group_admins(ctx: BrainContext, bot) -> None:
     if not ctx.group_id:
         await bot.send_message(ctx.chat_id, "❌ Эта команда работает только в группе.")
         return
+
+    # Пересинхронизируем владельца с Telegram — owner мог смениться
+    # или не был записан при первом создании группы
+    from infra.safety.group_moderation import sync_group_owner
+    await sync_group_owner(ctx.group_id, bot, ctx.chat_id)
+
     from infra.db.supabase import get_supabase_admin
     res = (
         get_supabase_admin()
