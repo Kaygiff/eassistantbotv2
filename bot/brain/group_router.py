@@ -62,16 +62,19 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
     Вызывается из bot/handlers/group.py для каждого сообщения в группе.
     """
 
-    if ctx.group_id is None:
+    # 1. Всегда загружаем group_id — ctx.group_id никогда не заполняется снаружи
+    try:
+        from infra.safety.group_moderation import sync_group_owner
         group_id = await ensure_group_exists(
             chat_id=ctx.chat_id,
             title=ctx.extra.get("chat_title", "Unknown Group"),
             owner_id=None,
         )
         ctx.group_id = group_id
-        # Синхронизируем владельца сразу при первом появлении группы
-        from infra.safety.group_moderation import sync_group_owner
         await sync_group_owner(group_id, bot, ctx.chat_id)
+    except Exception as e:
+        logger.error(f"[GroupRouter] Failed to resolve group_id for chat {ctx.chat_id}: {e}")
+        return
 
     # 2. Загружаем пользователя
     user, is_new = await get_or_create_user(telegram_id=ctx.telegram_id)
