@@ -46,16 +46,39 @@ def role_index(role: str) -> int:
 # ---------------------------------------------------------------------------
 
 async def get_group_member_role(group_id: str, user_id: str) -> str:
+    """
+    Возвращает роль пользователя в группе.
+    Сначала ищет в group_members, при отсутствии — проверяет owner_id в groups.
+    Это защита от случая когда sync_group_owner отработал частично.
+    """
+    db = get_supabase_admin()
+
+    # 1. Основной путь — через group_members
     res = (
-        get_supabase_admin()
-        .table("group_members")
+        db.table("group_members")
         .select("role")
         .eq("group_id", group_id)
         .eq("user_id", user_id)
         .maybe_single()
         .execute()
     )
-    return res.data["role"] if res.data else "user"
+    if res.data:
+        return res.data["role"]
+
+    # 2. Fallback — может быть owner но запись не создана
+    owner_res = (
+        db.table("groups")
+        .select("owner_id")
+        .eq("id", group_id)
+        .maybe_single()
+        .execute()
+    )
+    if owner_res.data and owner_res.data.get("owner_id") == user_id:
+        # Восстанавливаем запись чтобы в следующий раз работало через основной путь
+        await set_member_role(group_id, user_id, "owner")
+        return "owner"
+
+    return "user"
 
 
 async def can_moderate(group_id: str, user_id: str) -> bool:
@@ -91,28 +114,43 @@ async def ensure_group_exists(chat_id: int, title: str, owner_id: Optional[str] 
 
 async def sync_group_owner(group_id: str, bot, chat_id: int) -> None:
     """Определяет владельца группы через Telegram API и записывает его в БД."""
+    import logging
+    _log = logging.getLogger(__name__)
     try:
         admins = await bot.get_chat_administrators(chat_id)
         for member in admins:
             if member.status == "creator":
                 tg_id = member.user.id
+                # telegram_id может храниться как int или str — ищем по обоим
+                db = get_supabase_admin()
                 res = (
-                    get_supabase_admin()
-                    .table("users")
+                    db.table("users")
                     .select("id")
                     .eq("telegram_id", tg_id)
                     .maybe_single()
                     .execute()
                 )
+                if not res.data:
+                    # Пробуем как строку на случай несовпадения типов
+                    res = (
+                        db.table("users")
+                        .select("id")
+                        .eq("telegram_id", str(tg_id))
+                        .maybe_single()
+                        .execute()
+                    )
                 if res.data:
                     owner_uuid = res.data["id"]
-                    get_supabase_admin().table("groups").update(
+                    db.table("groups").update(
                         {"owner_id": owner_uuid}
                     ).eq("id", group_id).execute()
                     await set_member_role(group_id, owner_uuid, "owner")
+                    _log.info(f"[GroupMod] Owner synced: {owner_uuid} for group {group_id}")
+                else:
+                    _log.warning(f"[GroupMod] Creator tg_id={tg_id} not found in users table")
                 break
-    except Exception:
-        pass
+    except Exception as e:
+        _log.warning(f"[GroupMod] sync_group_owner failed: {e}")
 
 
 # ---------------------------------------------------------------------------
