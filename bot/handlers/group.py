@@ -40,9 +40,15 @@ async def handle_group_message(message: Message) -> None:
     ctx.language = user.language if user else "ru"
     ctx.extra["chat_title"] = message.chat.title or ""
 
-    # Заполняем reply_to_user_telegram_id если это ответ на сообщение
+    # Заполняем reply_to_user_telegram_id + имя если это ответ на сообщение
     if message.reply_to_message and message.reply_to_message.from_user:
-        ctx.reply_to_user_telegram_id = message.reply_to_message.from_user.id
+        reply_user = message.reply_to_message.from_user
+        ctx.reply_to_user_telegram_id = reply_user.id
+        ctx.extra["reply_to_user_name"] = (
+            reply_user.first_name
+            or (f"@{reply_user.username}" if reply_user.username else None)
+            or f"id:{reply_user.id}"
+        )
 
     await process_group_message(ctx, message.bot)
 
@@ -171,8 +177,7 @@ async def handle_group_admins(ctx: BrainContext, bot) -> None:
         await bot.send_message(ctx.chat_id, "❌ Эта команда работает только в группе.")
         return
 
-    # Пересинхронизируем владельца с Telegram — owner мог смениться
-    # или не был записан при первом создании группы
+    # Пересинхронизируем owner с Telegram — чтобы всегда показывал правильного
     from infra.safety.group_moderation import sync_group_owner
     await sync_group_owner(ctx.group_id, bot, ctx.chat_id)
 
@@ -197,7 +202,10 @@ async def handle_group_admins(ctx: BrainContext, bot) -> None:
     lines = ["👥 *Администраторы группы:*\n"]
     for m in res.data:
         user = m.get("users") or {}
-        name = user.get("first_name") or f"@{user.get('username', '?')}"
+        # Защита от None: first_name или @username или заглушка
+        first_name = user.get("first_name")
+        username = user.get("username")
+        name = first_name or (f"@{username}" if username else "—")
         role_label = role_names.get(m["role"], m["role"])
         lines.append(f"{role_label} — {name}")
     await bot.send_message(ctx.chat_id, "\n".join(lines), parse_mode="Markdown")
