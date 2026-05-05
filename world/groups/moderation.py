@@ -151,7 +151,7 @@ async def warn_user_in_group(ctx: BrainContext, bot) -> str:
         return ""
 
     target_id, target_name, _ = await _get_target(ctx, bot)
-    if not target_id:
+    if not target_id and not target_tg_id:
         return "👥 Укажи пользователя через @username или ответь на его сообщение."
 
     reason = _extract_reason(ctx.text)
@@ -181,7 +181,7 @@ async def unwarn_user_in_group(ctx: BrainContext, bot) -> str:
         return ""
 
     target_id, target_name, _ = await _get_target(ctx, bot)
-    if not target_id:
+    if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
     remaining = await unwarn_user(ctx.group_id, target_id)
@@ -194,7 +194,7 @@ async def clearwarns_user_in_group(ctx: BrainContext, bot) -> str:
         return ""
 
     target_id, target_name, _ = await _get_target(ctx, bot)
-    if not target_id:
+    if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
     await clear_warns(ctx.group_id, target_id)
@@ -203,7 +203,7 @@ async def clearwarns_user_in_group(ctx: BrainContext, bot) -> str:
 
 async def warns_user_in_group(ctx: BrainContext, bot) -> str:
     target_id, target_name, _ = await _get_target(ctx, bot)
-    if not target_id:
+    if not target_id and not target_tg_id:
         # Если не указан — показываем свои варны
         target_id = ctx.user_id
         target_name = ctx.user.first_name or "Вы"
@@ -248,14 +248,15 @@ async def mute_user_in_group(ctx: BrainContext, bot) -> str:
         return ""
 
     target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id:
+    if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
     duration = _parse_duration(ctx.text) or timedelta(hours=1)
     until = datetime.now(timezone.utc) + duration
     reason = _extract_reason(ctx.text)
 
-    await mute_in_group(ctx.group_id, target_id, ctx.user_id, until, reason)
+    if target_id:
+        await mute_in_group(ctx.group_id, target_id, ctx.user_id, until, reason)
 
     if target_tg_id:
         try:
@@ -278,10 +279,11 @@ async def unmute_user_in_group(ctx: BrainContext, bot) -> str:
         return ""
 
     target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id:
+    if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
-    await unmute_in_group(ctx.group_id, target_id)
+    if target_id:
+        await unmute_in_group(ctx.group_id, target_id)
 
     if target_tg_id:
         try:
@@ -312,7 +314,7 @@ async def ban_user_in_group(ctx: BrainContext, bot) -> str:
         return ""
 
     target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id:
+    if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
     duration = _parse_duration(ctx.text)
@@ -342,7 +344,7 @@ async def unban_user_in_group(ctx: BrainContext, bot) -> str:
         return ""
 
     target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id:
+    if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
     await unban_from_group(ctx.group_id, target_id)
@@ -366,7 +368,7 @@ async def kick_user_from_group(ctx: BrainContext, bot) -> str:
         return ""
 
     target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id:
+    if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
     if target_tg_id:
@@ -393,7 +395,7 @@ async def promote_user_in_group(ctx: BrainContext, bot) -> str:
         return ""
 
     target_id, target_name, _ = await _get_target(ctx, bot)
-    if not target_id:
+    if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
     steps = _extract_steps(ctx.text)
@@ -414,7 +416,7 @@ async def demote_user_in_group(ctx: BrainContext, bot) -> str:
         return ""
 
     target_id, target_name, _ = await _get_target(ctx, bot)
-    if not target_id:
+    if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
     steps = _extract_steps(ctx.text)
