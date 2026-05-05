@@ -78,9 +78,15 @@ class Intent(str, Enum):
 
     # --- Группы ---
     GROUP_WARN = "group_warn"
+    GROUP_UNWARN = "group_unwarn"
+    GROUP_WARNS = "group_warns"
     GROUP_BAN = "group_ban"
+    GROUP_UNBAN = "group_unban"
     GROUP_MUTE = "group_mute"
+    GROUP_UNMUTE = "group_unmute"
     GROUP_KICK = "group_kick"
+    GROUP_PROMOTE = "group_promote"
+    GROUP_DEMOTE = "group_demote"
     GROUP_SETTINGS = "group_settings"
     GROUP_STATS = "group_stats"
     GROUP_WELCOME = "group_welcome"
@@ -126,8 +132,11 @@ ECONOMY_INTENTS = {
 }
 
 GROUP_MODERATION_INTENTS = {
-    Intent.GROUP_WARN, Intent.GROUP_BAN, Intent.GROUP_MUTE,
-    Intent.GROUP_KICK, Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
+    Intent.GROUP_WARN, Intent.GROUP_UNWARN, Intent.GROUP_WARNS,
+    Intent.GROUP_BAN, Intent.GROUP_UNBAN,
+    Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
+    Intent.GROUP_KICK, Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
+    Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
 }
 
 TASK_INTENTS = {
@@ -159,8 +168,11 @@ GROUP_WORLD_INTENTS = {
     Intent.GAME_WOULD_YOU, Intent.GAME_RIDDLE,
     Intent.ACTION_DO, Intent.RELATIONSHIP_PROPOSE, Intent.MARRIAGE_PROPOSE,
     Intent.EVENT_CREATE, Intent.EVENT_LIST, Intent.EVENT_JOIN,
-    Intent.GROUP_WARN, Intent.GROUP_BAN, Intent.GROUP_MUTE,
-    Intent.GROUP_KICK, Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
+    Intent.GROUP_WARN, Intent.GROUP_UNWARN, Intent.GROUP_WARNS,
+    Intent.GROUP_BAN, Intent.GROUP_UNBAN,
+    Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
+    Intent.GROUP_KICK, Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
+    Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
     Intent.HELP, Intent.BALANCE, Intent.DAILY_BONUS,
     Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL,
     Intent.CASINO_OPEN, Intent.CASINO_SLOTS, Intent.CASINO_ROULETTE,

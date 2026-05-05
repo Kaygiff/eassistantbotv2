@@ -191,10 +191,15 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
 async def handle_new_chat_member(ctx: BrainContext, bot, new_member_telegram_id: int) -> None:
     """
     Обрабатывает вступление нового участника в группу.
+    При первом появлении синхронизирует owner через Telegram API.
     Отправляет приветственное сообщение если оно настроено.
     """
     if not ctx.group_id:
         return
+
+    # Синхронизируем владельца группы через Telegram API
+    from infra.safety.group_moderation import sync_group_owner
+    await sync_group_owner(ctx.group_id, bot, ctx.chat_id)
 
     from infra.db.supabase import get_supabase_admin
     res = (

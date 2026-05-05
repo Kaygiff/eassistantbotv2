@@ -106,10 +106,25 @@ PATTERN_MAP: list[tuple[str, Intent]] = [
     (r"^/ai\b|^/chat\b|поговори со мной|давай поговорим|пообщайся|поболтай", Intent.AI_CHAT),
 
     # --- Модерация групп ---
-    (r"^/warn\b|выдай варн|предупредить пользователя", Intent.GROUP_WARN),
-    (r"^/ban\b|забань|бан пользователя|заблокировать в группе", Intent.GROUP_BAN),
-    (r"^/mute\b|заглуши|выдай мут|замьютить", Intent.GROUP_MUTE),
-    (r"^/kick\b|кикни|выгони|удали из группы", Intent.GROUP_KICK),
+    # Снять варн / варны — ВЫШЕ варна, чтобы не перехватывался
+    (r"^/unwarn\b|снять варн|убрать варн|удалить варн|\-варн|\bunwarn\b", Intent.GROUP_UNWARN),
+    (r"^/warns\b|^/clearwarns\b|\bварны\b|сколько варнов|проверить варны|очистить варны|сбросить варны|снять варны|убрать варны", Intent.GROUP_WARNS),
+    # Варн
+    (r"^/warn\b|\bварн\b|варнить|предупредить|предупреждение\b|\bwarn\b", Intent.GROUP_WARN),
+    # Разбан — ВЫШЕ бана
+    (r"^/unban\b|\bразбан\b|разбанить|разблокировать\b|\bunban\b", Intent.GROUP_UNBAN),
+    # Бан
+    (r"^/ban\b|\bбан\b|забанить|\bban\b", Intent.GROUP_BAN),
+    # Размут — ВЫШЕ мута
+    (r"^/unmute\b|\bразмут\b|размутить|разглушить|говори снова|\bunmute\b", Intent.GROUP_UNMUTE),
+    # Мут
+    (r"^/mute\b|\bмут\b|замутить|заглушить|помолчи|заткнись|молчать|замолчи|\bsilence\b|\bmute\b", Intent.GROUP_MUTE),
+    # Кик
+    (r"^/kick\b|\bкик\b|кикнуть|выгнать|вышвырнуть|выкинуть|\bkick\b|удалить из группы", Intent.GROUP_KICK),
+    # Повышение / понижение
+    (r"^/promote\b|\bповысить\b|повышение\b|продвинуть\b|\bpromote\b|назначить\b", Intent.GROUP_PROMOTE),
+    (r"^/demote\b|\bпонизить\b|понижение\b|разжаловать\b|\bdemote\b|снять роль", Intent.GROUP_DEMOTE),
+    # Настройки / статистика / приветствие
     (r"^/groupsettings\b|настройки группы", Intent.GROUP_SETTINGS),
     (r"^/stats\b|статистика группы|активность группы", Intent.GROUP_STATS),
     (r"^/setwelcome\b|приветствие группы|настроить приветствие", Intent.GROUP_WELCOME),
