@@ -83,6 +83,8 @@ async def _get_target(ctx: BrainContext, bot=None) -> tuple[Optional[str], Optio
     """
     Возвращает (user_uuid, display_name, telegram_id).
     Работает только через reply на сообщение.
+    user_uuid может быть None если пользователь не зарегистрирован в боте —
+    в этом случае действия выполняются только через Telegram API (по telegram_id).
     """
     from api.auth.identity import get_user_by_telegram_id
 
@@ -91,7 +93,10 @@ async def _get_target(ctx: BrainContext, bot=None) -> tuple[Optional[str], Optio
         if user:
             name = user.first_name or f"@{user.username}"
             return str(user.id), name, user.telegram_id
-        return None, f"id:{ctx.reply_to_user_telegram_id}", ctx.reply_to_user_telegram_id
+        # Пользователь не найден в БД — работаем только через Telegram ID
+        # Имя берём из extra (если было записано при построении контекста)
+        tg_name = ctx.extra.get("reply_to_user_name") or f"id:{ctx.reply_to_user_telegram_id}"
+        return None, tg_name, ctx.reply_to_user_telegram_id
 
     return None, None, None
 
@@ -126,6 +131,11 @@ async def warn_user_in_group(ctx: BrainContext, bot) -> str:
         return "👥 Укажи пользователя через @username или ответь на его сообщение."
 
     reason = _extract_reason(ctx.text)
+
+    if not target_id:
+        # Пользователь не зарегистрирован — варн нельзя записать в БД
+        return f"⚠️ *{target_name}* не зарегистрирован в боте, варн не может быть сохранён."
+
     count, threshold = await warn_user(ctx.group_id, target_id, ctx.user_id, reason)
 
     if count >= threshold:
@@ -154,6 +164,9 @@ async def unwarn_user_in_group(ctx: BrainContext, bot) -> str:
     target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
+
+    if not target_id:
+        return f"⚠️ *{target_name}* не зарегистрирован в боте, данные о варнах не найдены."
 
     remaining = await unwarn_user(ctx.group_id, target_id)
     group_res = _get_warn_threshold(ctx.group_id)
@@ -292,7 +305,8 @@ async def ban_user_in_group(ctx: BrainContext, bot) -> str:
     until = datetime.now(timezone.utc) + duration if duration else None
     reason = _extract_reason(ctx.text)
 
-    await ban_from_group(ctx.group_id, target_id, ctx.user_id, reason, until)
+    if target_id:
+        await ban_from_group(ctx.group_id, target_id, ctx.user_id, reason, until)
 
     if target_tg_id:
         try:
@@ -369,6 +383,9 @@ async def promote_user_in_group(ctx: BrainContext, bot) -> str:
     if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
+    if not target_id:
+        return f"❌ *{target_name}* не зарегистрирован в боте — роли недоступны."
+
     steps = _extract_steps(ctx.text)
     success, old_role, new_role = await promote_member(
         ctx.group_id, ctx.user_id, target_id, steps
@@ -389,6 +406,9 @@ async def demote_user_in_group(ctx: BrainContext, bot) -> str:
     target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
+
+    if not target_id:
+        return f"❌ *{target_name}* не зарегистрирован в боте — роли недоступны."
 
     steps = _extract_steps(ctx.text)
     success, old_role, new_role = await demote_member(
