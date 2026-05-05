@@ -116,7 +116,10 @@ async def _get_target(ctx: BrainContext, bot=None) -> tuple[Optional[str], Optio
         logger.info(f"[_get_target] bot={bot}, username={username}, trying Telegram API")
         if bot:
             try:
-                member = await bot.get_chat_member(ctx.chat_id, f"@{username}")
+                # aiogram требует int для user_id, используем username через get_chat
+                from aiogram.types import ChatMemberMember
+                chat = await bot.get_chat(f"@{username}")
+                member = await bot.get_chat_member(ctx.chat_id, chat.id)
                 tg_user = member.user
                 name = tg_user.first_name or f"@{username}"
                 logger.info(f"[_get_target] Telegram API found: {name}, id={tg_user.id}")
