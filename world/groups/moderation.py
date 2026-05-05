@@ -121,7 +121,7 @@ async def warn_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_WARN, bot):
         return ""
 
-    target_id, target_name, _ = await _get_target(ctx, bot)
+    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id and not target_tg_id:
         return "👥 Укажи пользователя через @username или ответь на его сообщение."
 
@@ -151,7 +151,7 @@ async def unwarn_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_WARN, bot):
         return ""
 
-    target_id, target_name, _ = await _get_target(ctx, bot)
+    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
@@ -164,7 +164,7 @@ async def clearwarns_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_WARN, bot):
         return ""
 
-    target_id, target_name, _ = await _get_target(ctx, bot)
+    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
@@ -173,7 +173,7 @@ async def clearwarns_user_in_group(ctx: BrainContext, bot) -> str:
 
 
 async def warns_user_in_group(ctx: BrainContext, bot) -> str:
-    target_id, target_name, _ = await _get_target(ctx, bot)
+    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id and not target_tg_id:
         # Если не указан — показываем свои варны
         target_id = ctx.user_id
@@ -365,7 +365,7 @@ async def promote_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_PROMOTE, bot):
         return ""
 
-    target_id, target_name, _ = await _get_target(ctx, bot)
+    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
@@ -386,7 +386,7 @@ async def demote_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_PROMOTE, bot):
         return ""
 
-    target_id, target_name, _ = await _get_target(ctx, bot)
+    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
     if not target_id and not target_tg_id:
         return "👥 Укажи пользователя."
 
