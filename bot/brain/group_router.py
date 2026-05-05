@@ -62,7 +62,6 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
     Вызывается из bot/handlers/group.py для каждого сообщения в группе.
     """
 
-    # 1. Убеждаемся что группа зарегистрирована в БД
     if ctx.group_id is None:
     group_id = await ensure_group_exists(
         chat_id=ctx.chat_id,
