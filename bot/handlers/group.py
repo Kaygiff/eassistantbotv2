@@ -23,7 +23,7 @@ async def handle_group_message(message: Message) -> None:
     from api.auth.identity import get_or_create_user
     from bot.brain.group_router import process_group_message
 
-    user = await get_or_create_user(
+    user, _ = await get_or_create_user(
         telegram_id=message.from_user.id,
         first_name=message.from_user.first_name or "",
         username=message.from_user.username,
