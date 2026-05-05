@@ -1,403 +1,197 @@
 """
-groups/moderation.py — Команды модерации в группах.
-Мут/размут, бан/разбан, кик, варны, повышение/понижение ролей.
+bot/handlers/group.py — Обработка сообщений в групповых чатах.
 """
 
 from __future__ import annotations
-import re
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Optional
 
+from aiogram import Router, F
+from aiogram.types import Message
+
+from bot.brain.router import register
+from bot.brain.intent import Intent
 from bot.brain.context import BrainContext
-from infra.safety.group_moderation import (
-    warn_user, unwarn_user, clear_warns, get_warn_count,
-    ban_from_group, unban_from_group,
-    mute_in_group, unmute_in_group,
-    promote_member, demote_member,
-    get_group_member_role,
-    CAN_BAN, CAN_MUTE, CAN_KICK, CAN_WARN, CAN_PROMOTE,
-    ROLE_HIERARCHY,
-)
-from core.i18n import t
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Названия ролей для вывода
-# ---------------------------------------------------------------------------
-
-ROLE_NAMES = {
-    "owner":    "👑 Владелец",
-    "co_owner": "🌟 Со-владелец",
-    "admin":    "🛡 Администратор",
-    "moderator": "⚔️ Модератор",
-    "vip":      "💎 VIP",
-    "user":     "👤 Участник",
-}
-
-# ---------------------------------------------------------------------------
-# Парсинг времени: 30м, 1ч, 2д и т.д.
-# ---------------------------------------------------------------------------
-
-_TIME_RE = re.compile(
-    r"(\d+)\s*(м|мин|минут|ч|час|часов|д|день|дней|дня|н|нед|неделю|недел|w|d|h|m)",
-    re.IGNORECASE | re.UNICODE,
-)
-
-_TIME_MAP = {
-    "м": 60, "мин": 60, "минут": 60, "m": 60,
-    "ч": 3600, "час": 3600, "часов": 3600, "h": 3600,
-    "д": 86400, "день": 86400, "дней": 86400, "дня": 86400, "d": 86400,
-    "н": 604800, "нед": 604800, "неделю": 604800, "недел": 604800, "w": 604800,
-}
+group_router = Router()
+group_router.message.filter(F.chat.type.in_({"group", "supergroup"}))
 
 
-def _parse_duration(text: str) -> Optional[timedelta]:
-    """Парсит строку вида '30м', '2ч', '7д' в timedelta. None если не найдено."""
-    match = _TIME_RE.search(text)
-    if not match:
-        return None
-    amount = int(match.group(1))
-    unit = match.group(2).lower()
-    seconds = _TIME_MAP.get(unit)
-    if not seconds:
-        return None
-    return timedelta(seconds=amount * seconds)
+@group_router.message()
+async def handle_group_message(message: Message) -> None:
+    from api.auth.identity import get_or_create_user
+    from bot.brain.group_router import process_group_message
+
+    user, _ = await get_or_create_user(
+        telegram_id=message.from_user.id,
+        first_name=message.from_user.first_name or "",
+        username=message.from_user.username,
+    )
+
+    ctx = BrainContext(
+        telegram_id=message.from_user.id,
+        chat_id=message.chat.id,
+        message_id=message.message_id,
+        text=message.text or "",
+        is_group=True,
+    )
+    ctx.user = user
+    ctx.language = user.language if user else "ru"
+    ctx.extra["chat_title"] = message.chat.title or ""
+
+    # Заполняем reply_to_user_telegram_id если это ответ на сообщение
+    if message.reply_to_message and message.reply_to_message.from_user:
+        ctx.reply_to_user_telegram_id = message.reply_to_message.from_user.id
+
+    await process_group_message(ctx, message.bot)
 
 
-def _format_duration(td: timedelta) -> str:
-    total = int(td.total_seconds())
-    if total >= 86400:
-        return f"{total // 86400} д."
-    if total >= 3600:
-        return f"{total // 3600} ч."
-    return f"{total // 60} мин."
+async def _send(ctx, bot, text: str) -> None:
+    if text:
+        await bot.send_message(ctx.chat_id, text, parse_mode="Markdown")
 
 
-# ---------------------------------------------------------------------------
-# Получение цели (reply или @username)
-# ---------------------------------------------------------------------------
-
-async def _get_target(ctx: BrainContext, bot=None) -> tuple[Optional[str], Optional[str], Optional[int]]:
-    """
-    Возвращает (user_uuid, display_name, telegram_id).
-    Работает только через reply на сообщение.
-    """
-    from api.auth.identity import get_user_by_telegram_id
-
-    if ctx.reply_to_user_telegram_id:
-        user = await get_user_by_telegram_id(ctx.reply_to_user_telegram_id)
-        if user:
-            name = user.first_name or f"@{user.username}"
-            return str(user.id), name, user.telegram_id
-        return None, f"id:{ctx.reply_to_user_telegram_id}", ctx.reply_to_user_telegram_id
-
-    return None, None, None
+@register(Intent.GROUP_WARN)
+async def handle_warn(ctx: BrainContext, bot) -> None:
+    from world.groups.moderation import warn_user_in_group
+    await _send(ctx, bot, await warn_user_in_group(ctx, bot))
 
 
-def _extract_reason(text: str) -> Optional[str]:
-    match = re.search(r"причина[:\s]+(.+)", text, re.IGNORECASE)
-    return match.group(1).strip() if match else None
+@register(Intent.GROUP_UNWARN)
+async def handle_unwarn(ctx: BrainContext, bot) -> None:
+    from world.groups.moderation import unwarn_user_in_group
+    await _send(ctx, bot, await unwarn_user_in_group(ctx, bot))
 
 
-async def _check_permission(ctx: BrainContext, allowed_set: set, bot) -> bool:
-    """Проверяет права и отправляет ошибку если нет доступа."""
+@register(Intent.GROUP_WARNS)
+async def handle_warns(ctx: BrainContext, bot) -> None:
+    from world.groups.moderation import warns_user_in_group
+    await _send(ctx, bot, await warns_user_in_group(ctx, bot))
+
+
+@register(Intent.GROUP_BAN)
+async def handle_ban(ctx: BrainContext, bot) -> None:
+    from world.groups.moderation import ban_user_in_group
+    await _send(ctx, bot, await ban_user_in_group(ctx, bot))
+
+
+@register(Intent.GROUP_UNBAN)
+async def handle_unban(ctx: BrainContext, bot) -> None:
+    from world.groups.moderation import unban_user_in_group
+    await _send(ctx, bot, await unban_user_in_group(ctx, bot))
+
+
+@register(Intent.GROUP_MUTE)
+async def handle_mute(ctx: BrainContext, bot) -> None:
+    from world.groups.moderation import mute_user_in_group
+    await _send(ctx, bot, await mute_user_in_group(ctx, bot))
+
+
+@register(Intent.GROUP_UNMUTE)
+async def handle_unmute(ctx: BrainContext, bot) -> None:
+    from world.groups.moderation import unmute_user_in_group
+    await _send(ctx, bot, await unmute_user_in_group(ctx, bot))
+
+
+@register(Intent.GROUP_KICK)
+async def handle_kick(ctx: BrainContext, bot) -> None:
+    from world.groups.moderation import kick_user_from_group
+    await _send(ctx, bot, await kick_user_from_group(ctx, bot))
+
+
+@register(Intent.GROUP_PROMOTE)
+async def handle_promote(ctx: BrainContext, bot) -> None:
+    from world.groups.moderation import promote_user_in_group
+    await _send(ctx, bot, await promote_user_in_group(ctx, bot))
+
+
+@register(Intent.GROUP_DEMOTE)
+async def handle_demote(ctx: BrainContext, bot) -> None:
+    from world.groups.moderation import demote_user_in_group
+    await _send(ctx, bot, await demote_user_in_group(ctx, bot))
+
+
+@register(Intent.GROUP_SETTINGS)
+async def handle_group_settings(ctx: BrainContext, bot) -> None:
+    from infra.safety.group_moderation import can_moderate
+    if not ctx.group_id or not await can_moderate(ctx.group_id, ctx.user_id):
+        await bot.send_message(ctx.chat_id, "❌ Нет прав.")
+        return
+    from world.groups.settings import get_group_settings_menu
+    text, keyboard = await get_group_settings_menu(ctx.group_id, ctx.language)
+    await bot.send_message(ctx.chat_id, text, parse_mode="Markdown", reply_markup=keyboard)
+
+
+@register(Intent.GROUP_STATS)
+async def handle_group_stats(ctx: BrainContext, bot) -> None:
+    from world.groups.stats import get_group_stats
+    text = await get_group_stats(ctx.group_id, ctx.language)
+    await bot.send_message(ctx.chat_id, text, parse_mode="Markdown")
+
+
+@register(Intent.GROUP_WELCOME)
+async def handle_group_welcome(ctx: BrainContext, bot) -> None:
+    from infra.safety.group_moderation import can_moderate
+    if not ctx.group_id or not await can_moderate(ctx.group_id, ctx.user_id):
+        await bot.send_message(ctx.chat_id, "❌ Нет прав.")
+        return
+    from world.groups.settings import set_welcome_message
+    text = await set_welcome_message(ctx, bot)
+    await bot.send_message(ctx.chat_id, text, parse_mode="Markdown")
+
+
+@register(Intent.GROUP_ROLE)
+async def handle_my_role(ctx: BrainContext, bot) -> None:
     if not ctx.group_id:
-        await bot.send_message(ctx.chat_id, "❌ Группа не найдена.")
-        return False
+        await bot.send_message(ctx.chat_id, "❌ Эта команда работает только в группе.")
+        return
+    from infra.safety.group_moderation import get_group_member_role
     role = await get_group_member_role(ctx.group_id, ctx.user_id)
-    if role not in allowed_set:
-        await bot.send_message(ctx.chat_id, t(ctx.language, "common.access_denied"))
-        return False
-    return True
+    role_names = {
+        "owner":     "👑 Владелец",
+        "co_owner":  "🌟 Со-владелец",
+        "admin":     "🛡 Администратор",
+        "moderator": "⚔️ Модератор",
+        "vip":       "💎 VIP",
+        "user":      "👤 Участник",
+    }
+    name = ctx.user.first_name or "Пользователь"
+    role_label = role_names.get(role, "👤 Участник")
+    await bot.send_message(
+        ctx.chat_id,
+        f"👤 *{name}*, твоя роль в этой группе: {role_label}",
+        parse_mode="Markdown",
+    )
 
 
-# ---------------------------------------------------------------------------
-# ВАРН
-# ---------------------------------------------------------------------------
-
-async def warn_user_in_group(ctx: BrainContext, bot) -> str:
-    if not await _check_permission(ctx, CAN_WARN, bot):
-        return ""
-
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя через @username или ответь на его сообщение."
-
-    reason = _extract_reason(ctx.text)
-    count, threshold = await warn_user(ctx.group_id, target_id, ctx.user_id, reason)
-
-    if count >= threshold:
-        await ban_from_group(ctx.group_id, target_id, ctx.user_id,
-                             reason=f"Автобан: {count} варнов")
-        try:
-            tg_res = _get_telegram_id(target_id)
-            if tg_res:
-                await bot.ban_chat_member(ctx.chat_id, tg_res)
-        except Exception as e:
-            logger.warning(f"[Moderation] Autoban telegram failed: {e}")
-        return t(ctx.language, "moderation.auto_banned", username=target_name, max=threshold)
-
-    reason_text = f"\nПричина: _{reason}_" if reason else ""
-    return f"⚠️ *{target_name}* получает предупреждение [{count}/{threshold}]{reason_text}"
-
-
-# ---------------------------------------------------------------------------
-# СНЯТЬ ВАРН / СНЯТЬ ВАРНЫ
-# ---------------------------------------------------------------------------
-
-async def unwarn_user_in_group(ctx: BrainContext, bot) -> str:
-    if not await _check_permission(ctx, CAN_WARN, bot):
-        return ""
-
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
-
-    remaining = await unwarn_user(ctx.group_id, target_id)
-    group_res = _get_warn_threshold(ctx.group_id)
-    return f"✅ С *{target_name}* снято одно предупреждение. Осталось: [{remaining}/{group_res}]"
-
-
-async def clearwarns_user_in_group(ctx: BrainContext, bot) -> str:
-    if not await _check_permission(ctx, CAN_WARN, bot):
-        return ""
-
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
-
-    await clear_warns(ctx.group_id, target_id)
-    return f"✅ Все предупреждения *{target_name}* сняты."
-
-
-async def warns_user_in_group(ctx: BrainContext, bot) -> str:
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id and not target_tg_id:
-        # Если не указан — показываем свои варны
-        target_id = ctx.user_id
-        target_name = ctx.user.first_name or "Вы"
-
-    count = await get_warn_count(ctx.group_id, target_id)
-    threshold = _get_warn_threshold(ctx.group_id)
-    return f"📋 Предупреждения *{target_name}*: [{count}/{threshold}]"
-
-
-def _get_warn_threshold(group_id: str) -> int:
+@register(Intent.GROUP_ADMINS)
+async def handle_group_admins(ctx: BrainContext, bot) -> None:
+    if not ctx.group_id:
+        await bot.send_message(ctx.chat_id, "❌ Эта команда работает только в группе.")
+        return
     from infra.db.supabase import get_supabase_admin
     res = (
         get_supabase_admin()
-        .table("groups")
-        .select("warn_threshold")
-        .eq("id", group_id)
-        .maybe_single()
+        .table("group_members")
+        .select("role, users(first_name, username)")
+        .eq("group_id", ctx.group_id)
+        .in_("role", ["owner", "co_owner", "admin", "moderator"])
         .execute()
     )
-    return res.data["warn_threshold"] if res.data else 3
-
-
-def _get_telegram_id(user_uuid: str) -> Optional[int]:
-    from infra.db.supabase import get_supabase_admin
-    res = (
-        get_supabase_admin()
-        .table("users")
-        .select("telegram_id")
-        .eq("id", user_uuid)
-        .maybe_single()
-        .execute()
-    )
-    return res.data["telegram_id"] if res.data else None
-
-
-# ---------------------------------------------------------------------------
-# МУТ / РАЗМУТ
-# ---------------------------------------------------------------------------
-
-async def mute_user_in_group(ctx: BrainContext, bot) -> str:
-    if not await _check_permission(ctx, CAN_MUTE, bot):
-        return ""
-
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
-
-    duration = _parse_duration(ctx.text) or timedelta(hours=1)
-    until = datetime.now(timezone.utc) + duration
-    reason = _extract_reason(ctx.text)
-
-    if target_id:
-        await mute_in_group(ctx.group_id, target_id, ctx.user_id, until, reason)
-
-    if target_tg_id:
-        try:
-            from aiogram.types import ChatPermissions
-            await bot.restrict_chat_member(
-                ctx.chat_id,
-                target_tg_id,
-                permissions=ChatPermissions(can_send_messages=False),
-                until_date=until,
-            )
-        except Exception as e:
-            logger.warning(f"[Moderation] Telegram mute failed: {e}")
-
-    reason_text = f"\nПричина: _{reason}_" if reason else ""
-    return f"🔇 *{target_name}* замучен на {_format_duration(duration)}{reason_text}"
-
-
-async def unmute_user_in_group(ctx: BrainContext, bot) -> str:
-    if not await _check_permission(ctx, CAN_MUTE, bot):
-        return ""
-
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
-
-    if target_id:
-        await unmute_in_group(ctx.group_id, target_id)
-
-    if target_tg_id:
-        try:
-            from aiogram.types import ChatPermissions
-            await bot.restrict_chat_member(
-                ctx.chat_id,
-                target_tg_id,
-                permissions=ChatPermissions(
-                    can_send_messages=True,
-                    can_send_media_messages=True,
-                    can_send_polls=True,
-                    can_send_other_messages=True,
-                    can_add_web_page_previews=True,
-                ),
-            )
-        except Exception as e:
-            logger.warning(f"[Moderation] Telegram unmute failed: {e}")
-
-    return f"🔊 *{target_name}* размучен."
-
-
-# ---------------------------------------------------------------------------
-# БАН / РАЗБАН
-# ---------------------------------------------------------------------------
-
-async def ban_user_in_group(ctx: BrainContext, bot) -> str:
-    if not await _check_permission(ctx, CAN_BAN, bot):
-        return ""
-
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
-
-    duration = _parse_duration(ctx.text)
-    until = datetime.now(timezone.utc) + duration if duration else None
-    reason = _extract_reason(ctx.text)
-
-    await ban_from_group(ctx.group_id, target_id, ctx.user_id, reason, until)
-
-    if target_tg_id:
-        try:
-            await bot.ban_chat_member(
-                ctx.chat_id,
-                target_tg_id,
-                until_date=until,
-            )
-        except Exception as e:
-            logger.warning(f"[Moderation] Telegram ban failed: {e}")
-
-    reason_text = f"\nПричина: _{reason}_" if reason else ""
-    if until:
-        return f"🚫 *{target_name}* забанен на {_format_duration(duration)}{reason_text}"
-    return f"🚫 *{target_name}* забанен навсегда{reason_text}"
-
-
-async def unban_user_in_group(ctx: BrainContext, bot) -> str:
-    if not await _check_permission(ctx, CAN_BAN, bot):
-        return ""
-
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
-
-    await unban_from_group(ctx.group_id, target_id)
-
-    if target_tg_id:
-        try:
-            await bot.unban_chat_member(ctx.chat_id, target_tg_id,
-                                        only_if_banned=True)
-        except Exception as e:
-            logger.warning(f"[Moderation] Telegram unban failed: {e}")
-
-    return f"✅ *{target_name}* разбанен."
-
-
-# ---------------------------------------------------------------------------
-# КИК
-# ---------------------------------------------------------------------------
-
-async def kick_user_from_group(ctx: BrainContext, bot) -> str:
-    if not await _check_permission(ctx, CAN_KICK, bot):
-        return ""
-
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
-
-    if target_tg_id:
-        try:
-            await bot.ban_chat_member(ctx.chat_id, target_tg_id)
-            await bot.unban_chat_member(ctx.chat_id, target_tg_id)
-        except Exception as e:
-            logger.warning(f"[Moderation] Telegram kick failed: {e}")
-
-    return f"👢 *{target_name}* кикнут из группы."
-
-
-# ---------------------------------------------------------------------------
-# ПОВЫСИТЬ / ПОНИЗИТЬ
-# ---------------------------------------------------------------------------
-
-def _extract_steps(text: str) -> int:
-    match = re.search(r"\b([1-4])\b", text)
-    return int(match.group(1)) if match else 1
-
-
-async def promote_user_in_group(ctx: BrainContext, bot) -> str:
-    if not await _check_permission(ctx, CAN_PROMOTE, bot):
-        return ""
-
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
-
-    steps = _extract_steps(ctx.text)
-    success, old_role, new_role = await promote_member(
-        ctx.group_id, ctx.user_id, target_id, steps
-    )
-
-    if not success:
-        return f"❌ Не удалось повысить *{target_name}*. Недостаточно прав или достигнут максимум."
-
-    old_name = ROLE_NAMES.get(old_role, old_role)
-    new_name = ROLE_NAMES.get(new_role, new_role)
-    return f"⬆️ *{target_name}*: {old_name} → {new_name}"
-
-
-async def demote_user_in_group(ctx: BrainContext, bot) -> str:
-    if not await _check_permission(ctx, CAN_PROMOTE, bot):
-        return ""
-
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
-
-    steps = _extract_steps(ctx.text)
-    success, old_role, new_role = await demote_member(
-        ctx.group_id, ctx.user_id, target_id, steps
-    )
-
-    if not success:
-        return f"❌ Не удалось понизить *{target_name}*. Недостаточно прав."
-
-    old_name = ROLE_NAMES.get(old_role, old_role)
-    new_name = ROLE_NAMES.get(new_role, new_role)
-    return f"⬇️ *{target_name}*: {old_name} → {new_name}"
+    if not res or not res.data:
+        await bot.send_message(ctx.chat_id, "👥 В группе нет назначенных администраторов.")
+        return
+    role_names = {
+        "owner":     "👑 Владелец",
+        "co_owner":  "🌟 Со-владелец",
+        "admin":     "🛡 Администратор",
+        "moderator": "⚔️ Модератор",
+    }
+    lines = ["👥 *Администраторы группы:*\n"]
+    for m in res.data:
+        user = m.get("users") or {}
+        name = user.get("first_name") or f"@{user.get('username', '?')}"
+        role_label = role_names.get(m["role"], m["role"])
+        lines.append(f"{role_label} — {name}")
+    await bot.send_message(ctx.chat_id, "\n".join(lines), parse_mode="Markdown")
