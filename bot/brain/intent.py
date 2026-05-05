@@ -90,6 +90,8 @@ class Intent(str, Enum):
     GROUP_SETTINGS = "group_settings"
     GROUP_STATS = "group_stats"
     GROUP_WELCOME = "group_welcome"
+    GROUP_ROLE = "group_role"
+    GROUP_ADMINS = "group_admins"
 
     # --- Системные ---
     START = "start"
@@ -137,6 +139,7 @@ GROUP_MODERATION_INTENTS = {
     Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
     Intent.GROUP_KICK, Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
     Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
+    Intent.GROUP_ROLE, Intent.GROUP_ADMINS,
 }
 
 TASK_INTENTS = {
@@ -152,7 +155,6 @@ PRIVATE_ONLY_INTENTS = {
 
 # ---------------------------------------------------------------------------
 # Микросервисы — в группе вызываются ТОЛЬКО при обращении по имени ассистента
-# (имя которое пользователь задал боту при онбординге, например "Альфа, найди музыку")
 # ---------------------------------------------------------------------------
 MICROSERVICE_INTENTS = {
     Intent.AI_CHAT,
@@ -173,6 +175,7 @@ GROUP_WORLD_INTENTS = {
     Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
     Intent.GROUP_KICK, Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
     Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
+    Intent.GROUP_ROLE, Intent.GROUP_ADMINS,
     Intent.HELP, Intent.BALANCE, Intent.DAILY_BONUS,
     Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL,
     Intent.CASINO_OPEN, Intent.CASINO_SLOTS, Intent.CASINO_ROULETTE,
