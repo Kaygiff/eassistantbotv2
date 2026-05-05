@@ -13,7 +13,7 @@ load_dotenv()
 import psycopg2
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-MIGRATIONS_DIR = Path(__file__).parent.parent / "db" / "migrations"
+MIGRATIONS_DIR = Path(__file__).parent.parent.parent / "infra" / "db" / "migrations"
 
 
 def run_migrations():
