@@ -113,6 +113,7 @@ async def _get_target(ctx: BrainContext, bot=None) -> tuple[Optional[str], Optio
         except Exception:
             pass
 
+        logger.info(f"[_get_target] bot={bot}, username={username}, trying Telegram API")
         if bot:
             try:
                 member = await bot.get_chat_member(ctx.chat_id, f"@{username}")
