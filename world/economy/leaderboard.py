@@ -82,3 +82,47 @@ async def invalidate_leaderboard_cache() -> None:
     """Сбрасывает кэш таблицы лидеров (после крупных транзакций)."""
     redis = get_redis()
     await redis.delete(CACHE_KEY)
+
+
+async def get_group_leaderboard_text(chat_id: int, limit: int = 10, language: str = "ru") -> str:
+    """Топ участников группы по балансу Ecoins."""
+    db = get_supabase_admin()
+
+    # Получаем user_id участников группы
+    group_res = db.table("groups").select("id").eq("chat_id", chat_id).maybe_single().execute()
+    if not group_res.data:
+        return "📊 Группа не найдена."
+
+    group_id = group_res.data["id"]
+    members_res = (
+        db.table("group_members")
+        .select("user_id")
+        .eq("group_id", group_id)
+        .execute()
+    )
+    member_ids = [m["user_id"] for m in (members_res.data or [])]
+    if not member_ids:
+        return "📊 В группе нет участников."
+
+    # Получаем балансы только этих участников
+    wallets_res = (
+        db.table("ecoin_wallets")
+        .select("balance, user_id, users(first_name, username)")
+        .in_("user_id", member_ids)
+        .order("balance", desc=True)
+        .limit(limit)
+        .execute()
+    )
+
+    if not wallets_res.data:
+        return "📊 Нет данных о балансах участников."
+
+    medals = {1: "🥇", 2: "🥈", 3: "🥉"}
+    lines = ["💰 *Топ группы по Ecoins:*\n"]
+    for i, row in enumerate(wallets_res.data, 1):
+        user = row.get("users") or {}
+        name = user.get("first_name") or f"@{user.get('username', '???')}"
+        icon = medals.get(i, f"{i}.")
+        lines.append(f"{icon} {name} — *{row['balance']:,} Ecoins*")
+
+    return "\n".join(lines)
