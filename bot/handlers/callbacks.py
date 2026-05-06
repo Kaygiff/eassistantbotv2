@@ -228,93 +228,104 @@ async def cb_settings(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
-# --- Настройки группы ---
-@callback_router.callback_query(F.data.startswith("groupset:"))
-async def cb_groupset(callback: CallbackQuery) -> None:
+# --- Ecoins ---
+@callback_router.callback_query(F.data.startswith("ecoins:"))
+async def cb_ecoins(callback: CallbackQuery) -> None:
     parts = callback.data.split(":")
     action = parts[1]
     ctx = await _get_ctx_and_user(callback)
 
-    from infra.safety.group_moderation import can_moderate, get_group_member_role
-    from world.groups.settings import (
-        get_group_settings_menu, get_warns_menu,
-        prompt_welcome, prompt_farewell, prompt_rules,
-        prompt_warn_threshold, prompt_warn_mute_hours,
-        save_warn_action,
-    )
-    from api.auth.session import set_fsm_data
-
-    # Определяем group_id по chat_id
-    from infra.db.supabase import get_supabase_admin
-    res = (
-        get_supabase_admin()
-        .table("groups")
-        .select("id")
-        .eq("chat_id", callback.message.chat.id)
-        .maybe_single()
-        .execute()
-    )
-    group_id = res.data["id"] if res.data else None
-
-    if not group_id or not await can_moderate(group_id, str(ctx.user.id)):
-        await callback.answer("❌ Нет прав.", show_alert=True)
-        return
-
-    # Сохраняем group_id в FSM-data чтобы потом знать в какую группу писать
-    await set_fsm_data(str(ctx.user.id), {"group_id": group_id, "chat_id": callback.message.chat.id})
-
-    if action == "back":
-        text, keyboard = await get_group_settings_menu(group_id, ctx.language)
-        await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
-
-    elif action == "welcome":
-        text = await prompt_welcome(ctx)
-        await callback.message.edit_text(text, parse_mode="Markdown")
-
-    elif action == "farewell":
-        text = await prompt_farewell(ctx)
-        await callback.message.edit_text(text, parse_mode="Markdown")
-
-    elif action == "rules":
-        text = await prompt_rules(ctx)
-        await callback.message.edit_text(text, parse_mode="Markdown")
-
-    elif action == "warns_menu":
-        text, keyboard = await get_warns_menu(group_id)
-        await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
-
-    elif action == "warn_threshold":
-        text = await prompt_warn_threshold(ctx)
-        await callback.message.edit_text(text)
-
-    elif action == "warn_mute_hours":
-        text = await prompt_warn_mute_hours(ctx)
-        await callback.message.edit_text(text)
-
-    elif action == "warn_action" and len(parts) > 2:
-        new_action = parts[2]
-        if new_action in ("ban", "kick", "mute"):
-            await save_warn_action(group_id, new_action)
-            text, keyboard = await get_warns_menu(group_id)
-            await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
-
-    elif action == "language":
+    if action == "menu":
+        from world.economy.wallet import get_balance
+        balance = await get_balance(str(ctx.user.id))
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-        langs = [
-            ("🇷🇺 Русский", "ru"), ("🇺🇸 English", "en"), ("🇺🇿 O'zbek", "uz"),
-            ("🇰🇿 Қазақ", "kz"), ("🇰🇬 Кыргыз", "kg"), ("🇹🇯 Тоҷик", "tj"),
-        ]
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text=label, callback_data=f"groupset:set_lang:{code}")]
-            for label, code in langs
-        ] + [[InlineKeyboardButton(text="◀️ Назад", callback_data="groupset:back")]])
-        await callback.message.edit_text("🌐 Выбери язык группы:", reply_markup=keyboard)
+            [InlineKeyboardButton(text="🎁 Бонус", callback_data="ecoins:bonus")],
+            [InlineKeyboardButton(text="🔗 Реферальная ссылка", callback_data="ecoins:referral")],
+            [InlineKeyboardButton(text="🏆 Лидеры", callback_data="ecoins:leaders")],
+            [InlineKeyboardButton(text="◀️ Назад", callback_data="ecoins:back")],
+        ])
+        await callback.message.edit_text(
+            f"💰 *Ecoins*\n\nТвой баланс: *{balance} Ecoins*",
+            parse_mode="Markdown",
+            reply_markup=keyboard,
+        )
 
-    elif action == "set_lang" and len(parts) > 2:
-        lang = parts[2]
-        get_supabase_admin().table("groups").update({"language": lang}).eq("id", group_id).execute()
-        text, keyboard = await get_group_settings_menu(group_id, lang)
+    elif action == "bonus":
+        from world.economy.daily import claim_daily_bonus
+        result = await claim_daily_bonus(str(ctx.user.id), ctx.language)
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="◀️ Назад", callback_data="ecoins:menu")],
+        ])
+        await callback.message.edit_text(result, parse_mode="Markdown", reply_markup=keyboard)
+
+    elif action == "referral":
+        from world.economy.referral import get_referral_info
+        info = await get_referral_info(str(ctx.user.id), ctx.user.telegram_id, ctx.language)
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="◀️ Назад", callback_data="ecoins:menu")],
+        ])
+        await callback.message.edit_text(info, parse_mode="Markdown", reply_markup=keyboard)
+
+    elif action == "leaders":
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🌍 Глобальные", callback_data="ecoins:top_global"),
+                InlineKeyboardButton(text="👥 В этой группе", callback_data="ecoins:top_group"),
+            ],
+            [InlineKeyboardButton(text="◀️ Назад", callback_data="ecoins:menu")],
+        ])
+        await callback.message.edit_text(
+            "🏆 *Таблица лидеров*\n\nВыбери тип:",
+            parse_mode="Markdown",
+            reply_markup=keyboard,
+        )
+
+    elif action == "top_global":
+        from world.economy.leaderboard import get_leaderboard_text
+        text = await get_leaderboard_text(language=ctx.language)
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="◀️ Назад", callback_data="ecoins:leaders")],
+        ])
         await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
+
+    elif action == "top_group":
+        if callback.message.chat.type not in ("group", "supergroup"):
+            await callback.answer("Доступно только в группе.", show_alert=True)
+            return
+        from world.economy.leaderboard import get_group_leaderboard_text
+        text = await get_group_leaderboard_text(chat_id=callback.message.chat.id, language=ctx.language)
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="◀️ Назад", callback_data="ecoins:leaders")],
+        ])
+        await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
+
+    elif action == "back":
+        from world.economy.wallet import get_balance
+        user = ctx.user
+        balance = await get_balance(str(user.id))
+        lines = [f"👤 *Профиль*\n", f"🏷 Имя ассистента: *{user.assistant_name}*"]
+        if user.nickname:
+            lines.append(f"✏️ Никнейм: *{user.nickname}*")
+        if user.bio:
+            lines.append(f"📝 О себе: {user.bio}")
+        if user.birthday:
+            lines.append(f"🎂 День рождения: {user.birthday.strftime('%d.%m.%Y')}")
+        lines.append(f"🌐 Язык: {user.language.upper()}")
+        lines.append(f"💰 Баланс: *{balance} Ecoins*")
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✏️ Редактировать", callback_data="profile:edit"),
+                InlineKeyboardButton(text="💰 Ecoins", callback_data="ecoins:menu"),
+            ],
+        ])
+        await callback.message.edit_text("\n".join(lines), parse_mode="Markdown", reply_markup=keyboard)
 
     await callback.answer()
 
