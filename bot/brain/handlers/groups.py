@@ -30,6 +30,12 @@ async def handle_warns(ctx: BrainContext, bot) -> None:
     await _send(ctx, bot, await warns_user_in_group(ctx, bot))
 
 
+@register(Intent.GROUP_CLEARWARNS)
+async def handle_clearwarns(ctx: BrainContext, bot) -> None:
+    from world.groups.moderation import clearwarns_user_in_group
+    await _send(ctx, bot, await clearwarns_user_in_group(ctx, bot))
+
+
 @register(Intent.GROUP_BAN)
 async def handle_ban(ctx: BrainContext, bot) -> None:
     from world.groups.moderation import ban_user_in_group
