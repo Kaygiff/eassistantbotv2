@@ -64,14 +64,22 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
 
     # 1. Всегда загружаем group_id — ctx.group_id никогда не заполняется снаружи
     try:
-        from infra.safety.group_moderation import sync_group_owner
-        group_id = await ensure_group_exists(
-            chat_id=ctx.chat_id,
-            title=ctx.extra.get("chat_title", "Unknown Group"),
-            owner_id=None,
-        )
-        ctx.group_id = group_id
-        await sync_group_owner(group_id, bot, ctx.chat_id)
+        is_new_group = False
+        from infra.db.supabase import get_supabase_admin
+        res = get_supabase_admin().table("groups").select("id").eq("chat_id", ctx.chat_id).limit(1).execute()
+        if res and res.data:
+            ctx.group_id = res.data[0]["id"]
+        else:
+            group_id = await ensure_group_exists(
+                chat_id=ctx.chat_id,
+                title=ctx.extra.get("chat_title", "Unknown Group"),
+                owner_id=None,
+            )
+            ctx.group_id = group_id
+            is_new_group = True
+        if is_new_group:
+            from infra.safety.group_moderation import sync_group_owner
+            await sync_group_owner(ctx.group_id, bot, ctx.chat_id)
     except Exception as e:
         logger.error(f"[GroupRouter] Failed to resolve group_id for chat {ctx.chat_id}: {e}")
         return
