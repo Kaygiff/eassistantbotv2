@@ -22,21 +22,18 @@ async def handle_group_message(message: Message) -> None:
     from api.auth.identity import get_or_create_user
     from bot.brain.group_router import process_group_message
 
-    user, _ = await get_or_create_user(
-        telegram_id=message.from_user.id,
-        first_name=message.from_user.first_name or "",
-        username=message.from_user.username,
-    )
-
-    ctx = BrainContext(
+    
         telegram_id=message.from_user.id,
         chat_id=message.chat.id,
         message_id=message.message_id,
         text=message.text or "",
         is_group=True,
+        tg_username=message.from_user.username,
+        tg_first_name=message.from_user.first_name,
+        tg_last_name=message.from_user.last_name,
+        tg_is_premium=bool(getattr(message.from_user, "is_premium", False)),
+        tg_locale=message.from_user.language_code,
     )
-    ctx.user = user
-    ctx.language = user.language if user else "ru"
     ctx.extra["chat_title"] = message.chat.title or ""
 
     if message.reply_to_message and message.reply_to_message.from_user:
