@@ -4,6 +4,7 @@ groups/moderation.py — Команды модерации в группах.
 
 from __future__ import annotations
 import re
+import asyncio
 import logging
 from datetime import datetime, timezone, timedelta
 from typing import Optional
@@ -15,7 +16,7 @@ from infra.safety.group_moderation import (
     mute_in_group, unmute_in_group,
     promote_member, demote_member,
     get_group_member_role,
-    CAN_BAN, CAN_MUTE, CAN_KICK, CAN_WARN, CAN_PROMOTE,
+    CAN_BAN, CAN_MUTE, CAN_WARN, CAN_PROMOTE,
     ROLE_HIERARCHY,
 )
 from core.i18n import t
@@ -197,8 +198,9 @@ async def ban_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_BAN, bot):
         return ""
     target_id, target_name, target_tg_id = await _get_target(ctx, bot)
+    logger.info(f"[Ban] target_id={target_id} target_name={target_name} target_tg_id={target_tg_id}")
     if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
+        return "👥 Укажи пользователя через реплей на его сообщение."
     duration = _parse_duration(ctx.text)
     until = datetime.now(timezone.utc) + duration if duration else None
     reason = _extract_reason(ctx.text)
@@ -206,9 +208,11 @@ async def ban_user_in_group(ctx: BrainContext, bot) -> str:
         await ban_from_group(ctx.group_id, target_id, ctx.user_id, reason, until)
     if target_tg_id:
         try:
-            await bot.ban_chat_member(ctx.chat_id, target_tg_id, until_date=until)
+            await bot.ban_chat_member(ctx.chat_id, int(target_tg_id), until_date=until)
+            logger.info(f"[Ban] Telegram ban success: {target_name}")
         except Exception as e:
-            logger.warning(f"[Moderation] Telegram ban failed: {e}")
+            logger.warning(f"[Ban] Telegram ban failed: {e}")
+            return f"❌ Не удалось забанить *{target_name}* в Telegram: {e}"
     reason_text = f"\nПричина: _{reason}_" if reason else ""
     if until:
         return f"🚫 *{target_name}* забанен на {_format_duration(duration)}{reason_text}"
@@ -218,36 +222,20 @@ async def unban_user_in_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_BAN, bot):
         return ""
     target_id, target_name, target_tg_id = await _get_target(ctx, bot)
+    logger.info(f"[Unban] target_id={target_id} target_name={target_name} target_tg_id={target_tg_id}")
     if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
+        return "👥 Укажи пользователя через реплей на его сообщение."
     if target_id:
         await unban_from_group(ctx.group_id, target_id)
     if target_tg_id:
         try:
-            await bot.unban_chat_member(ctx.chat_id, target_tg_id, only_if_banned=True)
+            await bot.unban_chat_member(ctx.chat_id, int(target_tg_id), only_if_banned=True)
+            logger.info(f"[Unban] Telegram unban success: {target_name}")
         except Exception as e:
-            logger.warning(f"[Moderation] Telegram unban failed: {e}")
+            logger.warning(f"[Unban] Telegram unban failed: {e}")
+            return f"❌ Не удалось разбанить *{target_name}* в Telegram: {e}"
     return f"✅ *{target_name}* разбанен."
 
-# КИК
-async def kick_user_from_group(ctx: BrainContext, bot) -> str:
-    if not await _check_permission(ctx, CAN_KICK, bot):
-        return ""
-    target_id, target_name, target_tg_id = await _get_target(ctx, bot)
-    logger.info(f"[Kick] target_id={target_id} target_name={target_name} target_tg_id={target_tg_id}")
-    if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя через реплей на его сообщение."
-    if not target_tg_id:
-        return f"❌ Не удалось кикнуть *{target_name}* — Telegram ID не найден."
-    logger.info(f"[Kick] Attempting ban chat_id={ctx.chat_id} tg_id={target_tg_id} type={type(target_tg_id)}")
-    try:
-        await bot.ban_chat_member(ctx.chat_id, int(target_tg_id))
-        await bot.unban_chat_member(ctx.chat_id, int(target_tg_id))
-        logger.info(f"[Kick] Success: {target_name} kicked")
-    except Exception as e:
-        logger.warning(f"[Moderation] Telegram kick failed: {e}")
-        return f"❌ Не удалось кикнуть *{target_name}*: {e}"
-    return f"👢 *{target_name}* кикнут из группы."
 
 # ПОВЫСИТЬ / ПОНИЗИТЬ
 def _extract_steps(text: str) -> int:
