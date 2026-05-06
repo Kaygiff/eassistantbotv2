@@ -60,11 +60,6 @@ async def handle_unmute(ctx: BrainContext, bot) -> None:
     await _send(ctx, bot, await unmute_user_in_group(ctx, bot))
 
 
-@register(Intent.GROUP_KICK)
-async def handle_kick(ctx: BrainContext, bot) -> None:
-    from world.groups.moderation import kick_user_from_group
-    await _send(ctx, bot, await kick_user_from_group(ctx, bot))
-
 
 @register(Intent.GROUP_PROMOTE)
 async def handle_promote(ctx: BrainContext, bot) -> None:
