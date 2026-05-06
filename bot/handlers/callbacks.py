@@ -222,7 +222,6 @@ async def cb_slots(callback: CallbackQuery) -> None:
             language=ctx.language,
             bot=callback.bot,
             chat_id=callback.message.chat.id,
-            message_id=callback.message.message_id,
         )
 
     elif action == "freespin":
@@ -238,9 +237,8 @@ async def cb_slots(callback: CallbackQuery) -> None:
             language=ctx.language,
             bot=callback.bot,
             chat_id=callback.message.chat.id,
-            message_id=callback.message.message_id,
-            freespins_left=freespins,
             is_freespin=True,
+            freespins_left=freespins,
         )
 
     elif action == "paytable":
