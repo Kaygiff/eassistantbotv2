@@ -193,6 +193,91 @@ async def cb_joker(callback: CallbackQuery) -> None:
     await callback.answer()
 
 
+
+# --- Слоты ---
+@callback_router.callback_query(F.data.startswith("slots:"))
+async def cb_slots(callback: CallbackQuery) -> None:
+    parts = callback.data.split(":")
+    action = parts[1]
+    ctx = await _get_ctx_and_user(callback)
+    await callback.answer()
+
+    if action == "spin":
+        try:
+            bet = int(parts[2])
+        except (IndexError, ValueError):
+            return
+        from bot.brain.handlers.casino import MIN_BET, MAX_BET
+        from world.economy.wallet import get_balance
+        if bet < MIN_BET or bet > MAX_BET:
+            return
+        balance = await get_balance(str(ctx.user.id))
+        if balance < bet:
+            await callback.message.answer("💸 Недостаточно средств!", parse_mode="Markdown")
+            return
+        from world.casino.games.slots import play_slots
+        await play_slots(
+            user_id=str(ctx.user.id),
+            bet=bet,
+            language=ctx.language,
+            bot=callback.bot,
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.message_id,
+        )
+
+    elif action == "freespin":
+        try:
+            bet = int(parts[2])
+            freespins = int(parts[3])
+        except (IndexError, ValueError):
+            return
+        from world.casino.games.slots import play_slots
+        await play_slots(
+            user_id=str(ctx.user.id),
+            bet=bet,
+            language=ctx.language,
+            bot=callback.bot,
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.message_id,
+            freespins_left=freespins,
+            is_freespin=True,
+        )
+
+    elif action == "paytable":
+        from world.casino.games.slots import paytable_text
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        bet_part = parts[2] if len(parts) > 2 else "100"
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="◀️ Назад", callback_data=f"slots:back:{bet_part}")]
+        ])
+        try:
+            await callback.message.edit_text(paytable_text(), parse_mode="Markdown", reply_markup=keyboard)
+        except Exception:
+            pass
+
+    elif action == "back":
+        try:
+            bet = int(parts[2])
+        except (IndexError, ValueError):
+            bet = 100
+        from world.economy.wallet import get_balance
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        balance = await get_balance(str(ctx.user.id))
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text=f"🔄 Крутить ({bet} Ecoins)", callback_data=f"slots:spin:{bet}")],
+            [InlineKeyboardButton(text="📊 Выплаты", callback_data=f"slots:paytable:{bet}"),
+             InlineKeyboardButton(text="🎰 Казино", callback_data="profile:casino")],
+        ])
+        try:
+            await callback.message.edit_text(
+                f"🎰 *Слоты*\n\n💰 Баланс: *{balance} Ecoins*\n\n_Нажми «Крутить» чтобы начать!_",
+                parse_mode="Markdown",
+                reply_markup=keyboard,
+            )
+        except Exception:
+            pass
+
+
 @callback_router.callback_query(F.data.startswith("casino:"))
 async def cb_casino(callback: CallbackQuery) -> None:
     parts = callback.data.split(":")
