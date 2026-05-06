@@ -22,7 +22,7 @@ async def handle_group_message(message: Message) -> None:
     from api.auth.identity import get_or_create_user
     from bot.brain.group_router import process_group_message
 
-    
+    ctx = BrainContext(
         telegram_id=message.from_user.id,
         chat_id=message.chat.id,
         message_id=message.message_id,
