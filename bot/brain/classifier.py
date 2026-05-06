@@ -121,7 +121,6 @@ PATTERN_MAP: list[tuple[str, Intent]] = [
     # Мут
     (r"^/mute\b|\bмут\b|замутить|заглушить|помолчи|заткнись|молчать|замолчи|\bsilence\b|\bmute\b", Intent.GROUP_MUTE),
     # Кик
-    (r"^/kick\b|\bкик\b|кикнуть|выгнать|вышвырнуть|выкинуть|\bkick\b|удалить из группы", Intent.GROUP_KICK),
     # Повышение / понижение
     (r"^/promote\b|\bповысить\b|повышение\b|продвинуть\b|\bpromote\b|назначить\b", Intent.GROUP_PROMOTE),
     (r"^/demote\b|\bпонизить\b|понижение\b|разжаловать\b|\bdemote\b|снять роль", Intent.GROUP_DEMOTE),
