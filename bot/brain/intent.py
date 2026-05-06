@@ -50,9 +50,11 @@ class Intent(str, Enum):
     CASINO_OPEN = "casino_open"
     CASINO_SLOTS = "casino_slots"
     CASINO_ROULETTE = "casino_roulette"
-    CASINO_BLACKJACK = "casino_blackjack"
-    CASINO_CRASH = "casino_crash"
-    CASINO_POKER = "casino_poker"
+    CASINO_DICE = "casino_dice"
+    CASINO_COIN = "casino_coin"
+    CASINO_MINES = "casino_mines"
+    CASINO_JOKER = "casino_joker"
+    CASINO_WHEEL = "casino_wheel"
 
     # --- Мини-игры ---
     GAME_QUIZ = "game_quiz"
@@ -108,7 +110,8 @@ class Intent(str, Enum):
 # Категории интентов для быстрой проверки
 CASINO_INTENTS = {
     Intent.CASINO_OPEN, Intent.CASINO_SLOTS, Intent.CASINO_ROULETTE,
-    Intent.CASINO_BLACKJACK, Intent.CASINO_CRASH, Intent.CASINO_POKER,
+    Intent.CASINO_DICE, Intent.CASINO_COIN, Intent.CASINO_MINES,
+    Intent.CASINO_JOKER, Intent.CASINO_WHEEL,
 }
 
 GAME_INTENTS = {
@@ -181,7 +184,8 @@ GROUP_WORLD_INTENTS = {
     Intent.HELP, Intent.BALANCE, Intent.DAILY_BONUS, Intent.LEADERBOARD,
     Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL,
     Intent.CASINO_OPEN, Intent.CASINO_SLOTS, Intent.CASINO_ROULETTE,
-    Intent.CASINO_BLACKJACK, Intent.CASINO_CRASH, Intent.CASINO_POKER,
+    Intent.CASINO_DICE, Intent.CASINO_COIN, Intent.CASINO_MINES,
+    Intent.CASINO_JOKER, Intent.CASINO_WHEEL,
     Intent.RELATIONSHIP_STATUS, Intent.RELATIONSHIP_BREAKUP,
     Intent.MARRIAGE_DIVORCE, Intent.FAMILY_ADD, Intent.FAMILY_VIEW,
     Intent.BLACKLIST_ADD, Intent.BLACKLIST_REMOVE,

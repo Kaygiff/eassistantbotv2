@@ -75,11 +75,13 @@ PATTERN_MAP: list[tuple[str, Intent]] = [
 
     # --- Казино ---
     (r"^/casino\b|открой казино|хочу в казино|казино", Intent.CASINO_OPEN),
-    (r"^/slots\b|слоты|крути слоты|однорукий бандит|хочу слоты", Intent.CASINO_SLOTS),
-    (r"^/roulette\b|рулетк|крути рулетку|поставь на рулетку", Intent.CASINO_ROULETTE),
-    (r"^/blackjack\b|блэкджек|blackjack|двадцать одно", Intent.CASINO_BLACKJACK),
-    (r"^/crash\b|краш|crash game|игра краш", Intent.CASINO_CRASH),
-    (r"^/poker\b|покер|poker|сыграй в покер", Intent.CASINO_POKER),
+    (r"^/slots\b|^/слоты\b|слоты \d+|крути слоты|хочу слоты", Intent.CASINO_SLOTS),
+    (r"^/roulette\b|^/рулетка\b|рулетка .+ \d+|крути рулетку", Intent.CASINO_ROULETTE),
+    (r"^/dice\b|^/кости\b|кости \d+", Intent.CASINO_DICE),
+    (r"^/coin\b|^/монетка\b|монетка \d+", Intent.CASINO_COIN),
+    (r"^/mines\b|^/мины\b|мины \d+", Intent.CASINO_MINES),
+    (r"^/joker\b|^/джокер\b|джокер \d+", Intent.CASINO_JOKER),
+    (r"^/wheel\b|^/колесо\b|^/фортуна\b|колесо \d+|фортуна \d+", Intent.CASINO_WHEEL),
 
     # --- Мини-игры ---
     (r"^/quiz\b|викторина|quiz|задай вопрос|тест на знания", Intent.GAME_QUIZ),

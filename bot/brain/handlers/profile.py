@@ -32,6 +32,9 @@ async def handle_profile_view(ctx: BrainContext, bot) -> None:
             InlineKeyboardButton(text="✏️ Редактировать", callback_data="profile:edit"),
             InlineKeyboardButton(text="💰 Ecoins", callback_data="ecoins:menu"),
         ],
+        [
+            InlineKeyboardButton(text="🎰 Казино", callback_data="profile:casino"),
+        ],
     ])
     await bot.send_message(
         ctx.chat_id,

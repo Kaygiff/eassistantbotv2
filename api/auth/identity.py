@@ -173,3 +173,4 @@ async def update_user_field(user_id: str, **fields) -> User:
         .execute()
     )
     return User(**res.data[0])
+

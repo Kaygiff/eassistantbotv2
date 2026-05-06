@@ -65,6 +65,24 @@ async def cb_profile(callback: CallbackQuery) -> None:
     action = parts[1]
     ctx = await _get_ctx_and_user(callback)
 
+    if action == "casino":
+        from bot.brain.handlers.casino import _casino_keyboard
+        from world.economy.wallet import get_balance
+        balance = await get_balance(str(ctx.user.id))
+        from core.i18n.loader import t
+        await callback.message.edit_text(
+            (
+                f"🎰 *Казино*\n\n"
+                f"💰 Твой баланс: *{balance} Ecoins*\n\n"
+                f"{t(ctx.language, 'casino.warning')}\n\n"
+                f"Выбери игру:"
+            ),
+            parse_mode="Markdown",
+            reply_markup=_casino_keyboard(),
+        )
+        await callback.answer()
+        return
+
     if action == "edit":
         # Если есть третья часть — это выбор конкретного поля
         if len(parts) > 2:
@@ -139,22 +157,66 @@ async def cb_pet(callback: CallbackQuery) -> None:
 # --- Казино ---
 @callback_router.callback_query(F.data.startswith("casino:"))
 async def cb_casino(callback: CallbackQuery) -> None:
-    game = callback.data.split(":")[1]
+    parts = callback.data.split(":")
+    action = parts[1]
     ctx = await _get_ctx_and_user(callback)
-    ctx.text = f"/{game}"
 
     from bot.brain.intent import Intent
-    intent_map = {
-        "slots": Intent.CASINO_SLOTS,
-        "roulette": Intent.CASINO_ROULETTE,
-        "blackjack": Intent.CASINO_BLACKJACK,
-        "crash": Intent.CASINO_CRASH,
-        "poker": Intent.CASINO_POKER,
-    }
-    ctx.set_intent(intent_map.get(game, Intent.CASINO_OPEN))
-
     from core.i18n.loader import t
-    await callback.message.edit_text(t(ctx.language, "casino.enter_bet"))
+
+    # FSM-игры: мины и джокер — обрабатываем in-place
+    if action == "mines" and len(parts) >= 3:
+        from world.casino.games.mines import handle_mines_callback
+        sub = parts[2]
+        param = parts[3] if len(parts) > 3 else None
+        text, keyboard = await handle_mines_callback(str(ctx.user.id), sub, param)
+        if keyboard:
+            await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
+        else:
+            await callback.message.edit_text(text, parse_mode="Markdown")
+        await callback.answer()
+        return
+
+    if action == "joker" and len(parts) >= 3:
+        from world.casino.games.joker import handle_joker_callback
+        sub = parts[2]
+        param = parts[3] if len(parts) > 3 else None
+        text, keyboard = await handle_joker_callback(str(ctx.user.id), sub, param)
+        if keyboard:
+            await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
+        else:
+            await callback.message.edit_text(text, parse_mode="Markdown")
+        await callback.answer()
+        return
+
+    # Обычные игры — просим ввести ставку через FSM
+    intent_map = {
+        "slots":   Intent.CASINO_SLOTS,
+        "roulette": Intent.CASINO_ROULETTE,
+        "dice":    Intent.CASINO_DICE,
+        "coin":    Intent.CASINO_COIN,
+        "mines":   Intent.CASINO_MINES,
+        "joker":   Intent.CASINO_JOKER,
+        "wheel":   Intent.CASINO_WHEEL,
+    }
+
+    game_hints = {
+        "slots":    "`/слоты <ставка>`",
+        "roulette": "`/рулетка <к/ч/число> <ставка>`",
+        "dice":     "`/кости <ставка>`",
+        "coin":     "`/монетка <ставка>`",
+        "mines":    "`/мины <ставка>`",
+        "joker":    "`/джокер <ставка>`",
+        "wheel":    "`/колесо <ставка>`",
+    }
+
+    hint = game_hints.get(action, "")
+    from api.auth.session import set_fsm_state, set_fsm_data
+    await set_fsm_state(str(ctx.user.id), f"casino:awaiting_bet:{action}")
+    await callback.message.edit_text(
+        f"💰 *Укажи ставку*\n\nМинимум: 10 Ecoins\n\nИли используй команду: {hint}",
+        parse_mode="Markdown",
+    )
     await callback.answer()
 
 
