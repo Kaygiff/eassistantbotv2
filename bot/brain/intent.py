@@ -85,7 +85,6 @@ class Intent(str, Enum):
     GROUP_UNBAN = "group_unban"
     GROUP_MUTE = "group_mute"
     GROUP_UNMUTE = "group_unmute"
-    GROUP_KICK = "group_kick"
     GROUP_PROMOTE = "group_promote"
     GROUP_DEMOTE = "group_demote"
     GROUP_SETTINGS = "group_settings"
@@ -138,7 +137,7 @@ GROUP_MODERATION_INTENTS = {
     Intent.GROUP_WARN, Intent.GROUP_UNWARN, Intent.GROUP_WARNS, Intent.GROUP_CLEARWARNS,
     Intent.GROUP_BAN, Intent.GROUP_UNBAN,
     Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
-    Intent.GROUP_KICK, Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
+    Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
     Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
     Intent.GROUP_ROLE, Intent.GROUP_ADMINS,
 }
@@ -174,7 +173,7 @@ GROUP_WORLD_INTENTS = {
     Intent.GROUP_WARN, Intent.GROUP_UNWARN, Intent.GROUP_WARNS, Intent.GROUP_CLEARWARNS,
     Intent.GROUP_BAN, Intent.GROUP_UNBAN,
     Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
-    Intent.GROUP_KICK, Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
+    Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
     Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
     Intent.GROUP_ROLE, Intent.GROUP_ADMINS,
     Intent.HELP, Intent.BALANCE, Intent.DAILY_BONUS,
