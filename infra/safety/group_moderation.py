@@ -157,6 +157,66 @@ async def sync_group_owner(group_id: str, bot, chat_id: int) -> None:
         _log.warning(f"[GroupMod] sync_group_owner failed: {e}")
 
 
+async def sync_telegram_admins(group_id: str, bot, chat_id: int) -> None:
+    """
+    Синхронизирует всех Telegram-администраторов группы в group_members.
+    Не трогает роли выше 'admin' (owner/co_owner) — только назначает 'admin'
+    тем, кто является администратором в Telegram но ещё не имеет роли в БД.
+    """
+    import logging
+    _log = logging.getLogger(__name__)
+    try:
+        admins = await bot.get_chat_administrators(chat_id)
+        db = get_supabase_admin()
+        for member in admins:
+            if member.status not in ("administrator", "creator"):
+                continue
+            tg_id = member.user.id
+            # Ищем пользователя в БД
+            res = (
+                db.table("users")
+                .select("id")
+                .eq("telegram_id", tg_id)
+                .maybe_single()
+                .execute()
+            )
+            if not res.data:
+                res = (
+                    db.table("users")
+                    .select("id")
+                    .eq("telegram_id", str(tg_id))
+                    .maybe_single()
+                    .execute()
+                )
+            if not res.data:
+                continue  # Пользователь не зарегистрирован в боте — пропускаем
+
+            user_uuid = res.data["id"]
+            # Проверяем текущую роль в БД
+            existing = (
+                db.table("group_members")
+                .select("role")
+                .eq("group_id", group_id)
+                .eq("user_id", user_uuid)
+                .maybe_single()
+                .execute()
+            )
+            existing_role = existing.data["role"] if existing.data else None
+            privileged = {"owner", "co_owner"}
+
+            if member.status == "creator":
+                if existing_role not in privileged:
+                    await set_member_role(group_id, user_uuid, "owner")
+            elif member.status == "administrator":
+                # Не понижаем тех, кому вручную дали более высокую роль в боте
+                if existing_role not in privileged and existing_role != "admin":
+                    await set_member_role(group_id, user_uuid, "admin")
+
+        _log.info(f"[GroupMod] Telegram admins synced for group {group_id}")
+    except Exception as e:
+        _log.warning(f"[GroupMod] sync_telegram_admins failed: {e}")
+
+
 # ---------------------------------------------------------------------------
 # Роли
 # ---------------------------------------------------------------------------
