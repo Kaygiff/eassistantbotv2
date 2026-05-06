@@ -155,6 +155,44 @@ async def cb_pet(callback: CallbackQuery) -> None:
 
 
 # --- Казино ---
+@callback_router.callback_query(F.data.startswith("mines:"))
+async def cb_mines(callback: CallbackQuery) -> None:
+    parts = callback.data.split(":")
+    action = parts[1]  # open / cashout
+    param = parts[2] if len(parts) > 2 else None
+    ctx = await _get_ctx_and_user(callback)
+
+    from world.casino.games.mines import handle_mines_callback
+    text, keyboard = await handle_mines_callback(str(ctx.user.id), action, param)
+    try:
+        if keyboard:
+            await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
+        else:
+            await callback.message.edit_text(text, parse_mode="Markdown")
+    except Exception:
+        pass
+    await callback.answer()
+
+
+@callback_router.callback_query(F.data.startswith("joker:"))
+async def cb_joker(callback: CallbackQuery) -> None:
+    parts = callback.data.split(":")
+    action = parts[1]  # pick / cashout
+    param = parts[2] if len(parts) > 2 else None
+    ctx = await _get_ctx_and_user(callback)
+
+    from world.casino.games.joker import handle_joker_callback
+    text, keyboard = await handle_joker_callback(str(ctx.user.id), action, param)
+    try:
+        if keyboard:
+            await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
+        else:
+            await callback.message.edit_text(text, parse_mode="Markdown")
+    except Exception:
+        pass
+    await callback.answer()
+
+
 @callback_router.callback_query(F.data.startswith("casino:"))
 async def cb_casino(callback: CallbackQuery) -> None:
     parts = callback.data.split(":")
@@ -164,32 +202,7 @@ async def cb_casino(callback: CallbackQuery) -> None:
     from bot.brain.intent import Intent
     from core.i18n.loader import t
 
-    # FSM-игры: мины и джокер — обрабатываем in-place
-    if action == "mines" and len(parts) >= 3:
-        from world.casino.games.mines import handle_mines_callback
-        sub = parts[2]
-        param = parts[3] if len(parts) > 3 else None
-        text, keyboard = await handle_mines_callback(str(ctx.user.id), sub, param)
-        if keyboard:
-            await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
-        else:
-            await callback.message.edit_text(text, parse_mode="Markdown")
-        await callback.answer()
-        return
-
-    if action == "joker" and len(parts) >= 3:
-        from world.casino.games.joker import handle_joker_callback
-        sub = parts[2]
-        param = parts[3] if len(parts) > 3 else None
-        text, keyboard = await handle_joker_callback(str(ctx.user.id), sub, param)
-        if keyboard:
-            await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=keyboard)
-        else:
-            await callback.message.edit_text(text, parse_mode="Markdown")
-        await callback.answer()
-        return
-
-    # Обычные игры — просим ввести ставку через FSM
+    # Обычные игры — просим ввести ставку
     intent_map = {
         "slots":   Intent.CASINO_SLOTS,
         "roulette": Intent.CASINO_ROULETTE,
