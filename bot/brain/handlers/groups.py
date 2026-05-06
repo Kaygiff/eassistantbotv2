@@ -132,13 +132,14 @@ async def handle_group_admins(ctx: BrainContext, bot) -> None:
         await bot.send_message(ctx.chat_id, "❌ Эта команда работает только в группе.")
         return
 
-    from infra.safety.group_moderation import sync_group_owner
-    await sync_group_owner(ctx.group_id, bot, ctx.chat_id)
+    # Синхронизируем владельца И всех Telegram-администраторов в БД
+    from infra.safety.group_moderation import sync_telegram_admins
+    await sync_telegram_admins(ctx.group_id, bot, ctx.chat_id)
 
     from infra.db.supabase import get_supabase_admin
     db = get_supabase_admin()
 
-    # Получаем участников с ролями
+    # Получаем участников с ролями из БД
     members_res = (
         db.table("group_members")
         .select("user_id, role")
@@ -146,15 +147,36 @@ async def handle_group_admins(ctx: BrainContext, bot) -> None:
         .in_("role", ["owner", "co_owner", "admin", "moderator"])
         .execute()
     )
+
+    # Параллельно получаем актуальный список из Telegram как источник имён
+    tg_admins: dict[int, str] = {}  # tg_id -> display_name
+    try:
+        tg_admin_list = await bot.get_chat_administrators(ctx.chat_id)
+        for m in tg_admin_list:
+            u = m.user
+            name = u.first_name or ""
+            if u.last_name:
+                name += f" {u.last_name}"
+            tg_admins[u.id] = name.strip() or f"@{u.username}" if u.username else str(u.id)
+    except Exception:
+        pass
+
     if not members_res or not members_res.data:
-        await bot.send_message(ctx.chat_id, "👥 В группе нет назначенных администраторов.")
+        # Даже если в БД пусто — покажем Telegram-администраторов
+        if tg_admins:
+            lines = ["👥 *Администраторы группы:*\n"]
+            for tg_id, name in tg_admins.items():
+                lines.append(f"🛡 Администратор — {name}")
+            await bot.send_message(ctx.chat_id, "\n".join(lines), parse_mode="Markdown")
+        else:
+            await bot.send_message(ctx.chat_id, "👥 В группе нет назначенных администраторов.")
         return
 
-    # Получаем имена пользователей отдельным запросом
+    # Получаем имена из таблицы users + telegram_id для сопоставления с tg_admins
     user_ids = [m["user_id"] for m in members_res.data]
     users_res = (
         db.table("users")
-        .select("id, first_name, username")
+        .select("id, telegram_id, first_name, username")
         .in_("id", user_ids)
         .execute()
     )
@@ -166,12 +188,25 @@ async def handle_group_admins(ctx: BrainContext, bot) -> None:
         "admin":     "🛡 Администратор",
         "moderator": "⚔️ Модератор",
     }
+
+    # Сортируем по иерархии роли
+    from infra.safety.group_moderation import role_index
+    members_sorted = sorted(members_res.data, key=lambda m: -role_index(m["role"]))
+
     lines = ["👥 *Администраторы группы:*\n"]
-    for m in members_res.data:
+    for m in members_sorted:
         u = users_map.get(m["user_id"]) or {}
-        first_name = u.get("first_name")
-        username = u.get("username")
-        name = first_name or (f"@{username}" if username else "—")
+        # Пробуем имя из БД пользователей
+        name = u.get("first_name") or (f"@{u['username']}" if u.get("username") else None)
+        # Если не нашли — ищем имя в Telegram по telegram_id
+        if not name and u.get("telegram_id"):
+            tg_id_val = u["telegram_id"]
+            try:
+                name = tg_admins.get(int(tg_id_val))
+            except (ValueError, TypeError):
+                pass
+        name = name or "—"
         role_label = role_names.get(m["role"], m["role"])
         lines.append(f"{role_label} — {name}")
+
     await bot.send_message(ctx.chat_id, "\n".join(lines), parse_mode="Markdown")
