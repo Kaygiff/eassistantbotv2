@@ -234,13 +234,16 @@ async def kick_user_from_group(ctx: BrainContext, bot) -> str:
     if not await _check_permission(ctx, CAN_KICK, bot):
         return ""
     target_id, target_name, target_tg_id = await _get_target(ctx, bot)
+    logger.info(f"[Kick] target_id={target_id} target_name={target_name} target_tg_id={target_tg_id}")
     if not target_id and not target_tg_id:
-        return "👥 Укажи пользователя."
+        return "👥 Укажи пользователя через реплей на его сообщение."
     if not target_tg_id:
         return f"❌ Не удалось кикнуть *{target_name}* — Telegram ID не найден."
+    logger.info(f"[Kick] Attempting ban chat_id={ctx.chat_id} tg_id={target_tg_id} type={type(target_tg_id)}")
     try:
-        await bot.ban_chat_member(ctx.chat_id, target_tg_id)
-        await bot.unban_chat_member(ctx.chat_id, target_tg_id)
+        await bot.ban_chat_member(ctx.chat_id, int(target_tg_id))
+        await bot.unban_chat_member(ctx.chat_id, int(target_tg_id))
+        logger.info(f"[Kick] Success: {target_name} kicked")
     except Exception as e:
         logger.warning(f"[Moderation] Telegram kick failed: {e}")
         return f"❌ Не удалось кикнуть *{target_name}*: {e}"
@@ -278,4 +281,3 @@ async def demote_user_in_group(ctx: BrainContext, bot) -> str:
     if not success:
         return f"❌ Не удалось понизить *{target_name}*. Недостаточно прав."
     return f"⬇️ *{target_name}*: {ROLE_NAMES.get(old_role, old_role)} → {ROLE_NAMES.get(new_role, new_role)}"
-    
