@@ -32,17 +32,18 @@ PATTERN_MAP: list[tuple[str, Intent]] = [
     # --- Системные ---
     (r"^/start\b|^старт$|^начать$", Intent.START),
     (r"^/help\b|помог|что умеешь|список команд|что ты умеешь|команды", Intent.HELP),
-    (r"^/settings\b|настроить бота|^настройки профиля|^мои настройки", Intent.SETTINGS),
+    (r"^/settings\b|настройк|настроить бота", Intent.SETTINGS),
 
     # --- Профиль ---
     (r"^/profile\b|мой профил|моя анкет|посмотреть профил", Intent.PROFILE_VIEW),
     (r"(измени|редактир|поменя|сменить|обнови).*(профил|имя|никнейм|ассистент)", Intent.PROFILE_EDIT),
 
     # --- Экономика ---
-    (r"^/balance\b|мо[её]? баланс|мой баланс|сколько.*(монет|экоин|ecoins)|покажи баланс|мои монет", Intent.BALANCE),
-    (r"^/daily\b|ежедневн|бонус дня|получить бонус|дейли|дать бонус", Intent.DAILY_BONUS),
-    (r"(перевест|отправ|перекин).*(монет|экоин|ecoins)|^/transfer\b", Intent.TRANSFER),
-    (r"^/referral\b|реферал|пригласи|моя ссылка|реф.ссылка", Intent.REFERRAL),
+    (r"^/balance\b|^баланс$|^мой баланс$|^мои монеты$|сколько.*(монет|экоин|ecoins)|покажи баланс", Intent.BALANCE),
+    (r"^/daily\b|^бонус$|ежедневн|бонус дня|дейли", Intent.DAILY_BONUS),
+    (r"^(передать|дать|отдать|скинуть)\s+\d+|^/transfer\b", Intent.TRANSFER),
+    (r"^/referral\b|^рефералы$|^реф$|^рефер$|реферальная ссылка|моя реф", Intent.REFERRAL),
+    (r"^/top\b|^лидеры$|^топ$|таблица лидеров|лучшие по монетам", Intent.LEADERBOARD),
 
     # --- Питомец ---
     (r"^/pet\b|мой питомец|состояние питомца|как питомец|питомец жив", Intent.PET_STATUS),
@@ -125,7 +126,7 @@ PATTERN_MAP: list[tuple[str, Intent]] = [
     (r"^/promote\b|\bповысить\b|повышение\b|продвинуть\b|\bpromote\b|назначить\b", Intent.GROUP_PROMOTE),
     (r"^/demote\b|\bпонизить\b|понижение\b|разжаловать\b|\bdemote\b|снять роль", Intent.GROUP_DEMOTE),
     # Настройки / статистика / приветствие
-    (r"^/groupsettings\b|^настройки группы|^настройки чата|^настройки$|^настройки бота в группе|^конфиг группы", Intent.GROUP_SETTINGS),
+    (r"^/groupsettings\b|настройки группы", Intent.GROUP_SETTINGS),
     (r"^/stats\b|\bстатистика\b|активность группы", Intent.GROUP_STATS),
     (r"^/setwelcome\b|приветствие группы|настроить приветствие", Intent.GROUP_WELCOME),
     # Роль / администраторы — ВЫШЕ профиля чтобы не перехватывался
