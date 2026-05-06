@@ -103,7 +103,10 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
             await bot.send_message(ctx.chat_id, t(ctx.language, "common.banned"))
         return
 
-    # 5. Голосовое/видео → STT
+    # 5. FSM middleware — перехватываем если пользователь ожидает ввода текста
+    from bot.onboarding.fsm_middleware import handle_fsm
+    if await handle_fsm(ctx, bot):
+        return
     # Транскрибируем всегда — чтобы люди могли прочитать вместо прослушивания.
     # Если в тексте есть имя бота или world-команда — дополнительно обрабатываем.
     if ctx.is_voice and ctx.voice_file_id:
