@@ -89,14 +89,12 @@ async def handle_slots(ctx: BrainContext, bot) -> None:
     if not await _check_bet(ctx, bot, bet):
         return
     from world.casino.games.slots import play_slots
-    sent = await bot.send_message(ctx.chat_id, "🎰 *Слоты*\n\n_Запуск..._", parse_mode="Markdown")
     await play_slots(
         user_id=str(ctx.user.id),
         bet=bet,
         language=ctx.language,
         bot=bot,
         chat_id=ctx.chat_id,
-        message_id=sent.message_id,
     )
 
 
