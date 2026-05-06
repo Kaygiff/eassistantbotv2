@@ -2,6 +2,7 @@
 auth/identity.py — Идентификация пользователя.
 Telegram ID (внешний) + внутренний UUID.
 Получение или создание профиля при первом обращении.
+При каждом входе синхронизирует username/имя/premium из Telegram.
 """
 
 from __future__ import annotations
@@ -45,7 +46,6 @@ async def get_user_by_uuid(user_id: str) -> Optional[User]:
 async def create_user(data: UserCreate) -> User:
     """
     Создаёт нового пользователя + кошелёк + запись daily_bonuses.
-    Всё в одной транзакции через последовательные вызовы.
     """
     user_id = str(uuid.uuid4())
 
@@ -58,7 +58,10 @@ async def create_user(data: UserCreate) -> User:
             "telegram_id": data.telegram_id,
             "username": data.username,
             "first_name": data.first_name,
+            "last_name": data.last_name,
             "language": data.language,
+            "locale": data.locale,
+            "is_premium": data.is_premium,
             "assistant_name": data.assistant_name,
         })
         .execute()
@@ -80,17 +83,70 @@ async def create_user(data: UserCreate) -> User:
     return user
 
 
+async def sync_user_telegram_data(
+    user: User,
+    username: Optional[str],
+    first_name: Optional[str],
+    last_name: Optional[str],
+    is_premium: bool,
+    locale: Optional[str],
+) -> User:
+    """
+    Обновляет username/имя/premium если они изменились в Telegram.
+    Также обновляет last_seen_at и инкрементирует messages_count.
+    Возвращает обновлённого пользователя.
+    """
+    updates: dict = {
+        "last_seen_at": "now()",
+        "messages_count": user.messages_count + 1,
+    }
+
+    if user.username != username:
+        updates["username"] = username
+    if user.first_name != first_name:
+        updates["first_name"] = first_name
+    if user.last_name != last_name:
+        updates["last_name"] = last_name
+    if user.is_premium != is_premium:
+        updates["is_premium"] = is_premium
+    if locale and user.locale != locale:
+        updates["locale"] = locale
+
+    res = (
+        get_supabase_admin()
+        .table("users")
+        .update(updates)
+        .eq("id", str(user.id))
+        .execute()
+    )
+    return User(**res.data[0])
+
+
 async def get_or_create_user(
     telegram_id: int,
     username: Optional[str] = None,
     first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
+    is_premium: bool = False,
+    locale: Optional[str] = None,
 ) -> tuple[User, bool]:
     """
     Возвращает (user, is_new).
     is_new=True если пользователь только что создан.
+    При каждом вызове синхронизирует данные из Telegram.
     """
     user = await get_user_by_telegram_id(telegram_id)
+
     if user:
+        # Синхронизируем Telegram-данные при каждом входе
+        user = await sync_user_telegram_data(
+            user=user,
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            is_premium=is_premium,
+            locale=locale,
+        )
         return user, False
 
     # Создаём с временным именем ассистента — онбординг его установит
@@ -98,7 +154,10 @@ async def get_or_create_user(
         telegram_id=telegram_id,
         username=username,
         first_name=first_name,
+        last_name=last_name,
         language="ru",
+        locale=locale,
+        is_premium=is_premium,
         assistant_name="Ассистент",
     ))
     return new_user, True
