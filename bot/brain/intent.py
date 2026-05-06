@@ -20,6 +20,7 @@ class Intent(str, Enum):
     DAILY_BONUS = "daily_bonus"
     TRANSFER = "transfer"
     REFERRAL = "referral"
+    LEADERBOARD = "leaderboard"
 
     # --- Питомец ---
     PET_STATUS = "pet_status"
@@ -92,7 +93,6 @@ class Intent(str, Enum):
     GROUP_WELCOME = "group_welcome"
     GROUP_ROLE = "group_role"
     GROUP_ADMINS = "group_admins"
-    GROUP_RULES = "group_rules"
 
     # --- Системные ---
     START = "start"
@@ -131,7 +131,7 @@ VIRTUAL_WORLD_INTENTS = {
 }
 
 ECONOMY_INTENTS = {
-    Intent.BALANCE, Intent.DAILY_BONUS, Intent.TRANSFER, Intent.REFERRAL,
+    Intent.BALANCE, Intent.DAILY_BONUS, Intent.TRANSFER, Intent.REFERRAL, Intent.LEADERBOARD,
 }
 
 GROUP_MODERATION_INTENTS = {
@@ -140,7 +140,7 @@ GROUP_MODERATION_INTENTS = {
     Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
     Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
     Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
-    Intent.GROUP_ROLE, Intent.GROUP_ADMINS, Intent.GROUP_RULES,
+    Intent.GROUP_ROLE, Intent.GROUP_ADMINS,
 }
 
 TASK_INTENTS = {
@@ -176,8 +176,8 @@ GROUP_WORLD_INTENTS = {
     Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
     Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
     Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
-    Intent.GROUP_ROLE, Intent.GROUP_ADMINS, Intent.GROUP_RULES,
-    Intent.HELP, Intent.BALANCE, Intent.DAILY_BONUS,
+    Intent.GROUP_ROLE, Intent.GROUP_ADMINS,
+    Intent.HELP, Intent.BALANCE, Intent.DAILY_BONUS, Intent.LEADERBOARD,
     Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL,
     Intent.CASINO_OPEN, Intent.CASINO_SLOTS, Intent.CASINO_ROULETTE,
     Intent.CASINO_BLACKJACK, Intent.CASINO_CRASH, Intent.CASINO_POKER,
