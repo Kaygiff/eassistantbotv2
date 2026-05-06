@@ -136,17 +136,30 @@ async def handle_group_admins(ctx: BrainContext, bot) -> None:
     await sync_group_owner(ctx.group_id, bot, ctx.chat_id)
 
     from infra.db.supabase import get_supabase_admin
-    res = (
-        get_supabase_admin()
-        .table("group_members")
-        .select("role, users(first_name, username)")
+    db = get_supabase_admin()
+
+    # Получаем участников с ролями
+    members_res = (
+        db.table("group_members")
+        .select("user_id, role")
         .eq("group_id", ctx.group_id)
         .in_("role", ["owner", "co_owner", "admin", "moderator"])
         .execute()
     )
-    if not res or not res.data:
+    if not members_res or not members_res.data:
         await bot.send_message(ctx.chat_id, "👥 В группе нет назначенных администраторов.")
         return
+
+    # Получаем имена пользователей отдельным запросом
+    user_ids = [m["user_id"] for m in members_res.data]
+    users_res = (
+        db.table("users")
+        .select("id, first_name, username")
+        .in_("id", user_ids)
+        .execute()
+    )
+    users_map = {u["id"]: u for u in (users_res.data or [])}
+
     role_names = {
         "owner":     "👑 Владелец",
         "co_owner":  "🌟 Со-владелец",
@@ -154,10 +167,10 @@ async def handle_group_admins(ctx: BrainContext, bot) -> None:
         "moderator": "⚔️ Модератор",
     }
     lines = ["👥 *Администраторы группы:*\n"]
-    for m in res.data:
-        user = m.get("users") or {}
-        first_name = user.get("first_name")
-        username = user.get("username")
+    for m in members_res.data:
+        u = users_map.get(m["user_id"]) or {}
+        first_name = u.get("first_name")
+        username = u.get("username")
         name = first_name or (f"@{username}" if username else "—")
         role_label = role_names.get(m["role"], m["role"])
         lines.append(f"{role_label} — {name}")
