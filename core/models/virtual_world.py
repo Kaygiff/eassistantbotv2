@@ -1,5 +1,5 @@
 """
-Pydantic модели: relationships, family_relations, blacklist, virtual_world_profiles.
+Pydantic модели: relationships, family_relations, blacklist.
 """
 
 from __future__ import annotations
@@ -11,15 +11,6 @@ from pydantic import BaseModel
 
 RelationshipStatus = Literal["dating", "married"]
 FamilyStatus = Literal["pending", "active"]
-
-
-class VirtualWorldProfile(BaseModel):
-    id: UUID
-    user_id: UUID
-    nickname: Optional[str] = None
-    status: Optional[str] = None
-    bio: Optional[str] = None
-    created_at: datetime
 
 
 class Relationship(BaseModel):
