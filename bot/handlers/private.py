@@ -115,6 +115,11 @@ def _build_context(message: Message) -> BrainContext:
         is_group=False,
         is_command=bool(message.text and message.text.startswith("/")),
         reply_to_user_telegram_id=reply_tg_id,
+        tg_username=message.from_user.username,
+        tg_first_name=message.from_user.first_name,
+        tg_last_name=message.from_user.last_name,
+        tg_is_premium=bool(getattr(message.from_user, "is_premium", False)),
+        tg_locale=message.from_user.language_code,
     )
 
 
