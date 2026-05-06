@@ -80,6 +80,7 @@ class Intent(str, Enum):
     GROUP_WARN = "group_warn"
     GROUP_UNWARN = "group_unwarn"
     GROUP_WARNS = "group_warns"
+    GROUP_CLEARWARNS = "group_clearwarns"
     GROUP_BAN = "group_ban"
     GROUP_UNBAN = "group_unban"
     GROUP_MUTE = "group_mute"
@@ -134,7 +135,7 @@ ECONOMY_INTENTS = {
 }
 
 GROUP_MODERATION_INTENTS = {
-    Intent.GROUP_WARN, Intent.GROUP_UNWARN, Intent.GROUP_WARNS,
+    Intent.GROUP_WARN, Intent.GROUP_UNWARN, Intent.GROUP_WARNS, Intent.GROUP_CLEARWARNS, Intent.GROUP_CLEARWARNS,
     Intent.GROUP_BAN, Intent.GROUP_UNBAN,
     Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
     Intent.GROUP_KICK, Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
