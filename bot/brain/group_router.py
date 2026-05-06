@@ -85,7 +85,14 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
         return
 
     # 2. Загружаем пользователя
-    user, is_new = await get_or_create_user(telegram_id=ctx.telegram_id)
+    user, is_new = await get_or_create_user(
+        telegram_id=ctx.telegram_id,
+        username=ctx.tg_username,
+        first_name=ctx.tg_first_name,
+        last_name=ctx.tg_last_name,
+        is_premium=ctx.tg_is_premium,
+        locale=ctx.tg_locale,
+    )
     ctx.user = user
     ctx.is_new_user = is_new
     ctx.language = user.language
