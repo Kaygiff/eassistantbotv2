@@ -285,20 +285,21 @@ async def cb_casino(callback: CallbackQuery) -> None:
     from bot.brain.intent import Intent
     from core.i18n.loader import t
 
-    # Обычные игры — просим ввести ставку
-    intent_map = {
-        "slots":   Intent.CASINO_SLOTS,
-        "roulette": Intent.CASINO_ROULETTE,
-        "dice":    Intent.CASINO_DICE,
-        "coin":    Intent.CASINO_COIN,
-        "mines":   Intent.CASINO_MINES,
-        "joker":   Intent.CASINO_JOKER,
-        "wheel":   Intent.CASINO_WHEEL,
-    }
+    # Рулетка — открываем inline-меню
+    if action == "roulette":
+        from world.casino.games.roulette import open_roulette
+        await open_roulette(
+            user_id=str(ctx.user.id),
+            language=ctx.language,
+            bot=callback.bot,
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.message_id,
+        )
+        await callback.answer()
+        return
 
     game_hints = {
         "slots":    "`/слоты <ставка>`",
-        "roulette": "`/рулетка <к/ч/число> <ставка>`",
         "dice":     "`/кости <ставка>`",
         "coin":     "`/монетка <ставка>`",
         "mines":    "`/мины <ставка>`",
@@ -307,13 +308,139 @@ async def cb_casino(callback: CallbackQuery) -> None:
     }
 
     hint = game_hints.get(action, "")
-    from api.auth.session import set_fsm_state, set_fsm_data
+    from api.auth.session import set_fsm_state
     await set_fsm_state(str(ctx.user.id), f"casino:awaiting_bet:{action}")
     await callback.message.edit_text(
         f"💰 *Укажи ставку*\n\nМинимум: 10 Ecoins\n\nИли используй команду: {hint}",
         parse_mode="Markdown",
     )
     await callback.answer()
+
+
+# --- Рулетка (inline) ---
+@callback_router.callback_query(F.data.startswith("rlt:"))
+async def cb_roulette(callback: CallbackQuery) -> None:
+    parts = callback.data.split(":")
+    action = parts[1]
+    ctx = await _get_ctx_and_user(callback)
+    await callback.answer()
+
+    user_id = str(ctx.user.id)
+    msg = callback.message
+    chat_id = msg.chat.id
+    message_id = msg.message_id
+
+    from world.casino.games.roulette import (
+        open_roulette, show_bet_amount_screen, play_roulette_inline,
+        _keyboard_number_row, _text_choose_type, _keyboard_bet_type,
+    )
+    from world.economy.wallet import get_balance
+
+    # Назад к выбору типа ставки
+    if action == "back" and parts[2] == "types":
+        await open_roulette(
+            user_id=user_id, language=ctx.language,
+            bot=callback.bot, chat_id=chat_id, message_id=message_id,
+        )
+        return
+
+    # Выбор типа ставки — переход к экрану суммы
+    if action == "type":
+        bet_type = parts[2]
+        if bet_type == "number":
+            # Сначала выбираем число — показываем страницу 0
+            kb = _keyboard_number_row(0)
+            try:
+                await callback.bot.edit_message_text(
+                    "🎡 *Рулетка* — Выбери число (0–36)\n\n🟢 = 0  🔴 = красное  ⚫ = чёрное",
+                    chat_id=chat_id, message_id=message_id,
+                    parse_mode="Markdown", reply_markup=kb,
+                )
+            except Exception:
+                pass
+        else:
+            await show_bet_amount_screen(
+                user_id=user_id, bet_type=bet_type, current_amount=0,
+                bot=callback.bot, chat_id=chat_id, message_id=message_id,
+            )
+        return
+
+    # Пагинация страниц выбора числа
+    if action == "numpage":
+        row = int(parts[2])
+        kb = _keyboard_number_row(row)
+        try:
+            await callback.bot.edit_message_reply_markup(
+                chat_id=chat_id, message_id=message_id, reply_markup=kb,
+            )
+        except Exception:
+            pass
+        return
+
+    # Нет действия (заглушка для центровых кнопок навигации)
+    if action == "noop":
+        return
+
+    # Выбрали конкретное число → переход к экрану суммы
+    if action == "num":
+        number = int(parts[2])
+        bet_type = f"number:{number}"
+        await show_bet_amount_screen(
+            user_id=user_id, bet_type=bet_type, current_amount=0,
+            bot=callback.bot, chat_id=chat_id, message_id=message_id,
+        )
+        return
+
+    # Установка суммы кнопкой (+X / ½ / Всё / Сброс)
+    if action == "amount":
+        bet_type = parts[2]
+        amount = int(parts[3])
+        await show_bet_amount_screen(
+            user_id=user_id, bet_type=bet_type, current_amount=amount,
+            bot=callback.bot, chat_id=chat_id, message_id=message_id,
+        )
+        return
+
+    # Ввести своё число — ставим FSM и просим написать сумму
+    if action == "custom":
+        bet_type = parts[2]
+        from api.auth.session import set_fsm_state, set_fsm_data
+        await set_fsm_state(user_id, "casino:roulette_custom_bet")
+        await set_fsm_data(user_id, {
+            "bet_type": bet_type,
+            "chat_id": chat_id,
+            "message_id": message_id,
+        })
+        try:
+            from world.casino.games.roulette import _bet_label, _get_multiplier
+            label = _bet_label(bet_type)
+            mult = _get_multiplier(bet_type)
+            await callback.bot.edit_message_text(
+                f"🎡 *Рулетка* — {label} (×{mult})\n\n✏️ Введи сумму ставки числом:",
+                chat_id=chat_id, message_id=message_id,
+                parse_mode="Markdown",
+            )
+        except Exception:
+            pass
+        return
+
+    # Спин
+    if action == "spin":
+        bet_type = parts[2]
+        bet = int(parts[3])
+        from bot.brain.handlers.casino import MIN_BET, MAX_BET
+        if bet < MIN_BET or bet > MAX_BET:
+            return
+        balance = await get_balance(user_id)
+        if balance < bet:
+            await callback.answer("💸 Недостаточно средств!", show_alert=True)
+            return
+        await play_roulette_inline(
+            user_id=user_id, bet=bet, language=ctx.language,
+            bet_type=bet_type, bot=callback.bot,
+            chat_id=chat_id, message_id=message_id,
+        )
+        return
 
 
 # --- Настройки ---

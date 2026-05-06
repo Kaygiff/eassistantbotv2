@@ -100,22 +100,38 @@ async def handle_slots(ctx: BrainContext, bot) -> None:
 
 @register(Intent.CASINO_ROULETTE)
 async def handle_roulette(ctx: BrainContext, bot) -> None:
-    from world.casino.games.roulette import play_roulette, _parse_bet_type
+    from world.casino.games.roulette import play_roulette, _parse_bet_type, open_roulette
+
     parts = ctx.text.strip().split()
+
+    # Если аргументов нет — открываем inline-меню
+    if len(parts) < 3:
+        await open_roulette(
+            user_id=str(ctx.user.id),
+            language=ctx.language,
+            bot=bot,
+            chat_id=ctx.chat_id,
+        )
+        return
+
+    # Поддержка старой команды: /рулетка к 100
     bet_type_raw = None
     bet = None
     for part in parts[1:]:
-        if bet is None:
-            try:
-                bet = int(part)
-            except ValueError:
-                if bet_type_raw is None:
-                    bet_type_raw = part
-        else:
-            break
+        try:
+            bet = int(part)
+        except ValueError:
+            if bet_type_raw is None:
+                bet_type_raw = part
+
     bet_type = _parse_bet_type(bet_type_raw) if bet_type_raw else "red"
     if bet_type is None:
-        await bot.send_message(ctx.chat_id, "⚠️ Формат: `/рулетка к 100` / `/рулетка ч 100` / `/рулетка 17 100`", parse_mode="Markdown")
+        await open_roulette(
+            user_id=str(ctx.user.id),
+            language=ctx.language,
+            bot=bot,
+            chat_id=ctx.chat_id,
+        )
         return
     if not await _check_bet(ctx, bot, bet):
         return
