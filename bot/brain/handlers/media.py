@@ -12,9 +12,15 @@ from core.i18n import t
 @register(Intent.MUSIC_SEARCH)
 async def handle_music(ctx: BrainContext, bot) -> None:
     # Извлекаем запрос: убираем триггерные слова
+    # Двухпроходная очистка: сначала командные фразы, потом одиночные шум-слова
     query = re.sub(
-        r"(найди музыку|скачай|включи|поставь песню|музыка|трек|скачать песню)\s*",
+        r"(найди\s+(?:музыку|песню|трек)|скачай\s+(?:музыку|песню|трек)|"
+        r"включи|поставь\s+(?:песню|трек|музыку)|хочу послушать|поищи|сыграй|"
+        r"музыкальн\w*|скачать\s+(?:песню|трек))\s*",
         "", ctx.text, flags=re.IGNORECASE
+    ).strip()
+    query = re.sub(
+        r"\b(музыку|музыка|трек|песню|песня)\b\s*", "", query, flags=re.IGNORECASE
     ).strip() or ctx.text
 
     await bot.send_chat_action(ctx.chat_id, "upload_audio")
