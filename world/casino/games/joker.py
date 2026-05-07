@@ -65,7 +65,7 @@ def _history_rows(history: list[dict]) -> list[list[InlineKeyboardButton]]:
             else:
                 icons.append(CARD_JOKER if card == "joker" else CARD_SAFE)
 
-        status = f"x{mult} OK" if result == "win" else "JOKER!"
+        status = f"×{mult} ✅" if result == "win" else "💥 Джокер"
         row = [_noop(icon) for icon in icons]
         row.append(_noop(status))
         rows.append(row)
@@ -93,26 +93,26 @@ def _keyboard_bet(current: int, balance: int) -> InlineKeyboardMarkup:
     halves = []
     if balance > 0:
         halves.append(InlineKeyboardButton(
-            text=f"1/2 ({balance // 2})", callback_data=f"joker:amount:{balance // 2}",
+            text=f"½ ({balance // 2})", callback_data=f"joker:amount:{balance // 2}",
         ))
         halves.append(InlineKeyboardButton(
-            text=f"All in ({balance})", callback_data=f"joker:amount:{balance}",
+            text=f"Всё ({balance})", callback_data=f"joker:amount:{balance}",
         ))
     if halves:
         rows.append(halves)
 
     if current > 0:
         rows.append([InlineKeyboardButton(
-            text=f"Reset (now: {current})", callback_data="joker:amount:0",
+            text=f"🗑 Сбросить ({current})", callback_data="joker:amount:0",
         )])
 
     if current >= 10:
         rows.append([InlineKeyboardButton(
-            text=f"Start! Bet: {current} Ecoins",
+            text=f"🃏 Начать! Ставка: {current} Ecoins",
             callback_data=f"joker:start:{current}",
         )])
 
-    rows.append([InlineKeyboardButton(text="Casino", callback_data="profile:casino")])
+    rows.append([InlineKeyboardButton(text="🎰 Казино", callback_data="profile:casino")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -127,20 +127,13 @@ def _keyboard_round_active(round_num: int, history: list[dict]) -> InlineKeyboar
 
 
 def _keyboard_with_cashout(completed_round: int, next_round: int, bet: int, history: list[dict]) -> InlineKeyboardMarkup:
-    """История + карты следующего раунда + кнопка Забрать снизу."""
+    """История + карты следующего раунда (без кнопки Забрать)."""
     rows = _history_rows(history)
-    # Карты следующего раунда (кликабельные)
     rows.append([
         InlineKeyboardButton(text=CARD_BACK, callback_data=f"joker:pick:{next_round}:0"),
         InlineKeyboardButton(text=CARD_BACK, callback_data=f"joker:pick:{next_round}:1"),
         InlineKeyboardButton(text=CARD_BACK, callback_data=f"joker:pick:{next_round}:2"),
     ])
-    mult   = ROUND_MULTIPLIERS[completed_round - 1]
-    payout = int(bet * mult)
-    rows.append([InlineKeyboardButton(
-        text=f"Take {payout} Ecoins (x{mult})",
-        callback_data="joker:cashout",
-    )])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -148,20 +141,20 @@ def _keyboard_final_win(bet: int, history: list[dict]) -> InlineKeyboardMarkup:
     """После прохождения всех раундов."""
     rows = _history_rows(history)
     rows.append([InlineKeyboardButton(
-        text=f"Play again ({bet} Ecoins)", callback_data=f"joker:restart:{bet}",
+        text=f"🔄 Снова ({bet} Ecoins)", callback_data=f"joker:restart:{bet}",
     )])
-    rows.append([InlineKeyboardButton(text="Casino", callback_data="profile:casino")])
+    rows.append([InlineKeyboardButton(text="🎰 Казино", callback_data="profile:casino")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def _keyboard_game_over(bet: int, history: list[dict]) -> InlineKeyboardMarkup:
     rows = _history_rows(history)
     rows.append([InlineKeyboardButton(
-        text=f"Play again ({bet} Ecoins)", callback_data=f"joker:restart:{bet}",
+        text=f"🔄 Снова ({bet} Ecoins)", callback_data=f"joker:restart:{bet}",
     )])
     rows.append([
-        InlineKeyboardButton(text="Change bet", callback_data="joker:amount:0"),
-        InlineKeyboardButton(text="Casino",     callback_data="profile:casino"),
+        InlineKeyboardButton(text="💰 Изменить ставку", callback_data="joker:amount:0"),
+        InlineKeyboardButton(text="🎰 Казино",     callback_data="profile:casino"),
     ])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -180,30 +173,30 @@ def _build_text(
     final_mult: float | None = None,
     balance: int | None = None,
 ) -> str:
-    header = f"Joker — Bet: {bet} Ecoins\n\n"
+    header = f"🃏 *Джокер* — Ставка: *{bet} Ecoins*\n\n"
 
     if game_over and not cashout and not won:
-        round_info = f"JOKER! You lost on round {history[-1]['round']}\n"
-        round_info += f"Bet lost: {bet} Ecoins"
+        round_info = f"💀 *Джокер! Проигрыш на раунде {history[-1]['round']}*\n"
+        round_info += f"Ставка сгорела: *{bet} Ecoins*"
     elif cashout or (game_over and won):
         payout = int(bet * final_mult)
         profit = payout - bet
-        label = "Cashed out!" if cashout else "MAX WIN!"
-        round_info = f"{label}\n"
-        round_info += f"Multiplier: x{final_mult}\n"
-        round_info += f"Profit: +{profit} Ecoins"
+        label = "Забрал выигрыш" if cashout else "Максимальный выигрыш! 🏆"
+        round_info = f"🎉 *{label}*\n"
+        round_info += f"Множитель: ×{final_mult}\n"
+        round_info += f"Выигрыш: *+{profit} Ecoins*"
     elif current_round:
         mult      = ROUND_MULTIPLIERS[current_round - 1]
         next_mult = ROUND_MULTIPLIERS[current_round] if current_round < MAX_ROUNDS else mult
         round_info = (
-            f"Round {current_round}/{MAX_ROUNDS}\n"
-            f"x{mult}  ->  next: x{next_mult}\n\n"
-            f"Pick a card — avoid the Joker!"
+            f"Раунд *{current_round}/{MAX_ROUNDS}*\n"
+            f"Множитель: ×{mult}  →  следующий: ×{next_mult}\n\n"
+            f"_Выбери карту — избегай Джокера!_"
         )
     else:
         round_info = ""
 
-    bal_line = f"\n\nBalance: {balance} Ecoins" if balance is not None else ""
+    bal_line = f"\n\n💰 Баланс: *{balance} Ecoins*" if balance is not None else ""
     return header + round_info + bal_line
 
 
@@ -220,19 +213,19 @@ async def open_joker(
 ) -> None:
     balance = await get_balance(user_id)
     text = (
-        f"Joker\n\n"
-        f"Balance: {balance} Ecoins\n\n"
-        f"5 rounds, 3 cards (2 safe + 1 Joker).\n"
-        f"Multiplier grows each round!\n"
-        f"x1.5 -> x2.5 -> x4.0 -> x6.5 -> x10.0\n\n"
-        f"Min bet: 10 Ecoins"
+        f"🃏 *Джокер*\n\n"
+        f"💰 Баланс: *{balance} Ecoins*\n\n"
+        f"5 раундов, 3 карты (2 победные + 1 Джокер).\n"
+        f"Множитель растёт с каждым раундом!\n"
+        f"×1.5 → ×2.5 → ×4.0 → ×6.5 → ×10.0\n\n"
+        f"_Минимум: 10 Ecoins_"
     )
     kb = _keyboard_bet(0, balance)
     if message_id:
         try:
             await bot.edit_message_text(
                 text, chat_id=chat_id, message_id=message_id,
-                parse_mode=None, reply_markup=kb,
+                parse_mode="Markdown", reply_markup=kb,
             )
             return
         except Exception:
@@ -249,16 +242,16 @@ async def show_joker_bet_screen(
 ) -> None:
     balance = await get_balance(user_id)
     text = (
-        f"Joker\n\n"
-        f"Balance: {balance} Ecoins\n"
-        f"Current bet: {current} Ecoins\n\n"
-        f"Min bet: 10 Ecoins"
+        f"🃏 *Джокер*\n\n"
+        f"💰 Баланс: *{balance} Ecoins*\n"
+        f"🎯 Ставка: *{current} Ecoins*\n\n"
+        f"_Минимум: 10 Ecoins_"
     )
     kb = _keyboard_bet(current, balance)
     try:
         await bot.edit_message_text(
             text, chat_id=chat_id, message_id=message_id,
-            reply_markup=kb,
+            parse_mode="Markdown", reply_markup=kb,
         )
     except Exception:
         pass
@@ -296,7 +289,7 @@ async def start_joker_inline(
     try:
         await bot.edit_message_text(
             text, chat_id=chat_id, message_id=message_id,
-            reply_markup=kb,
+            parse_mode="Markdown", reply_markup=kb,
         )
     except Exception:
         pass
@@ -379,7 +372,7 @@ async def handle_joker_callback(
         try:
             await bot.edit_message_text(
                 text, chat_id=chat_id, message_id=message_id,
-                reply_markup=kb,
+                parse_mode="Markdown", reply_markup=kb,
             )
         except Exception:
             pass
@@ -435,7 +428,7 @@ async def handle_joker_callback(
             try:
                 await bot.edit_message_text(
                     text, chat_id=chat_id, message_id=message_id,
-                    reply_markup=kb,
+                    parse_mode="Markdown", reply_markup=kb,
                 )
             except Exception:
                 pass
@@ -466,7 +459,7 @@ async def handle_joker_callback(
             try:
                 await bot.edit_message_text(
                     text, chat_id=chat_id, message_id=message_id,
-                    reply_markup=kb,
+                    parse_mode="Markdown", reply_markup=kb,
                 )
             except Exception:
                 pass
@@ -484,7 +477,7 @@ async def handle_joker_callback(
         try:
             await bot.edit_message_text(
                 text, chat_id=chat_id, message_id=message_id,
-                reply_markup=kb,
+                parse_mode="Markdown", reply_markup=kb,
             )
         except Exception:
             pass
