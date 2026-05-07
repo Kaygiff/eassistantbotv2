@@ -219,14 +219,16 @@ async def play_wheel_inline(
             pass
         return
 
-    # 2. Скрыть кнопки
+    # 2. Скрыть кнопки (показываем "Крутим колесо...")
     wheel_str = _render_wheel()
+    spinning_edited = False
     try:
         await bot.edit_message_text(
             f"🎡 *Колесо фортуны*\n\n{wheel_str}\n\n_Крутим колесо..._",
             chat_id=chat_id, message_id=message_id,
             parse_mode="Markdown",
         )
+        spinning_edited = True
     except Exception:
         pass
 
@@ -260,7 +262,7 @@ async def play_wheel_inline(
     # 5. Ждём анимацию 🎡 (~3 сек)
     await asyncio.sleep(3)
 
-    # 6. Показать результат
+    # 6. Показать результат — редактируем исходное сообщение (не шлём новое!)
     wheel_result = _render_wheel(winner_icon)
 
     if payout > 0:
@@ -277,11 +279,27 @@ async def play_wheel_inline(
         f"💰 Баланс: *{balance} Ecoins*"
     )
 
-    await bot.send_message(
-        chat_id, text,
-        parse_mode="Markdown",
-        reply_markup=_keyboard_result(bet),
-    )
+    # Пробуем отредактировать исходное сообщение
+    edited = False
+    if spinning_edited:
+        try:
+            await bot.edit_message_text(
+                text,
+                chat_id=chat_id, message_id=message_id,
+                parse_mode="Markdown",
+                reply_markup=_keyboard_result(bet),
+            )
+            edited = True
+        except Exception:
+            pass
+
+    # Фолбэк: отправляем новым сообщением если edit не сработал
+    if not edited:
+        await bot.send_message(
+            chat_id, text,
+            parse_mode="Markdown",
+            reply_markup=_keyboard_result(bet),
+        )
 
 
 # ---------------------------------------------------------------------------
