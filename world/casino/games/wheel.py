@@ -219,18 +219,18 @@ async def play_wheel_inline(
             pass
         return
 
-    # 2. Скрыть кнопки (показываем "Крутим колесо...")
-    wheel_str = _render_wheel()
-    spinning_edited = False
+    # 2. Удаляем старое сообщение со ставкой, шлём "Крутим..."
     try:
-        await bot.edit_message_text(
-            f"🎡 *Колесо фортуны*\n\n{wheel_str}\n\n_Крутим колесо..._",
-            chat_id=chat_id, message_id=message_id,
-            parse_mode="Markdown",
-        )
-        spinning_edited = True
+        await bot.delete_message(chat_id, message_id)
     except Exception:
         pass
+
+    wheel_str = _render_wheel()
+    spinning_msg = await bot.send_message(
+        chat_id,
+        f"🎡 *Колесо фортуны*\n\n{wheel_str}\n\n_Крутим колесо..._",
+        parse_mode="Markdown",
+    )
 
     # 3. Нативная анимация Telegram 🎡
     await bot.send_dice(chat_id, emoji="🎡")
@@ -262,7 +262,12 @@ async def play_wheel_inline(
     # 5. Ждём анимацию 🎡 (~3 сек)
     await asyncio.sleep(3)
 
-    # 6. Показать результат — редактируем исходное сообщение (не шлём новое!)
+    # 6. Удаляем "Крутим колесо..." и показываем результат
+    try:
+        await bot.delete_message(chat_id, spinning_msg.message_id)
+    except Exception:
+        pass
+
     wheel_result = _render_wheel(winner_icon)
 
     if payout > 0:
@@ -279,27 +284,11 @@ async def play_wheel_inline(
         f"💰 Баланс: *{balance} Ecoins*"
     )
 
-    # Пробуем отредактировать исходное сообщение
-    edited = False
-    if spinning_edited:
-        try:
-            await bot.edit_message_text(
-                text,
-                chat_id=chat_id, message_id=message_id,
-                parse_mode="Markdown",
-                reply_markup=_keyboard_result(bet),
-            )
-            edited = True
-        except Exception:
-            pass
-
-    # Фолбэк: отправляем новым сообщением если edit не сработал
-    if not edited:
-        await bot.send_message(
-            chat_id, text,
-            parse_mode="Markdown",
-            reply_markup=_keyboard_result(bet),
-        )
+    await bot.send_message(
+        chat_id, text,
+        parse_mode="Markdown",
+        reply_markup=_keyboard_result(bet),
+    )
 
 
 # ---------------------------------------------------------------------------
