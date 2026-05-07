@@ -114,8 +114,8 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
     from bot.onboarding.fsm_middleware import handle_fsm
     if await handle_fsm(ctx, bot):
         return
-    # Транскрибируем всегда — чтобы люди могли прочитать вместо прослушивания.
-    # Если в тексте есть имя бота или world-команда — дополнительно обрабатываем.
+
+    # 5а. Голосовые сообщения — транскрибируем всегда, дальше по той же логике
     if ctx.is_voice and ctx.voice_file_id:
         from services.voice.stt import transcribe_voice
         transcribed = await transcribe_voice(ctx.voice_file_id, ctx.language, bot)
@@ -132,66 +132,51 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
             parse_mode="Markdown",
             reply_to_message_id=ctx.message_id,
         )
-        # Проверяем: есть ли обращение по имени или world-команда
-        addressed, clean_text = _extract_assistant_address(ctx.text, user.assistant_name)
-        if addressed:
-            ctx.text = clean_text
-            intent = await classify(ctx.text, ctx.language)
-            ctx.set_intent(intent)
-        else:
-            # Нет имени — проверяем world-команды (/ban, /warn и т.д.)
-            intent = await classify(ctx.text, ctx.language)
-            ctx.set_intent(intent)
-            if ctx.intent not in GROUP_WORLD_INTENTS:
-                return  # просто транскрипция, дальше не идём
-        if ctx.intent not in GROUP_ALLOWED_INTENTS:
-            return
-        handler = _handlers.get(ctx.intent) or _handlers.get(Intent.AI_CHAT)
-        if handler:
-            try:
-                await handler(ctx, bot)
-            except Exception as e:
-                logger.exception(f"[GroupRouter] Voice handler error: {e}")
-                await bot.send_message(ctx.chat_id, t(ctx.language, "common.error"))
-        return  # голосовое полностью обработано
+        # После транскрипции падаём в общую логику ниже (голос = текст)
 
     # 6. Определяем режим: обращение по имени или нет
     addressed, clean_text = _extract_assistant_address(ctx.text, user.assistant_name)
 
     if addressed:
-        # Режим МИКРОСЕРВИСОВ: классифицируем очищенный текст (без имени)
+        # Режим МИКРОСЕРВИСОВ + AI: пользователь явно обратился к боту
         ctx.extra["addressed_by_name"] = True
-        original_text = ctx.text
         ctx.text = clean_text  # классифицируем без имени бота
 
-        if ctx.intent == Intent.UNKNOWN:
-            intent = await classify(ctx.text, ctx.language)
-            ctx.set_intent(intent)
+        intent = await classify(ctx.text, ctx.language)
+        ctx.set_intent(intent)
 
-        # Если классификатор вернул world-интент при обращении по имени —
-        # всё равно пропускаем (пользователь явно обратился к боту)
-        if ctx.intent not in GROUP_ALLOWED_INTENTS:
-            ctx.text = original_text
-            await bot.send_message(ctx.chat_id, t(ctx.language, "common.only_private"))
-            return
-
-    else:
-        # Режим WORLD: классифицируем полный текст, но микросервисы НЕ вызываем
-        if ctx.intent == Intent.UNKNOWN:
-            intent = await classify(ctx.text, ctx.language)
-            ctx.set_intent(intent)
-
-        # Микросервисы без обращения по имени — игнорируем молча
-        if ctx.intent in MICROSERVICE_INTENTS:
-            logger.debug(
-                f"[GroupRouter] Microservice intent={ctx.intent.value} ignored "
-                f"(no assistant name address) in group {ctx.chat_id}"
+        # Не понял запрос — просим уточнить
+        if ctx.intent == Intent.CLARIFICATION:
+            from bot.brain.classifier import build_clarification_message
+            clarification = await build_clarification_message(ctx.text, ctx.language)
+            await bot.send_message(
+                ctx.chat_id,
+                clarification,
+                reply_to_message_id=ctx.message_id,
             )
             return
 
-        # Остальные world-интенты проверяем по общему списку
+        # Интент есть, но недоступен в группах (например, PROFILE_EDIT, SETTINGS)
+        if ctx.intent not in GROUP_ALLOWED_INTENTS:
+            await bot.send_message(
+                ctx.chat_id,
+                t(ctx.language, "common.only_private"),
+                reply_to_message_id=ctx.message_id,
+            )
+            return
+
+    else:
+        # Режим WORLD: работают только world-интенты без обращения по имени
+        intent = await classify(ctx.text, ctx.language)
+        ctx.set_intent(intent)
+
+        # Всё что не является явной world-командой — молча игнорируем.
+        # Бот не должен реагировать на обычный разговор в группе.
         if ctx.intent not in GROUP_WORLD_INTENTS:
-            await bot.send_message(ctx.chat_id, t(ctx.language, "common.only_private"))
+            logger.debug(
+                f"[GroupRouter] Ignored intent={ctx.intent.value} "
+                f"(no assistant name address) in group {ctx.chat_id}"
+            )
             return
 
     logger.info(f"[GroupRouter] {ctx} addressed={addressed}")
