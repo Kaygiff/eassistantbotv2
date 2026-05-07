@@ -213,14 +213,29 @@ async def play_coin_inline(
     except Exception:
         pass
 
-    # 3. Нативная анимация Telegram
-    await bot.send_dice(chat_id, emoji="🎲")
-
-    # 4. Считаем результат пока идёт анимация
+    # 3. Считаем результат заранее
     result = random.choice(["орёл", "решка"])
     won = side == result
-    payout = 0
 
+    # 4. Анимация кадрами через edit_message_text
+    frames = ["🪙", "🦅", "🪙", "🦅", "🪙", SIDE_ICON[result]]
+    delays = [0.30, 0.30, 0.35, 0.35, 0.40, 0.50]
+
+    for frame, delay in zip(frames, delays):
+        try:
+            await bot.edit_message_text(
+                f"🪙 *Монетка*\n\n"
+                f"Ставка на {SIDE_ICON[side]} *{side}*\n\n"
+                f"{frame}",
+                chat_id=chat_id, message_id=message_id,
+                parse_mode="Markdown",
+            )
+        except Exception:
+            pass
+        await asyncio.sleep(delay)
+
+    # 5. Начисляем
+    payout = 0
     if won:
         payout = bet * 2
         await credit(user_id, payout, "game_win")
@@ -262,11 +277,14 @@ async def play_coin_inline(
         f"💰 Баланс: *{balance} Ecoins*"
     )
 
-    await bot.send_message(
-        chat_id, text,
-        parse_mode="Markdown",
-        reply_markup=_keyboard_result(side, bet),
-    )
+    try:
+        await bot.edit_message_text(
+            text, chat_id=chat_id, message_id=message_id,
+            parse_mode="Markdown",
+            reply_markup=_keyboard_result(side, bet),
+        )
+    except Exception:
+        pass
 
 
 # ---------------------------------------------------------------------------
