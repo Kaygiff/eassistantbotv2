@@ -75,13 +75,13 @@ PATTERN_MAP: list[tuple[str, Intent]] = [
 
     # --- Казино ---
     (r"^/casino\b|открой казино|хочу в казино|казино", Intent.CASINO_OPEN),
-    (r"^/slots\b|^/слоты\b|слоты \d+|крути слоты|хочу слоты", Intent.CASINO_SLOTS),
-    (r"^/roulette\b|^/рулетка\b|рулетка .+ \d+|крути рулетку", Intent.CASINO_ROULETTE),
-    (r"^/dice\b|^/кости\b|кости \d+", Intent.CASINO_DICE),
-    (r"^/coin\b|^/монетка\b|монетка \d+", Intent.CASINO_COIN),
-    (r"^/mines\b|^/мины\b|мины \d+", Intent.CASINO_MINES),
-    (r"^/joker\b|^/джокер\b|джокер \d+", Intent.CASINO_JOKER),
-    (r"^/wheel\b|^/колесо\b|^/фортуна\b|колесо \d+|фортуна \d+", Intent.CASINO_WHEEL),
+    (r"^/slots\b|^/слоты\b|слоты(\s+\d+)?$|крути слоты|хочу слоты", Intent.CASINO_SLOTS),
+    (r"^/roulette\b|^/рулетка\b|рулетка(\s+.+\s+\d+)?$|крути рулетку", Intent.CASINO_ROULETTE),
+    (r"^/dice\b|^/кости\b|^кости(\s+\d+)?$", Intent.CASINO_DICE),
+    (r"^/coin\b|^/монетка\b|^монетка(\s+\S+)?(\s+\d+)?$", Intent.CASINO_COIN),
+    (r"^/mines\b|^/мины\b|^мины(\s+\d+)?$", Intent.CASINO_MINES),
+    (r"^/joker\b|^/джокер\b|^джокер(\s+\d+)?$", Intent.CASINO_JOKER),
+    (r"^/wheel\b|^/колесо\b|^/фортуна\b|^колесо(\s+\d+)?$|^фортуна(\s+\d+)?$", Intent.CASINO_WHEEL),
 
     # --- Мини-игры ---
     (r"^/quiz\b|викторина|quiz|задай вопрос|тест на знания", Intent.GAME_QUIZ),
