@@ -222,14 +222,15 @@ async def play_dice_inline(
     except Exception:
         pass
 
-    # 3. Два кубика — нативная анимация
-    await bot.send_dice(chat_id, emoji="🎲")
+    # 3. Два кубика — нативная анимация Telegram
+    # Сохраняем ответ — в нём лежит реальное значение кубика (.dice.value)
+    msg1 = await bot.send_dice(chat_id, emoji="🎲")
     await asyncio.sleep(0.3)
-    await bot.send_dice(chat_id, emoji="🎲")
+    msg2 = await bot.send_dice(chat_id, emoji="🎲")
 
-    # 4. Считаем исход
-    die1 = random.randint(1, 6)
-    die2 = random.randint(1, 6)
+    # 4. Берём реальные значения из анимации (1-6 каждый)
+    die1 = msg1.dice.value
+    die2 = msg2.dice.value
     total = die1 + die2
 
     if choice == "ровно":
