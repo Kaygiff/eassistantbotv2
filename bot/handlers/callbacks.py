@@ -298,6 +298,42 @@ async def cb_casino(callback: CallbackQuery) -> None:
         await callback.answer()
         return
 
+<<<<<<< HEAD
+=======
+
+    # Кости — открываем inline-меню
+    if action == "dice":
+        from world.casino.games.dice import open_dice
+        await open_dice(
+            user_id=str(ctx.user.id),
+            language=ctx.language,
+            bot=callback.bot,
+            chat_id=callback.message.chat.id,
+            message_id=callback.message.message_id,
+        )
+        await callback.answer()
+        return
+
+    if action == "back":
+        from bot.brain.handlers.casino import _casino_keyboard
+        from world.economy.wallet import get_balance
+        balance = await get_balance(str(ctx.user.id))
+        from core.i18n.loader import t
+        await callback.message.edit_text(
+            (
+                f"🎰 *Казино*\n\n"
+                f"💰 Твой баланс: *{balance} Ecoins*\n\n"
+                f"{t(ctx.language, 'casino.warning')}\n\n"
+                f"Выбери игру:"
+            ),
+            parse_mode="Markdown",
+            reply_markup=_casino_keyboard(),
+        )
+        await callback.answer()
+        return
+
+
+>>>>>>> 463e2dc762cb529f9c4cb051846d8c19c1987331
     game_hints = {
         "slots":    "`/слоты <ставка>`",
         "dice":     "`/кости <ставка>`",
