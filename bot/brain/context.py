@@ -31,6 +31,13 @@ class BrainContext:
     voice_file_id: Optional[str] = None
     reply_to_user_telegram_id: Optional[int] = None  # @ упоминание или reply
 
+    # --- Telegram-данные отправителя (из Message.from_user) ---
+    tg_username: Optional[str] = None
+    tg_first_name: Optional[str] = None
+    tg_last_name: Optional[str] = None
+    tg_is_premium: bool = False
+    tg_locale: Optional[str] = None
+
     # --- Пользователь ---
     user: Optional[User] = None            # None до get_or_create
     language: str = "ru"

@@ -80,10 +80,31 @@ async def _translate_to_english(prompt: str) -> str:
         return prompt
 
 
+async def generate_via_pollinations(prompt: str) -> bytes | None:
+    """
+    Генерирует изображение через Pollinations.ai — бесплатно, без ключей.
+    Fallback когда DALL-E и Stability исчерпали баланс.
+    """
+    try:
+        import httpx
+        from urllib.parse import quote
+        url = f"https://image.pollinations.ai/prompt/{quote(prompt)}?width=1024&height=1024&nologo=true&enhance=true"
+        async with httpx.AsyncClient(timeout=60.0, follow_redirects=True) as client:
+            resp = await client.get(url)
+            if resp.status_code == 200 and resp.headers.get("content-type", "").startswith("image/"):
+                return resp.content
+            logger.warning(f"[ImageGen] Pollinations error: {resp.status_code}")
+            return None
+    except Exception as e:
+        logger.warning(f"[ImageGen] Pollinations error: {e}")
+        return None
+
+
 async def generate_image(prompt: str) -> bytes | None:
     """
     Генерирует изображение по промпту.
-    Переводит на английский, затем генерирует.
+    Переводит на английский, затем пробует провайдеров по очереди:
+    DALL-E 3 → Stability AI → Pollinations.ai (бесплатный fallback).
     Возвращает байты изображения или None при ошибке.
     """
     english_prompt = await _translate_to_english(prompt)
@@ -92,4 +113,10 @@ async def generate_image(prompt: str) -> bytes | None:
     img = await generate_via_dalle(english_prompt)
     if img:
         return img
-    return await generate_via_stability(english_prompt)
+
+    img = await generate_via_stability(english_prompt)
+    if img:
+        return img
+
+    logger.info("[ImageGen] Falling back to Pollinations.ai")
+    return await generate_via_pollinations(english_prompt)

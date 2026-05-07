@@ -20,6 +20,7 @@ class Intent(str, Enum):
     DAILY_BONUS = "daily_bonus"
     TRANSFER = "transfer"
     REFERRAL = "referral"
+    LEADERBOARD = "leaderboard"
 
     # --- Питомец ---
     PET_STATUS = "pet_status"
@@ -49,9 +50,11 @@ class Intent(str, Enum):
     CASINO_OPEN = "casino_open"
     CASINO_SLOTS = "casino_slots"
     CASINO_ROULETTE = "casino_roulette"
-    CASINO_BLACKJACK = "casino_blackjack"
-    CASINO_CRASH = "casino_crash"
-    CASINO_POKER = "casino_poker"
+    CASINO_DICE = "casino_dice"
+    CASINO_COIN = "casino_coin"
+    CASINO_MINES = "casino_mines"
+    CASINO_JOKER = "casino_joker"
+    CASINO_WHEEL = "casino_wheel"
 
     # --- Мини-игры ---
     GAME_QUIZ = "game_quiz"
@@ -78,12 +81,21 @@ class Intent(str, Enum):
 
     # --- Группы ---
     GROUP_WARN = "group_warn"
+    GROUP_UNWARN = "group_unwarn"
+    GROUP_WARNS = "group_warns"
+    GROUP_CLEARWARNS = "group_clearwarns"
     GROUP_BAN = "group_ban"
+    GROUP_UNBAN = "group_unban"
     GROUP_MUTE = "group_mute"
-    GROUP_KICK = "group_kick"
+    GROUP_UNMUTE = "group_unmute"
+    GROUP_PROMOTE = "group_promote"
+    GROUP_DEMOTE = "group_demote"
     GROUP_SETTINGS = "group_settings"
     GROUP_STATS = "group_stats"
     GROUP_WELCOME = "group_welcome"
+    GROUP_ROLE = "group_role"
+    GROUP_ADMINS = "group_admins"
+    GROUP_RULES = "group_rules"
 
     # --- Системные ---
     START = "start"
@@ -98,7 +110,8 @@ class Intent(str, Enum):
 # Категории интентов для быстрой проверки
 CASINO_INTENTS = {
     Intent.CASINO_OPEN, Intent.CASINO_SLOTS, Intent.CASINO_ROULETTE,
-    Intent.CASINO_BLACKJACK, Intent.CASINO_CRASH, Intent.CASINO_POKER,
+    Intent.CASINO_DICE, Intent.CASINO_COIN, Intent.CASINO_MINES,
+    Intent.CASINO_JOKER, Intent.CASINO_WHEEL,
 }
 
 GAME_INTENTS = {
@@ -122,12 +135,16 @@ VIRTUAL_WORLD_INTENTS = {
 }
 
 ECONOMY_INTENTS = {
-    Intent.BALANCE, Intent.DAILY_BONUS, Intent.TRANSFER, Intent.REFERRAL,
+    Intent.BALANCE, Intent.DAILY_BONUS, Intent.TRANSFER, Intent.REFERRAL, Intent.LEADERBOARD,
 }
 
 GROUP_MODERATION_INTENTS = {
-    Intent.GROUP_WARN, Intent.GROUP_BAN, Intent.GROUP_MUTE,
-    Intent.GROUP_KICK, Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
+    Intent.GROUP_WARN, Intent.GROUP_UNWARN, Intent.GROUP_WARNS, Intent.GROUP_CLEARWARNS,
+    Intent.GROUP_BAN, Intent.GROUP_UNBAN,
+    Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
+    Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
+    Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
+    Intent.GROUP_ROLE, Intent.GROUP_ADMINS, Intent.GROUP_RULES,
 }
 
 TASK_INTENTS = {
@@ -141,15 +158,39 @@ PRIVATE_ONLY_INTENTS = {
     Intent.IMAGE_GEN, Intent.VOICE_TO_TEXT,
 }
 
-# Интенты доступные в группах
-GROUP_ALLOWED_INTENTS = {
-    Intent.AI_CHAT, Intent.MUSIC_SEARCH, Intent.WEATHER,
-    Intent.TRANSLATE, Intent.ENCYCLOPEDIA, Intent.BOOK_SEARCH, Intent.ANIME_SEARCH,
+# ---------------------------------------------------------------------------
+# Микросервисы — в группе вызываются ТОЛЬКО при обращении по имени ассистента
+# ---------------------------------------------------------------------------
+MICROSERVICE_INTENTS = {
+    Intent.AI_CHAT,
+    Intent.MUSIC_SEARCH, Intent.WEATHER, Intent.TRANSLATE,
+    Intent.ENCYCLOPEDIA, Intent.BOOK_SEARCH, Intent.ANIME_SEARCH,
+    Intent.IMAGE_GEN, Intent.VOICE_TO_TEXT,
+    Intent.TASK_CREATE, Intent.TASK_LIST, Intent.TASK_DONE, Intent.REMINDER_CREATE,
+}
+
+# World-функции — работают в группе без обращения по имени
+GROUP_WORLD_INTENTS = {
     Intent.GAME_QUIZ, Intent.GAME_DICE, Intent.GAME_TRUTH_DARE,
     Intent.GAME_WOULD_YOU, Intent.GAME_RIDDLE,
     Intent.ACTION_DO, Intent.RELATIONSHIP_PROPOSE, Intent.MARRIAGE_PROPOSE,
     Intent.EVENT_CREATE, Intent.EVENT_LIST, Intent.EVENT_JOIN,
-    Intent.GROUP_WARN, Intent.GROUP_BAN, Intent.GROUP_MUTE,
-    Intent.GROUP_KICK, Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
-    Intent.HELP,
+    Intent.GROUP_WARN, Intent.GROUP_UNWARN, Intent.GROUP_WARNS, Intent.GROUP_CLEARWARNS,
+    Intent.GROUP_BAN, Intent.GROUP_UNBAN,
+    Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
+    Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
+    Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
+    Intent.GROUP_ROLE, Intent.GROUP_ADMINS, Intent.GROUP_RULES,
+    Intent.HELP, Intent.BALANCE, Intent.DAILY_BONUS, Intent.LEADERBOARD,
+    Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL,
+    Intent.CASINO_OPEN, Intent.CASINO_SLOTS, Intent.CASINO_ROULETTE,
+    Intent.CASINO_DICE, Intent.CASINO_COIN, Intent.CASINO_MINES,
+    Intent.CASINO_JOKER, Intent.CASINO_WHEEL,
+    Intent.RELATIONSHIP_STATUS, Intent.RELATIONSHIP_BREAKUP,
+    Intent.MARRIAGE_DIVORCE, Intent.FAMILY_ADD, Intent.FAMILY_VIEW,
+    Intent.BLACKLIST_ADD, Intent.BLACKLIST_REMOVE,
+    Intent.PROFILE_VIEW,
 }
+
+# Все интенты разрешённые в группах (объединение)
+GROUP_ALLOWED_INTENTS = GROUP_WORLD_INTENTS | MICROSERVICE_INTENTS

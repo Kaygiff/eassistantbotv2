@@ -53,7 +53,7 @@ async def send_single(body: SingleNotificationRequest, _=Depends(require_admin))
 @router.get("/history")
 async def notification_history(limit: int = 50, _=Depends(require_admin)):
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("audit_log")
         .select("*")
         .eq("action", "broadcast")

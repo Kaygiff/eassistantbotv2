@@ -25,7 +25,7 @@ async def get_all_rules() -> list[dict[str, Any]]:
     Используется Brain Editor в EAdmin для отображения.
     """
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("brain_rules")
         .select("*")
         .order("intent")
@@ -37,7 +37,7 @@ async def get_all_rules() -> list[dict[str, Any]]:
 async def get_rules_for_intent(intent: str) -> list[str]:
     """Возвращает список ключевых слов для конкретного интента."""
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("brain_rules")
         .select("keywords")
         .eq("intent", intent)
@@ -55,7 +55,7 @@ async def update_rule(intent: str, keywords: list[str]) -> dict[str, Any]:
     После обновления сбрасывает кэш — новые правила применятся сразу.
     """
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("brain_rules")
         .upsert({
             "intent": intent,

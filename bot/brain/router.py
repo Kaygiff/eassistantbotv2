@@ -46,11 +46,14 @@ async def process(ctx: BrainContext, bot: Any) -> None:
     Вызывается из bot/handlers/ для каждого входящего сообщения.
     """
 
-    # 1. Загружаем пользователя
+    # 1. Загружаем пользователя (создаём если новый, синхронизируем если существующий)
     user, is_new = await get_or_create_user(
         telegram_id=ctx.telegram_id,
-        username=None,
-        first_name=None,
+        username=ctx.tg_username,
+        first_name=ctx.tg_first_name,
+        last_name=ctx.tg_last_name,
+        is_premium=ctx.tg_is_premium,
+        locale=ctx.tg_locale,
     )
     ctx.user = user
     ctx.is_new_user = is_new
@@ -87,8 +90,10 @@ async def process(ctx: BrainContext, bot: Any) -> None:
         transcribed = await transcribe_voice(ctx.voice_file_id, ctx.language, bot)
         if transcribed:
             ctx.text = transcribed
+            await bot.send_message(ctx.chat_id, f"🎤 _«{transcribed}»_", parse_mode="Markdown", reply_to_message_id=ctx.message_id)
         else:
-            return  # STT сервис сам отправит сообщение об ошибке
+            await bot.send_message(ctx.chat_id, "🎤 Не удалось распознать голосовое сообщение. Попробуй ещё раз или напиши текстом.")
+            return
 
     # 6. Классификация intent
     if ctx.intent == Intent.UNKNOWN:

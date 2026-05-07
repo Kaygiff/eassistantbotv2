@@ -42,7 +42,7 @@ async def get_group(group_id: UUID, _=Depends(require_admin)):
 @router.get("/{group_id}/members")
 async def get_members(group_id: UUID, _=Depends(require_admin)):
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("group_members")
         .select("*, users(username, first_name)")
         .eq("group_id", str(group_id))
@@ -54,7 +54,7 @@ async def get_members(group_id: UUID, _=Depends(require_admin)):
 @router.get("/{group_id}/warns")
 async def get_warns(group_id: UUID, _=Depends(require_admin)):
     res = (
-        supabase_admin
+        get_supabase_admin()
         .table("group_warns")
         .select("*, users(username, first_name)")
         .eq("group_id", str(group_id))

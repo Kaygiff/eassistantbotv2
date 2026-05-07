@@ -9,7 +9,10 @@ from bot.brain.context import BrainContext
 
 @register(Intent.PROFILE_VIEW)
 async def handle_profile_view(ctx: BrainContext, bot) -> None:
+    from world.economy.wallet import get_balance
     user = ctx.user
+    balance = await get_balance(ctx.user_id)
+
     lines = [
         f"👤 *Профиль*\n",
         f"🏷 Имя ассистента: *{user.assistant_name}*",
@@ -21,10 +24,17 @@ async def handle_profile_view(ctx: BrainContext, bot) -> None:
     if user.birthday:
         lines.append(f"🎂 День рождения: {user.birthday.strftime('%d.%m.%Y')}")
     lines.append(f"🌐 Язык: {user.language.upper()}")
+    lines.append(f"💰 Баланс: *{balance} Ecoins*")
 
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✏️ Редактировать", callback_data="profile:edit")],
+        [
+            InlineKeyboardButton(text="✏️ Редактировать", callback_data="profile:edit"),
+            InlineKeyboardButton(text="💰 Ecoins", callback_data="ecoins:menu"),
+        ],
+        [
+            InlineKeyboardButton(text="🎰 Казино", callback_data="profile:casino"),
+        ],
     ])
     await bot.send_message(
         ctx.chat_id,

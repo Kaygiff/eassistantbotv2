@@ -55,7 +55,7 @@ async def list_rounds(
 ):
     """Список раундов казино с фильтрацией."""
     query = (
-        supabase_admin
+        get_supabase_admin()
         .table("casino_rounds")
         .select("*")
         .order("created_at", desc=True)
@@ -77,7 +77,7 @@ async def casino_leaderboard(
 ):
     """Таблица лидеров казино."""
     query = (
-        supabase_admin
+        get_supabase_admin()
         .table("game_leaderboard")
         .select("*, users(username, first_name)")
         .order("wins", desc=True)

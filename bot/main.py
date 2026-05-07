@@ -47,6 +47,7 @@ async def on_startup(bot: Bot) -> None:
             url=f"{WEBHOOK_URL}/webhook",
             secret_token=WEBHOOK_SECRET,
             drop_pending_updates=True,
+            allowed_updates=["message", "callback_query", "chat_member", "inline_query"],
         )
         logger.info(f"[Bot] Webhook set: {WEBHOOK_URL}/webhook")
     else:

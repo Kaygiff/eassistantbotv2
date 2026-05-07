@@ -39,10 +39,11 @@ PATTERN_MAP: list[tuple[str, Intent]] = [
     (r"(измени|редактир|поменя|сменить|обнови).*(профил|имя|никнейм|ассистент)", Intent.PROFILE_EDIT),
 
     # --- Экономика ---
-    (r"^/balance\b|мо[её]? баланс|мой баланс|сколько.*(монет|экоин|ecoins)|покажи баланс|мои монет", Intent.BALANCE),
-    (r"^/daily\b|ежедневн|бонус дня|получить бонус|дейли|дать бонус", Intent.DAILY_BONUS),
-    (r"(перевест|отправ|перекин).*(монет|экоин|ecoins)|^/transfer\b", Intent.TRANSFER),
-    (r"^/referral\b|реферал|пригласи|моя ссылка|реф.ссылка", Intent.REFERRAL),
+    (r"^/balance\b|^баланс$|^мой баланс$|^мои монеты$|сколько.*(монет|экоин|ecoins)|покажи баланс", Intent.BALANCE),
+    (r"^/daily\b|^бонус$|ежедневн|бонус дня|дейли", Intent.DAILY_BONUS),
+    (r"^(передать|дать|отдать|скинуть)\s+\d+|^/transfer\b", Intent.TRANSFER),
+    (r"^/referral\b|^рефералы$|^реф$|^рефер$|реферальная ссылка|моя реф", Intent.REFERRAL),
+    (r"^/top\b|^лидеры$|^топ$|таблица лидеров|лучшие по монетам", Intent.LEADERBOARD),
 
     # --- Питомец ---
     (r"^/pet\b|мой питомец|состояние питомца|как питомец|питомец жив", Intent.PET_STATUS),
@@ -74,11 +75,13 @@ PATTERN_MAP: list[tuple[str, Intent]] = [
 
     # --- Казино ---
     (r"^/casino\b|открой казино|хочу в казино|казино", Intent.CASINO_OPEN),
-    (r"^/slots\b|слоты|крути слоты|однорукий бандит|хочу слоты", Intent.CASINO_SLOTS),
-    (r"^/roulette\b|рулетк|крути рулетку|поставь на рулетку", Intent.CASINO_ROULETTE),
-    (r"^/blackjack\b|блэкджек|blackjack|двадцать одно", Intent.CASINO_BLACKJACK),
-    (r"^/crash\b|краш|crash game|игра краш", Intent.CASINO_CRASH),
-    (r"^/poker\b|покер|poker|сыграй в покер", Intent.CASINO_POKER),
+    (r"^/slots\b|^/слоты\b|слоты \d+|крути слоты|хочу слоты", Intent.CASINO_SLOTS),
+    (r"^/roulette\b|^/рулетка\b|рулетка .+ \d+|крути рулетку", Intent.CASINO_ROULETTE),
+    (r"^/dice\b|^/кости\b|кости \d+", Intent.CASINO_DICE),
+    (r"^/coin\b|^/монетка\b|монетка \d+", Intent.CASINO_COIN),
+    (r"^/mines\b|^/мины\b|мины \d+", Intent.CASINO_MINES),
+    (r"^/joker\b|^/джокер\b|джокер \d+", Intent.CASINO_JOKER),
+    (r"^/wheel\b|^/колесо\b|^/фортуна\b|колесо \d+|фортуна \d+", Intent.CASINO_WHEEL),
 
     # --- Мини-игры ---
     (r"^/quiz\b|викторина|quiz|задай вопрос|тест на знания", Intent.GAME_QUIZ),
@@ -106,13 +109,31 @@ PATTERN_MAP: list[tuple[str, Intent]] = [
     (r"^/ai\b|^/chat\b|поговори со мной|давай поговорим|пообщайся|поболтай", Intent.AI_CHAT),
 
     # --- Модерация групп ---
-    (r"^/warn\b|выдай варн|предупредить пользователя", Intent.GROUP_WARN),
-    (r"^/ban\b|забань|бан пользователя|заблокировать в группе", Intent.GROUP_BAN),
-    (r"^/mute\b|заглуши|выдай мут|замьютить", Intent.GROUP_MUTE),
-    (r"^/kick\b|кикни|выгони|удали из группы", Intent.GROUP_KICK),
+    # Снять варн / варны — ВЫШЕ варна, чтобы не перехватывался
+    (r"^/unwarn\b|снять варн|убрать варн|удалить варн|\-варн|\bunwarn\b", Intent.GROUP_UNWARN),
+    (r"^/warns\b|\bварны\b|сколько варнов|проверить варны", Intent.GROUP_WARNS),
+    (r"^/clearwarns\b|очистить варны|сбросить варны|снять варны|убрать варны", Intent.GROUP_CLEARWARNS),
+    # Варн
+    (r"^/warn\b|\bварн\b|варнить|предупредить|предупреждение\b|\bwarn\b", Intent.GROUP_WARN),
+    # Разбан — ВЫШЕ бана
+    (r"^/unban\b|\bразбан\b|разбанить|разблокировать\b|\bunban\b", Intent.GROUP_UNBAN),
+    # Бан
+    (r"^/ban\b|\bбан\b|забанить|\bban\b", Intent.GROUP_BAN),
+    # Размут — ВЫШЕ мута
+    (r"^/unmute\b|\bразмут\b|размутить|разглушить|говори снова|\bunmute\b", Intent.GROUP_UNMUTE),
+    # Мут
+    (r"^/mute\b|\bмут\b|замутить|заглушить|помолчи|заткнись|молчать|замолчи|\bsilence\b|\bmute\b", Intent.GROUP_MUTE),
+    # Кик
+    # Повышение / понижение
+    (r"^/promote\b|\bповысить\b|повышение\b|продвинуть\b|\bpromote\b|назначить\b", Intent.GROUP_PROMOTE),
+    (r"^/demote\b|\bпонизить\b|понижение\b|разжаловать\b|\bdemote\b|снять роль", Intent.GROUP_DEMOTE),
+    # Настройки / статистика / приветствие
     (r"^/groupsettings\b|настройки группы", Intent.GROUP_SETTINGS),
-    (r"^/stats\b|статистика группы|активность группы", Intent.GROUP_STATS),
+    (r"^/stats\b|\bстатистика\b|активность группы", Intent.GROUP_STATS),
     (r"^/setwelcome\b|приветствие группы|настроить приветствие", Intent.GROUP_WELCOME),
+    # Роль / администраторы — ВЫШЕ профиля чтобы не перехватывался
+    (r"^/role\b|моя роль|какая моя роль|кто я в группе|мой статус в группе|мои права в группе", Intent.GROUP_ROLE),
+    (r"^/admins\b|список админов|кто админ|администраторы группы|модераторы группы|кто модератор|кто управляет", Intent.GROUP_ADMINS),
 ]
 
 # Компилируем паттерны один раз при загрузке модуля
@@ -136,6 +157,8 @@ SERVICE_HINTS = """🌤 Погода — «какая погода в Москв
 🎰 Казино — «казино» или /casino
 💰 Баланс — «баланс» или /balance
 🐾 Питомец — «питомец» или /pet
+👤 Моя роль — «моя роль» или /role
+👥 Администраторы — «список админов» или /admins
 💬 Просто поговорить — /ai"""
 
 
