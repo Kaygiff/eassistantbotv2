@@ -166,18 +166,18 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
             return
 
     else:
-        # Режим WORLD: работают только world-интенты без обращения по имени
-        intent = await classify(ctx.text, ctx.language)
-        ctx.set_intent(intent)
-
-        # Всё что не является явной world-командой — молча игнорируем.
-        # Бот не должен реагировать на обычный разговор в группе.
-        if ctx.intent not in GROUP_WORLD_INTENTS:
+        # Режим WORLD: работают только world-интенты без обращения по имени.
+        # Используем СТРОГИЙ классификатор — только паттерны с ^ или /команда.
+        # Brain AI здесь не вызывается: он слишком широко интерпретирует
+        # обычный разговор и порождает ложные срабатывания.
+        from bot.brain.classifier import classify_by_patterns_strict
+        intent = classify_by_patterns_strict(ctx.text)
+        if intent is None or intent not in GROUP_WORLD_INTENTS:
             logger.debug(
-                f"[GroupRouter] Ignored intent={ctx.intent.value} "
-                f"(no assistant name address) in group {ctx.chat_id}"
+                f"[GroupRouter] No strict world match for group {ctx.chat_id} — ignoring"
             )
             return
+        ctx.set_intent(intent)
 
     logger.info(f"[GroupRouter] {ctx} addressed={addressed}")
 
