@@ -298,6 +298,7 @@ async def cb_casino(callback: CallbackQuery) -> None:
         await callback.answer()
         return
 
+<<<<<<< HEAD
     # Кости — открываем inline-меню
     if action == "dice":
         from world.casino.games.dice import open_dice
@@ -329,6 +330,8 @@ async def cb_casino(callback: CallbackQuery) -> None:
         await callback.answer()
         return
 
+=======
+>>>>>>> f969f2d678af5e9fa0ad8d875be4951482cab46b
     game_hints = {
         "slots":    "`/слоты <ставка>`",
         "dice":     "`/кости <ставка>`",

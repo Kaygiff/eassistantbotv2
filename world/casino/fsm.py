@@ -10,6 +10,7 @@ from api.auth.session import get_fsm_data, clear_fsm_state, clear_fsm_data
 async def handle_casino_fsm(ctx: BrainContext, bot, state: str) -> bool:
     user_id = str(ctx.user.id)
 
+<<<<<<< HEAD
     # --- Кости: игрок вводит сумму ставки вручную ---
     if state == "casino:dice_custom_bet":
         data = await get_fsm_data(user_id)
@@ -53,6 +54,8 @@ async def handle_casino_fsm(ctx: BrainContext, bot, state: str) -> bool:
             await open_dice(user_id=user_id, language=ctx.language, bot=bot, chat_id=ctx.chat_id)
         return True
 
+=======
+>>>>>>> f969f2d678af5e9fa0ad8d875be4951482cab46b
     # --- Рулетка: пользователь вводит свою сумму ставки текстом ---
     if state == "casino:roulette_custom_bet":
         data = await get_fsm_data(user_id)
