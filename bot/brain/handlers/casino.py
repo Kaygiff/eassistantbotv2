@@ -141,41 +141,12 @@ async def handle_roulette(ctx: BrainContext, bot) -> None:
 
 @register(Intent.CASINO_DICE)
 async def handle_dice(ctx: BrainContext, bot) -> None:
-<<<<<<< HEAD
-    """
-    /кости <ставка> — сразу к выбору Больше/Меньше.
-    /кости (без аргументов) — экран выбора ставки.
-    """
-    from world.casino.games.dice import open_dice, show_choice_screen
-
-    bet = _extract_bet(ctx.text)
-    if bet:
-        if not await _check_bet(ctx, bot, bet):
-            return
-        msg = await bot.send_message(ctx.chat_id, "🎲 *Кости*", parse_mode="Markdown")
-        await show_choice_screen(
-            user_id=str(ctx.user.id),
-            bet=bet,
-            language=ctx.language,
-            bot=bot,
-            chat_id=ctx.chat_id,
-            message_id=msg.message_id,
-        )
-    else:
-        await open_dice(
-            user_id=str(ctx.user.id),
-            language=ctx.language,
-            bot=bot,
-            chat_id=ctx.chat_id,
-        )
-=======
     bet = _extract_bet(ctx.text)
     if not await _check_bet(ctx, bot, bet):
         return
     from world.casino.games.dice import play_dice
     result = await play_dice(user_id=str(ctx.user.id), bet=bet, language=ctx.language)
     await bot.send_message(ctx.chat_id, result, parse_mode="Markdown")
->>>>>>> f969f2d678af5e9fa0ad8d875be4951482cab46b
 
 
 @register(Intent.CASINO_COIN)
