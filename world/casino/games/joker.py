@@ -126,28 +126,31 @@ def _keyboard_round_active(round_num: int, history: list[dict]) -> InlineKeyboar
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
-def _keyboard_after_win(round_num: int, bet: int, history: list[dict]) -> InlineKeyboardMarkup:
+def _keyboard_with_cashout(completed_round: int, next_round: int, bet: int, history: list[dict]) -> InlineKeyboardMarkup:
+    """История + карты следующего раунда + кнопка Забрать снизу."""
     rows = _history_rows(history)
-
-    mult   = ROUND_MULTIPLIERS[round_num - 1]
+    # Карты следующего раунда (кликабельные)
+    rows.append([
+        InlineKeyboardButton(text=CARD_BACK, callback_data=f"joker:pick:{next_round}:0"),
+        InlineKeyboardButton(text=CARD_BACK, callback_data=f"joker:pick:{next_round}:1"),
+        InlineKeyboardButton(text=CARD_BACK, callback_data=f"joker:pick:{next_round}:2"),
+    ])
+    mult   = ROUND_MULTIPLIERS[completed_round - 1]
     payout = int(bet * mult)
-
-    if round_num >= MAX_ROUNDS:
-        rows.append([InlineKeyboardButton(
-            text=f"Play again ({bet} Ecoins)", callback_data=f"joker:restart:{bet}",
-        )])
-        rows.append([InlineKeyboardButton(text="Casino", callback_data="profile:casino")])
-        return InlineKeyboardMarkup(inline_keyboard=rows)
-
-    next_mult = ROUND_MULTIPLIERS[round_num]
     rows.append([InlineKeyboardButton(
         text=f"Take {payout} Ecoins (x{mult})",
         callback_data="joker:cashout",
     )])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def _keyboard_final_win(bet: int, history: list[dict]) -> InlineKeyboardMarkup:
+    """После прохождения всех раундов."""
+    rows = _history_rows(history)
     rows.append([InlineKeyboardButton(
-        text=f"Round {round_num + 1}  (x{next_mult})",
-        callback_data=f"joker:next:{round_num + 1}",
+        text=f"Play again ({bet} Ecoins)", callback_data=f"joker:restart:{bet}",
     )])
+    rows.append([InlineKeyboardButton(text="Casino", callback_data="profile:casino")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -339,30 +342,6 @@ async def handle_joker_callback(
             await open_joker(user_id, "ru", bot, chat_id, message_id)
         return
 
-    if action == "next":
-        data = await get_fsm_data(user_id)
-        if not data:
-            await open_joker(user_id, "ru", bot, chat_id, message_id)
-            return
-        bet     = data["bet"]
-        history = data.get("history", [])
-        next_r  = int(param) if param and param.isdigit() else data["round"]
-        cards   = _new_round()
-        data["round"] = next_r
-        data["cards"] = cards
-        await set_fsm_data(user_id, data)
-
-        text = _build_text(bet, history, current_round=next_r)
-        kb   = _keyboard_round_active(next_r, history)
-        try:
-            await bot.edit_message_text(
-                text, chat_id=chat_id, message_id=message_id,
-                reply_markup=kb,
-            )
-        except Exception:
-            pass
-        return
-
     if action == "cashout":
         data = await get_fsm_data(user_id)
         if not data:
@@ -372,9 +351,10 @@ async def handle_joker_callback(
         history = data.get("history", [])
         r       = data["round"]
 
-        completed = r - 1
-        if completed < 1:
+        # r уже указывает на следующий раунд (карты загружены), берём последний из истории
+        if not history:
             return
+        completed = history[-1]["round"]
         mult   = ROUND_MULTIPLIERS[completed - 1]
         payout = int(bet * mult)
 
@@ -482,7 +462,7 @@ async def handle_joker_callback(
 
             text = _build_text(bet, history, None, game_over=True, won=True,
                                final_mult=ROUND_MULTIPLIERS[-1], balance=balance)
-            kb   = _keyboard_after_win(round_n, bet, history)
+            kb   = _keyboard_final_win(bet, history)
             try:
                 await bot.edit_message_text(
                     text, chat_id=chat_id, message_id=message_id,
@@ -492,11 +472,15 @@ async def handle_joker_callback(
                 pass
             return
 
-        data["round"] = round_n + 1
+        next_round = round_n + 1
+        new_cards  = _new_round()
+        data["round"] = next_round
+        data["cards"] = new_cards
         await set_fsm_data(user_id, data)
 
-        text = _build_text(bet, history, current_round=round_n + 1)
-        kb   = _keyboard_after_win(round_n + 1, bet, history)
+        mult = ROUND_MULTIPLIERS[round_n - 1]
+        text = _build_text(bet, history, current_round=next_round)
+        kb   = _keyboard_with_cashout(round_n, next_round, bet, history)
         try:
             await bot.edit_message_text(
                 text, chat_id=chat_id, message_id=message_id,
