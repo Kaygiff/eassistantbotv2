@@ -21,19 +21,19 @@ def _casino_keyboard():
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="🎰 Слоты", callback_data="casino:slots"),
+            InlineKeyboardButton(text="🎰 Слоты",   callback_data="casino:slots"),
             InlineKeyboardButton(text="🎡 Рулетка", callback_data="casino:roulette"),
         ],
         [
-            InlineKeyboardButton(text="🎲 Кости", callback_data="casino:dice"),
-            InlineKeyboardButton(text="🪙 Монетка", callback_data="casino:coin"),
+            InlineKeyboardButton(text="🎲 Кости",   callback_data="casino:dice"),
+            InlineKeyboardButton(text="🪙 Монетка",  callback_data="casino:coin"),
         ],
         [
-            InlineKeyboardButton(text="💣 Мины", callback_data="casino:mines"),
-            InlineKeyboardButton(text="🃏 Джокер", callback_data="casino:joker"),
+            InlineKeyboardButton(text="💣 Мины",    callback_data="casino:mines"),
+            InlineKeyboardButton(text="🃏 Джокер",  callback_data="casino:joker"),
         ],
         [
-            InlineKeyboardButton(text="🎠 Колесо", callback_data="casino:wheel"),
+            InlineKeyboardButton(text="🎠 Колесо",  callback_data="casino:wheel"),
         ],
     ])
 
@@ -47,14 +47,7 @@ async def handle_casino_open(ctx: BrainContext, bot) -> None:
             f"🎰 *Казино*\n\n"
             f"💰 Твой баланс: *{balance} Ecoins*\n\n"
             f"{t(ctx.language, 'casino.warning')}\n\n"
-            f"Выбери игру или используй команду:\n"
-            f"`/слоты <ставка>`\n"
-            f"`/рулетка <к/ч/число> <ставка>`\n"
-            f"`/кости <ставка>`\n"
-            f"`/монетка <ставка>`\n"
-            f"`/мины <ставка>`\n"
-            f"`/джокер <ставка>`\n"
-            f"`/колесо <ставка>`"
+            f"Выбери игру:"
         ),
         parse_mode="Markdown",
         reply_markup=_casino_keyboard(),
@@ -104,7 +97,6 @@ async def handle_roulette(ctx: BrainContext, bot) -> None:
 
     parts = ctx.text.strip().split()
 
-    # Если аргументов нет — открываем inline-меню
     if len(parts) < 3:
         await open_roulette(
             user_id=str(ctx.user.id),
@@ -114,7 +106,6 @@ async def handle_roulette(ctx: BrainContext, bot) -> None:
         )
         return
 
-    # Поддержка старой команды: /рулетка к 100
     bet_type_raw = None
     bet = None
     for part in parts[1:]:
@@ -141,7 +132,12 @@ async def handle_roulette(ctx: BrainContext, bot) -> None:
 
 @register(Intent.CASINO_DICE)
 async def handle_dice(ctx: BrainContext, bot) -> None:
+    # Если ставка не указана — открываем inline-флоу
     bet = _extract_bet(ctx.text)
+    if not bet:
+        from world.casino.games.dice import open_dice
+        await open_dice(user_id=str(ctx.user.id), language=ctx.language, bot=bot, chat_id=ctx.chat_id)
+        return
     if not await _check_bet(ctx, bot, bet):
         return
     from world.casino.games.dice import play_dice
@@ -151,10 +147,12 @@ async def handle_dice(ctx: BrainContext, bot) -> None:
 
 @register(Intent.CASINO_COIN)
 async def handle_coin(ctx: BrainContext, bot) -> None:
-    from world.casino.games.coin import play_coin, parse_coin_choice
-    parts = ctx.text.strip().split()
+    from world.casino.games.coin import play_coin, parse_coin_choice, open_coin
+
+    parts  = ctx.text.strip().split()
     choice = "орёл"
-    bet = None
+    bet    = None
+
     for part in parts[1:]:
         parsed = parse_coin_choice(part)
         if parsed and choice == "орёл":
@@ -164,6 +162,12 @@ async def handle_coin(ctx: BrainContext, bot) -> None:
                 bet = int(part)
             except ValueError:
                 pass
+
+    # Если ставка не указана — открываем inline-флоу
+    if not bet:
+        await open_coin(user_id=str(ctx.user.id), language=ctx.language, bot=bot, chat_id=ctx.chat_id)
+        return
+
     if not await _check_bet(ctx, bot, bet):
         return
     result = await play_coin(user_id=str(ctx.user.id), bet=bet, language=ctx.language, choice=choice)
@@ -172,29 +176,20 @@ async def handle_coin(ctx: BrainContext, bot) -> None:
 
 @register(Intent.CASINO_MINES)
 async def handle_mines(ctx: BrainContext, bot) -> None:
-    bet = _extract_bet(ctx.text)
-    if not await _check_bet(ctx, bot, bet):
-        return
-    from world.casino.games.mines import start_mines
-    text, keyboard = await start_mines(user_id=str(ctx.user.id), bet=bet, language=ctx.language)
-    await bot.send_message(ctx.chat_id, text, parse_mode="Markdown", reply_markup=keyboard)
+    from world.casino.games.mines import open_mines
+    # Всегда открываем inline-флоу (экран выбора ставки)
+    await open_mines(user_id=str(ctx.user.id), language=ctx.language, bot=bot, chat_id=ctx.chat_id)
 
 
 @register(Intent.CASINO_JOKER)
 async def handle_joker(ctx: BrainContext, bot) -> None:
-    bet = _extract_bet(ctx.text)
-    if not await _check_bet(ctx, bot, bet):
-        return
-    from world.casino.games.joker import start_joker
-    text, keyboard = await start_joker(user_id=str(ctx.user.id), bet=bet, language=ctx.language)
-    await bot.send_message(ctx.chat_id, text, parse_mode="Markdown", reply_markup=keyboard)
+    from world.casino.games.joker import open_joker
+    # Всегда открываем inline-флоу (экран выбора ставки)
+    await open_joker(user_id=str(ctx.user.id), language=ctx.language, bot=bot, chat_id=ctx.chat_id)
 
 
 @register(Intent.CASINO_WHEEL)
 async def handle_wheel(ctx: BrainContext, bot) -> None:
-    bet = _extract_bet(ctx.text)
-    if not await _check_bet(ctx, bot, bet):
-        return
-    from world.casino.games.wheel import play_wheel
-    result = await play_wheel(user_id=str(ctx.user.id), bet=bet, language=ctx.language)
-    await bot.send_message(ctx.chat_id, result, parse_mode="Markdown")
+    from world.casino.games.wheel import open_wheel
+    # Всегда открываем inline-флоу (экран выбора ставки)
+    await open_wheel(user_id=str(ctx.user.id), language=ctx.language, bot=bot, chat_id=ctx.chat_id)
