@@ -232,8 +232,24 @@ async def play_wheel_inline(
         parse_mode="Markdown",
     )
 
-    # 3. Нативная анимация Telegram 🎡
-    await bot.send_dice(chat_id, emoji="🎡")
+    # 3. Текстовая анимация вращения
+    frames = [
+        "💀 🟡 🟠 🔵 🟣 🔴 ⭐\n\n_Крутим колесо..._",
+        "⭐ 💀 🟡 🟠 🔵 🟣 🔴\n\n_Крутим колесо..._",
+        "🔴 ⭐ 💀 🟡 🟠 🔵 🟣\n\n_Крутим колесо..._",
+        "🟣 🔴 ⭐ 💀 🟡 🟠 🔵\n\n_Вот-вот..._",
+    ]
+    for frame in frames:
+        try:
+            await bot.edit_message_text(
+                f"🎡 *Колесо фортуны*\n\n{frame}",
+                chat_id=chat_id, message_id=spinning_msg.message_id,
+                parse_mode="Markdown",
+            )
+        except Exception:
+            pass
+        await asyncio.sleep(0.9)
+
 
     # 4. Считаем исход
     multiplier, winner_icon, winner_label = _spin()
@@ -259,15 +275,7 @@ async def play_wheel_inline(
     except Exception:
         pass
 
-    # 5. Ждём анимацию 🎡 (~3 сек)
-    await asyncio.sleep(3)
-
-    # 6. Удаляем "Крутим колесо..." и показываем результат
-    try:
-        await bot.delete_message(chat_id, spinning_msg.message_id)
-    except Exception:
-        pass
-
+    # 5. Показываем результат в том же сообщении
     wheel_result = _render_wheel(winner_icon)
 
     if payout > 0:
@@ -284,11 +292,19 @@ async def play_wheel_inline(
         f"💰 Баланс: *{balance} Ecoins*"
     )
 
-    await bot.send_message(
-        chat_id, text,
-        parse_mode="Markdown",
-        reply_markup=_keyboard_result(bet),
-    )
+    try:
+        await bot.edit_message_text(
+            text,
+            chat_id=chat_id, message_id=spinning_msg.message_id,
+            parse_mode="Markdown",
+            reply_markup=_keyboard_result(bet),
+        )
+    except Exception:
+        await bot.send_message(
+            chat_id, text,
+            parse_mode="Markdown",
+            reply_markup=_keyboard_result(bet),
+        )
 
 
 # ---------------------------------------------------------------------------
