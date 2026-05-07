@@ -74,14 +74,14 @@ PATTERN_MAP: list[tuple[str, Intent]] = [
     (r"(участвовать|участвую|присоединить|хочу на).*(событи|встреч)", Intent.EVENT_JOIN),
 
     # --- Казино ---
-    (r"^/casino\b|открой казино|хочу в казино|казино", Intent.CASINO_OPEN),
-    (r"^/slots\b|^/слоты\b|слоты \d+|крути слоты|хочу слоты", Intent.CASINO_SLOTS),
-    (r"^/roulette\b|^/рулетка\b|рулетка .+ \d+|крути рулетку", Intent.CASINO_ROULETTE),
-    (r"^/dice\b|^/кости\b|кости \d+", Intent.CASINO_DICE),
-    (r"^/coin\b|^/монетка\b|монетка \d+", Intent.CASINO_COIN),
-    (r"^/mines\b|^/мины\b|мины \d+", Intent.CASINO_MINES),
-    (r"^/joker\b|^/джокер\b|джокер \d+", Intent.CASINO_JOKER),
-    (r"^/wheel\b|^/колесо\b|^/фортуна\b|колесо \d+|фортуна \d+", Intent.CASINO_WHEEL),
+    (r"^/casino\b|открой казино|хочу в казино|^казино$", Intent.CASINO_OPEN),
+    (r"^/slots\b|^/слоты\b|^слоты$|слоты\s+\d+|крути слоты|хочу слоты|в слоты", Intent.CASINO_SLOTS),
+    (r"^/roulette\b|^/рулетка\b|^рулетка$|рулетка\s+\S+\s+\d+|рулетка\s+\d+|крути рулетку|хочу рулетку|в рулетку", Intent.CASINO_ROULETTE),
+    (r"^/dice\b|^/кости\b|^кости$|кости\s+\d+|бросить кости|хочу кости|в кости", Intent.CASINO_DICE),
+    (r"^/coin\b|^/монетка\b|^монетка$|монетка\s+\d+|подбросить монетку|хочу монетку", Intent.CASINO_COIN),
+    (r"^/mines\b|^/мины\b|^мины$|мины\s+\d+|хочу мины|играть в мины", Intent.CASINO_MINES),
+    (r"^/joker\b|^/джокер\b|^джокер$|джокер\s+\d+|хочу джокер|играть в джокер", Intent.CASINO_JOKER),
+    (r"^/wheel\b|^/колесо\b|^/фортуна\b|^колесо$|^фортуна$|колесо\s+\d+|фортуна\s+\d+|крути колесо|хочу колесо", Intent.CASINO_WHEEL),
 
     # --- Мини-игры ---
     (r"^/quiz\b|викторина|quiz|задай вопрос|тест на знания", Intent.GAME_QUIZ),
