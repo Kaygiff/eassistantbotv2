@@ -173,6 +173,29 @@ def classify_by_patterns(text: str) -> Optional[Intent]:
     return None
 
 
+def classify_by_patterns_strict(text: str) -> Optional[Intent]:
+    """
+    Строгая классификация для группового чата БЕЗ обращения по имени бота.
+    Срабатывает ТОЛЬКО на паттерны, привязанные к началу строки (^)
+    или к слэш-командам (/command).
+    Исключает случайные срабатывания на обычный разговор.
+    """
+    strict_pattern = re.compile(r'(?:^|\(\^)')
+    for pattern, intent in _COMPILED:
+        raw = pattern.pattern
+        # Берём только паттерны, у которых хотя бы одна альтернатива начинается с ^ или /
+        parts = raw.split("|")
+        has_anchor = any(
+            p.lstrip("(").startswith("^") or p.lstrip("(").startswith("/")
+            for p in parts
+        )
+        if not has_anchor:
+            continue
+        if pattern.search(text):
+            return intent
+    return None
+
+
 async def classify_by_brain_ai(text: str, language: str = "ru") -> "Intent | str":
     """
     Brain AI — определяет к какому СЕРВИСУ относится запрос,
