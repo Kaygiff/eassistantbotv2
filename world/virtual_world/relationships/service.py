@@ -93,8 +93,11 @@ def _partner_display(partner_data: dict) -> str:
 
 async def _get_partner_data(rel: dict, user_id: str) -> dict:
     partner_id = rel["user_b_id"] if rel["user_a_id"] == user_id else rel["user_a_id"]
-    p = get_supabase_admin().table("users").select("first_name, username").eq("id", partner_id).maybe_single().execute()
-    return p.data or {}
+    try:
+        p = get_supabase_admin().table("users").select("first_name, username").eq("id", partner_id).execute()
+        return (p.data[0] if p and p.data else None) or {}
+    except Exception:
+        return {}
 
 
 # ---------------------------------------------------------------------------
@@ -131,11 +134,15 @@ async def _set_rejected_cooldown(from_id: str, to_id: str) -> None:
 async def _notify_with_buttons(user_id: str, text: str, buttons: list[list[dict]]) -> None:
     """Отправляет уведомление с inline-кнопками по UUID пользователя."""
     from infra.notifications.sender import send_message_async
-    res = get_supabase_admin().table("users").select("telegram_id").eq("id", user_id).maybe_single().execute()
-    if not res.data:
+    try:
+        res = get_supabase_admin().table("users").select("telegram_id").eq("id", user_id).execute()
+        if not (res and res.data):
+            return
+        tg_id = res.data[0]["telegram_id"]
+    except Exception:
         return
     await send_message_async(
-        res.data["telegram_id"],
+        tg_id,
         text,
         reply_markup={"inline_keyboard": buttons},
     )
@@ -192,15 +199,18 @@ async def propose_dating(initiator: User, target: User, bot) -> str:
     if await get_current_relationship(target_id):
         return "💔 Этот человек уже в отношениях."
 
-    bl = (
-        get_supabase_admin().table("blacklist")
-        .select("id")
-        .eq("blocker_id", target_id)
-        .eq("blocked_id", init_id)
-        .maybe_single()
-        .execute()
-    )
-    if bl.data:
+    try:
+        bl = (
+            get_supabase_admin().table("blacklist")
+            .select("id")
+            .eq("blocker_id", target_id)
+            .eq("blocked_id", init_id)
+            .execute()
+        )
+        bl_found = bool(bl and bl.data)
+    except Exception:
+        bl_found = False
+    if bl_found:
         return "🚫 Этот человек тебя заблокировал."
 
     cooldown_msg = await _check_propose_cooldown(init_id, target_id)
