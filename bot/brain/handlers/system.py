@@ -37,7 +37,13 @@ async def handle_help(ctx: BrainContext, bot) -> None:
     await bot.send_message(ctx.chat_id, text, parse_mode="Markdown")
 
 
-@register(Intent.SETTINGS)
+@register(Intent.WHO_MADE_YOU)
+async def handle_who_made_you(ctx: BrainContext, bot) -> None:
+    await bot.send_message(
+        ctx.chat_id,
+        f"🛠 Меня создал *Кай Гиффенс*\\nTelegram: @kxygxf",
+        parse_mode="Markdown",
+    )
 async def handle_settings(ctx: BrainContext, bot) -> None:
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
