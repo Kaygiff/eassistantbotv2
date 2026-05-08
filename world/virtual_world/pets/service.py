@@ -272,20 +272,31 @@ async def handle_pet_naming(ctx: BrainContext, bot) -> bool:
         return True
     data = await get_fsm_data(user_id)
     species = data.get("species", "cat")
-    get_supabase_admin().table("pets").delete().eq("user_id", user_id).execute()
-    get_supabase_admin().table("pets").insert({
-        "id": str(uuid.uuid4()),
-        "user_id": user_id,
-        "name": name,
-        "species": species,
-        "level": 1,
-        "xp": 0,
-        "mood": "happy",
-        "hunger": 100,
-        "energy": 100,
-        "is_sick": False,
-        "is_dead": False,
-    }).execute()
+    # Fallback: если вид по какой-то причине не в списке — используем "cat"
+    if species not in ALL_SPECIES:
+        logger.warning(f"[Pets] Unknown species '{species}' for user {user_id}, falling back to 'cat'")
+        species = "cat"
+    try:
+        get_supabase_admin().table("pets").delete().eq("user_id", user_id).execute()
+        get_supabase_admin().table("pets").insert({
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "name": name,
+            "species": species,
+            "level": 1,
+            "xp": 0,
+            "mood": "happy",
+            "hunger": 100,
+            "energy": 100,
+            "is_sick": False,
+            "is_dead": False,
+        }).execute()
+    except Exception as e:
+        logger.exception(f"[Pets] Failed to create pet for user {user_id}: {e}")
+        await clear_fsm_state(user_id)
+        await clear_fsm_data(user_id)
+        await bot.send_message(ctx.chat_id, "⚠️ Произошла ошибка при создании питомца. Попробуй ещё раз через /pet")
+        return True
     await clear_fsm_state(user_id)
     await clear_fsm_data(user_id)
     icon = _species_icon(species)
