@@ -1,60 +1,61 @@
 """
-brain/handlers/pet.py — Питомец-тамагочи.
+brain/handlers/pets.py — Хэндлеры питомцев.
+
+Команды:
+  питомец               → главное меню
+  создать питомца       → выбор вида (inline)
+  покормить питомца     → еда + XP
+  поиграть с питомцем   → энергия + XP
+  лечить питомца        → лечение (50 Ecoins) + XP
+  сменить имя питомцу   → FSM переименования
 """
 
 from bot.brain.router import register
 from bot.brain.intent import Intent
 from bot.brain.context import BrainContext
-from core.i18n import t
+
+
+@register(Intent.PET_MENU)
+async def handle_pet_menu(ctx: BrainContext, bot) -> None:
+    from world.virtual_world.pets.service import open_pet_menu
+    await open_pet_menu(str(ctx.user.id), ctx.language, bot, ctx.chat_id)
 
 
 @register(Intent.PET_STATUS)
 async def handle_pet_status(ctx: BrainContext, bot) -> None:
     from world.virtual_world.pets.service import get_pet_status
-    text = await get_pet_status(ctx.user_id, ctx.language)
+    text = await get_pet_status(str(ctx.user.id), ctx.language)
     await bot.send_message(ctx.chat_id, text, parse_mode="Markdown")
+
+
+@register(Intent.PET_NEW)
+async def handle_pet_new(ctx: BrainContext, bot) -> None:
+    from world.virtual_world.pets.service import open_pet_creation
+    await open_pet_creation(str(ctx.user.id), bot, ctx.chat_id)
 
 
 @register(Intent.PET_FEED)
 async def handle_pet_feed(ctx: BrainContext, bot) -> None:
     from world.virtual_world.pets.service import feed_pet
-    text = await feed_pet(ctx.user_id, ctx.language)
+    text = await feed_pet(str(ctx.user.id), ctx.language)
     await bot.send_message(ctx.chat_id, text, parse_mode="Markdown")
 
 
 @register(Intent.PET_PLAY)
 async def handle_pet_play(ctx: BrainContext, bot) -> None:
     from world.virtual_world.pets.service import play_with_pet
-    text = await play_with_pet(ctx.user_id, ctx.language)
+    text = await play_with_pet(str(ctx.user.id), ctx.language)
     await bot.send_message(ctx.chat_id, text, parse_mode="Markdown")
 
 
 @register(Intent.PET_HEAL)
 async def handle_pet_heal(ctx: BrainContext, bot) -> None:
     from world.virtual_world.pets.service import heal_pet
-    text = await heal_pet(ctx.user_id, ctx.language)
+    text = await heal_pet(str(ctx.user.id), ctx.language)
     await bot.send_message(ctx.chat_id, text, parse_mode="Markdown")
 
 
-@register(Intent.PET_NEW)
-async def handle_pet_new(ctx: BrainContext, bot) -> None:
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="🐱 Кот", callback_data="pet:new:cat"),
-            InlineKeyboardButton(text="🐶 Пёс", callback_data="pet:new:dog"),
-        ],
-        [
-            InlineKeyboardButton(text="🐰 Кролик", callback_data="pet:new:rabbit"),
-            InlineKeyboardButton(text="🐹 Хомяк", callback_data="pet:new:hamster"),
-        ],
-        [
-            InlineKeyboardButton(text="🦊 Лиса", callback_data="pet:new:fox"),
-            InlineKeyboardButton(text="🐉 Дракон", callback_data="pet:new:dragon"),
-        ],
-    ])
-    await bot.send_message(
-        ctx.chat_id,
-        t(ctx.language, "pets.new_pet"),
-        reply_markup=keyboard,
-    )
+@register(Intent.PET_RENAME)
+async def handle_pet_rename(ctx: BrainContext, bot) -> None:
+    from world.virtual_world.pets.service import start_pet_rename
+    await start_pet_rename(str(ctx.user.id), bot, ctx.chat_id)
