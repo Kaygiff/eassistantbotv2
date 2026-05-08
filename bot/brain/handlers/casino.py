@@ -204,40 +204,55 @@ async def handle_coin(ctx: BrainContext, bot) -> None:
 
 @register(Intent.CASINO_MINES)
 async def handle_mines(ctx: BrainContext, bot) -> None:
-    from world.casino.games.mines import open_mines
+    from world.casino.games.mines import open_mines, start_mines_inline
     _, bet = _parse_args(ctx.text)
-    await open_mines(
-        user_id=str(ctx.user.id), language=ctx.language,
-        bot=bot, chat_id=ctx.chat_id,
-        initial_bet=bet or 0,
-    )
+    if bet and await _check_bet(ctx, bot, bet, "500"):
+        msg = await bot.send_message(ctx.chat_id, "💣 *Мины* — запускаю...", parse_mode="Markdown")
+        await start_mines_inline(
+            user_id=str(ctx.user.id), bet=bet, language=ctx.language,
+            bot=bot, chat_id=ctx.chat_id, message_id=msg.message_id,
+        )
+    else:
+        await open_mines(
+            user_id=str(ctx.user.id), language=ctx.language,
+            bot=bot, chat_id=ctx.chat_id, initial_bet=0,
+        )
 
 
 # ---------------------------------------------------------------------------
-# Джокер  →  джокер 500  (inline-флоу со ставкой предзаполненной)
+# Джокер  →  джокер 500  (сразу стартует / без ставки — экран выбора)
 # ---------------------------------------------------------------------------
 
 @register(Intent.CASINO_JOKER)
 async def handle_joker(ctx: BrainContext, bot) -> None:
-    from world.casino.games.joker import open_joker
+    from world.casino.games.joker import open_joker, start_joker_inline
     _, bet = _parse_args(ctx.text)
-    await open_joker(
-        user_id=str(ctx.user.id), language=ctx.language,
-        bot=bot, chat_id=ctx.chat_id,
-        initial_bet=bet or 0,
-    )
+    if bet and await _check_bet(ctx, bot, bet, "500"):
+        msg = await bot.send_message(ctx.chat_id, "🃏 *Джокер* — запускаю...", parse_mode="Markdown")
+        await start_joker_inline(
+            user_id=str(ctx.user.id), bet=bet, language=ctx.language,
+            bot=bot, chat_id=ctx.chat_id, message_id=msg.message_id,
+        )
+    else:
+        await open_joker(
+            user_id=str(ctx.user.id), language=ctx.language,
+            bot=bot, chat_id=ctx.chat_id, initial_bet=0,
+        )
 
 
 # ---------------------------------------------------------------------------
-# Колесо  →  колесо 500  (inline-флоу со ставкой предзаполненной)
+# Колесо  →  колесо 500  (сразу результат / без ставки — экран выбора)
 # ---------------------------------------------------------------------------
 
 @register(Intent.CASINO_WHEEL)
 async def handle_wheel(ctx: BrainContext, bot) -> None:
-    from world.casino.games.wheel import open_wheel
+    from world.casino.games.wheel import open_wheel, play_wheel
     _, bet = _parse_args(ctx.text)
-    await open_wheel(
-        user_id=str(ctx.user.id), language=ctx.language,
-        bot=bot, chat_id=ctx.chat_id,
-        initial_bet=bet or 0,
-    )
+    if bet and await _check_bet(ctx, bot, bet, "500"):
+        result = await play_wheel(user_id=str(ctx.user.id), bet=bet, language=ctx.language)
+        await bot.send_message(ctx.chat_id, result, parse_mode="Markdown")
+    else:
+        await open_wheel(
+            user_id=str(ctx.user.id), language=ctx.language,
+            bot=bot, chat_id=ctx.chat_id, initial_bet=0,
+        )
