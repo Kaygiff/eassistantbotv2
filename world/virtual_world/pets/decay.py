@@ -14,8 +14,8 @@ from infra.notifications.sender import notify_user
 logger = logging.getLogger(__name__)
 
 # Значения деградации за один тик (30 минут)
-HUNGER_DECAY = 5
-ENERGY_DECAY = 3
+HUNGER_DECAY = 2
+ENERGY_DECAY = 1
 
 # Пороги для уведомлений
 NOTIFY_THRESHOLD_LOW = 20   # уведомить хозяина если показатель упал ниже
@@ -26,7 +26,7 @@ async def process_single_pet(pet: dict[str, Any]) -> None:
     """Обрабатывает деградацию одного питомца."""
     if pet.get("is_dead") or pet.get("is_sick"):
         # Больной питомец деградирует быстрее
-        hunger_decay = HUNGER_DECAY * 2 if pet.get("is_sick") else HUNGER_DECAY
+        hunger_decay = HUNGER_DECAY * 2 if pet.get("is_sick") else HUNGER_DECAY  # больной: 4, здоровый: 2
         energy_decay = ENERGY_DECAY * 2 if pet.get("is_sick") else ENERGY_DECAY
     else:
         hunger_decay = HUNGER_DECAY
