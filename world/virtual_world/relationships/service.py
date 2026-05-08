@@ -146,14 +146,19 @@ async def _notify_with_buttons(user_id: str, text: str, buttons: list[list[dict]
 # ---------------------------------------------------------------------------
 
 async def get_current_relationship(user_id: str) -> Optional[dict]:
-    res = (
-        get_supabase_admin().table("relationships")
-        .select("*")
-        .or_(f"user_a_id.eq.{user_id},user_b_id.eq.{user_id}")
-        .maybe_single()
-        .execute()
-    )
-    return res.data
+    try:
+        res = (
+            get_supabase_admin().table("relationships")
+            .select("*")
+            .or_(f"user_a_id.eq.{user_id},user_b_id.eq.{user_id}")
+            .execute()
+        )
+        if res and res.data:
+            return res.data[0]
+        return None
+    except Exception as e:
+        logger.warning(f"[relationships] get_current_relationship error for {user_id}: {e}")
+        return None
 
 
 async def get_relationship_profile_line(user_id: str) -> Optional[str]:
