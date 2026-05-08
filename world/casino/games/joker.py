@@ -214,6 +214,7 @@ async def open_joker(
     bot: Bot,
     chat_id: int,
     message_id: int | None = None,
+    initial_bet: int = 0,
 ) -> None:
     balance = await get_balance(user_id)
     text = (
@@ -224,7 +225,7 @@ async def open_joker(
         f"×1.5 → ×2.5 → ×4.0 → ×6.5 → ×10.0\n\n"
         f"_Минимум: 10 Ecoins_"
     )
-    kb = _keyboard_bet(0, balance)
+    kb = _keyboard_bet(initial_bet, balance)
     if message_id:
         try:
             await bot.edit_message_text(
