@@ -129,27 +129,60 @@ async def cb_profile(callback: CallbackQuery) -> None:
 @callback_router.callback_query(F.data.startswith("pet:"))
 async def cb_pet(callback: CallbackQuery) -> None:
     parts = callback.data.split(":")
-    action = parts[1]
+    action = parts[1] if len(parts) > 1 else ""
     ctx = await _get_ctx_and_user(callback)
+    user_id = str(ctx.user.id)
+    bot = callback.bot
+    chat_id = callback.message.chat.id
 
-    if action == "new" and len(parts) > 2:
+    if action == "noop":
+        await callback.answer()
+        return
+
+    if action == "menu":
+        from world.virtual_world.pets.service import open_pet_menu
+        await open_pet_menu(user_id, ctx.language, bot, chat_id)
+
+    elif action == "new" and len(parts) == 2:
+        from world.virtual_world.pets.service import open_pet_creation
+        await open_pet_creation(user_id, bot, chat_id)
+
+    elif action == "create" and len(parts) > 2:
         species = parts[2]
         from api.auth.session import set_fsm_state, set_fsm_data
-        await set_fsm_state(str(ctx.user.id), "pet:naming")
-        await set_fsm_data(str(ctx.user.id), {"species": species})
-        from core.i18n.loader import t
-        await callback.message.edit_text(t(ctx.language, "pets.name_pet"))
+        await set_fsm_state(user_id, "pet:naming")
+        await set_fsm_data(user_id, {"species": species})
+        from world.virtual_world.pets.service import ALL_SPECIES, _species_icon
+        label = ALL_SPECIES.get(species, species)
+        icon = _species_icon(species)
+        await callback.message.edit_text(
+            f"{icon} *{label}*!
+
+Как назовёшь питомца?",
+            parse_mode="Markdown",
+        )
+
     elif action == "feed":
-        from bot.brain.handlers.pet import handle_pet_feed
-        await handle_pet_feed(ctx, callback.message.bot)
+        from world.virtual_world.pets.service import feed_pet
+        text = await feed_pet(user_id, ctx.language)
+        await bot.send_message(chat_id, text, parse_mode="Markdown")
+
     elif action == "play":
-        from bot.brain.handlers.pet import handle_pet_play
-        await handle_pet_play(ctx, callback.message.bot)
+        from world.virtual_world.pets.service import play_with_pet
+        text = await play_with_pet(user_id, ctx.language)
+        await bot.send_message(chat_id, text, parse_mode="Markdown")
+
     elif action == "heal":
-        from bot.brain.handlers.pet import handle_pet_heal
-        await handle_pet_heal(ctx, callback.message.bot)
+        from world.virtual_world.pets.service import heal_pet
+        text = await heal_pet(user_id, ctx.language)
+        await bot.send_message(chat_id, text, parse_mode="Markdown")
+
+    elif action == "rename":
+        from world.virtual_world.pets.service import start_pet_rename
+        await start_pet_rename(user_id, bot, chat_id)
 
     await callback.answer()
+
 
 
 # ===========================================================================
