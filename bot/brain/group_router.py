@@ -158,6 +158,23 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
         ctx.extra["addressed_by_name"] = True
         ctx.text = clean_text  # классифицируем без имени бота
 
+        # Если после имени ничего нет — бот откликается
+        if not clean_text:
+            import random
+            responses = [
+                "👋 Я здесь!",
+                "⚡️ Работаю!",
+                "✅ На месте, слушаю!",
+                "😊 Да, это я!",
+                "🎯 Здесь, чем помочь?",
+            ]
+            await bot.send_message(
+                ctx.chat_id,
+                random.choice(responses),
+                reply_to_message_id=ctx.message_id,
+            )
+            return
+
         intent = await classify(ctx.text, ctx.language)
         ctx.set_intent(intent)
 
