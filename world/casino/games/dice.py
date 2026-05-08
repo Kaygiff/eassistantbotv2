@@ -306,7 +306,7 @@ async def play_dice_inline(
 # Текстовая версия (обратная совместимость)
 # ---------------------------------------------------------------------------
 
-async def play_dice(user_id: str, bet: int, language: str) -> str:
+async def play_dice(user_id: str, bet: int, language: str, choice: str | None = None) -> str:
     success, balance = await debit(user_id, bet, "casino_bet")
     if not success:
         return t(language, "economy.insufficient_funds", balance=balance)
@@ -314,9 +314,19 @@ async def play_dice(user_id: str, bet: int, language: str) -> str:
     die1 = random.randint(1, 6)
     die2 = random.randint(1, 6)
     total = die1 + die2
-    player_choice = random.choice(["больше", "меньше"])
+    player_choice = choice if choice in ("больше", "меньше", "ровно") else random.choice(["больше", "меньше"])
 
-    if total == 7:
+    if player_choice == "ровно":
+        if total == 7:
+            payout = bet * 5
+            outcome = "win"
+            await credit(user_id, payout, "game_win")
+            msg = t(language, "casino.win", amount=payout - bet)
+        else:
+            payout = 0
+            outcome = "loss"
+            msg = t(language, "casino.loss", amount=bet)
+    elif total == 7:
         await credit(user_id, bet, "casino_bet")
         outcome = "push"
         payout = bet
