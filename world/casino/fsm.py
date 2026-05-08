@@ -6,9 +6,19 @@ from __future__ import annotations
 from bot.brain.context import BrainContext
 from api.auth.session import get_fsm_data, clear_fsm_state, clear_fsm_data
 
+CANCEL_WORDS = {"отмена", "cancel", "/cancel", "выход", "стоп", "stop", "назад", "exit"}
+
 
 async def handle_casino_fsm(ctx: BrainContext, bot, state: str) -> bool:
     user_id = str(ctx.user.id)
+    text = ctx.text.strip()
+
+    # Пользователь хочет выйти из FSM казино
+    if text.lower() in CANCEL_WORDS:
+        await clear_fsm_state(user_id)
+        await clear_fsm_data(user_id)
+        await bot.send_message(ctx.chat_id, "🎰 Ввод ставки отменён. Напиши «казино» или /casino чтобы открыть меню.")
+        return True
 
     # --- Рулетка: пользователь вводит свою сумму ставки текстом ---
     if state == "casino:roulette_custom_bet":
@@ -18,9 +28,9 @@ async def handle_casino_fsm(ctx: BrainContext, bot, state: str) -> bool:
         message_id = data.get("message_id")
 
         try:
-            bet = int(ctx.text.strip())
+            bet = int(text)
         except ValueError:
-            await bot.send_message(ctx.chat_id, "⚠️ Введи число — размер ставки в Ecoins.")
+            await bot.send_message(ctx.chat_id, "⚠️ Введи число — размер ставки в Ecoins.\nИли напиши «отмена» чтобы выйти.")
             return True
 
         await clear_fsm_state(user_id)
@@ -62,9 +72,9 @@ async def handle_casino_fsm(ctx: BrainContext, bot, state: str) -> bool:
         data = await get_fsm_data(user_id)
         game_type = data.get("game_type", "slots")
         try:
-            bet = int(ctx.text.strip())
+            bet = int(text)
         except ValueError:
-            await bot.send_message(ctx.chat_id, "⚠️ Введи число — размер ставки в Ecoins.")
+            await bot.send_message(ctx.chat_id, "⚠️ Введи число — размер ставки в Ecoins.\nИли напиши «отмена» чтобы выйти.")
             return True
 
         await clear_fsm_state(user_id)
@@ -91,4 +101,7 @@ async def handle_casino_fsm(ctx: BrainContext, bot, state: str) -> bool:
         await bot.send_message(ctx.chat_id, result, parse_mode="Markdown")
         return True
 
+    # Неизвестное состояние casino: — сбрасываем чтобы не зависнуть
+    await clear_fsm_state(user_id)
+    await clear_fsm_data(user_id)
     return False
