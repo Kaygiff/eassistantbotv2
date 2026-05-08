@@ -23,11 +23,13 @@ class Intent(str, Enum):
     LEADERBOARD = "leaderboard"
 
     # --- Питомец ---
+    PET_MENU = "pet_menu"
     PET_STATUS = "pet_status"
     PET_FEED = "pet_feed"
     PET_PLAY = "pet_play"
     PET_HEAL = "pet_heal"
     PET_NEW = "pet_new"
+    PET_RENAME = "pet_rename"
 
     # --- Виртуальный мир ---
     RELATIONSHIP_PROPOSE = "relationship_propose"
@@ -131,7 +133,7 @@ VIRTUAL_WORLD_INTENTS = {
     Intent.MARRIAGE_PROPOSE, Intent.MARRIAGE_DIVORCE,
     Intent.FAMILY_ADD, Intent.FAMILY_VIEW,
     Intent.ACTION_DO, Intent.BLACKLIST_ADD, Intent.BLACKLIST_REMOVE,
-    Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL, Intent.PET_NEW,
+    Intent.PET_MENU, Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL, Intent.PET_NEW, Intent.PET_RENAME,
     Intent.EVENT_CREATE, Intent.EVENT_LIST, Intent.EVENT_JOIN,
 }
 
