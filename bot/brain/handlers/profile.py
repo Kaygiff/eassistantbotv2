@@ -10,31 +10,39 @@ from bot.brain.context import BrainContext
 @register(Intent.PROFILE_VIEW)
 async def handle_profile_view(ctx: BrainContext, bot) -> None:
     from world.economy.wallet import get_balance
+    from world.virtual_world.pets.service import get_pet_profile_line
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
     user = ctx.user
     balance = await get_balance(ctx.user_id)
+    pet_line = await get_pet_profile_line(ctx.user_id)
 
-    lines = [
-        f"👤 *Профиль*\n",
-        f"🏷 Имя ассистента: *{user.assistant_name}*",
-    ]
+    lines = [f"👤 *Профиль*\n"]
     if user.nickname:
-        lines.append(f"✏️ Никнейм: *{user.nickname}*")
+        lines.append(f"✏️ *{user.nickname}*")
+    lines.append(f"🏷 Ассистент: *{user.assistant_name}*")
     if user.bio:
-        lines.append(f"📝 О себе: {user.bio}")
+        lines.append(f"📝 {user.bio}")
     if user.birthday:
-        lines.append(f"🎂 День рождения: {user.birthday.strftime('%d.%m.%Y')}")
-    lines.append(f"🌐 Язык: {user.language.upper()}")
-    lines.append(f"💰 Баланс: *{balance} Ecoins*")
+        lines.append(f"🎂 {user.birthday.strftime('%d.%m.%Y')}")
+    lines.append(f"🌐 {user.language.upper()}")
+    lines.append(f"💰 *{balance} Ecoins*")
+    if pet_line:
+        lines.append(f"\n🐾 {pet_line}")
 
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    # Кнопка питомца: создать если нет, меню если есть
+    pet_btn = (
+        InlineKeyboardButton(text="🥚 Создать питомца", callback_data="pet:new")
+        if not pet_line else
+        InlineKeyboardButton(text="🐾 Питомец", callback_data="pet:menu")
+    )
+
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="✏️ Редактировать", callback_data="profile:edit"),
             InlineKeyboardButton(text="💰 Ecoins", callback_data="ecoins:menu"),
         ],
-        [
-            InlineKeyboardButton(text="🎰 Казино", callback_data="profile:casino"),
-        ],
+        [pet_btn, InlineKeyboardButton(text="🎰 Казино", callback_data="profile:casino")],
     ])
     await bot.send_message(
         ctx.chat_id,
