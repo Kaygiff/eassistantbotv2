@@ -156,9 +156,7 @@ async def cb_pet(callback: CallbackQuery) -> None:
         label = ALL_SPECIES.get(species, species)
         icon = _species_icon(species)
         await callback.message.edit_text(
-            f"{icon} *{label}*!
-
-Как назовёшь питомца?",
+            f"{icon} *{label}*!\n\nКак назовёшь питомца?",
             parse_mode="Markdown",
         )
 
