@@ -81,8 +81,18 @@ def _xp_gain(base: int, mood: str) -> int:
 
 
 async def _get_pet(user_id: str) -> dict | None:
-    res = get_supabase_admin().table("pets").select("*").eq("user_id", user_id).maybe_single().execute()
-    return res.data
+    try:
+        res = get_supabase_admin().table("pets").select("*").eq("user_id", user_id).limit(1).execute()
+        if res and res.data:
+            pet = res.data[0]
+            # xp может отсутствовать если колонка ещё не добавлена в БД
+            if "xp" not in pet:
+                pet["xp"] = 0
+            return pet
+        return None
+    except Exception as e:
+        logger.error(f"[Pets] _get_pet error: {e}")
+        return None
 
 
 def _species_icon(species: str) -> str:
