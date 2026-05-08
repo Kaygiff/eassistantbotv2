@@ -101,6 +101,7 @@ class Intent(str, Enum):
     START = "start"
     HELP = "help"
     SETTINGS = "settings"
+    WHO_MADE_YOU = "who_made_you"
     UNKNOWN = "unknown"
 
     # --- Служебные (не хэндлеры, обрабатываются в router.py) ---
