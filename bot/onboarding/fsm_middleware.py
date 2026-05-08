@@ -53,6 +53,10 @@ async def handle_fsm(ctx: BrainContext, bot) -> bool:
         from world.virtual_world.pets.service import handle_pet_naming
         return await handle_pet_naming(ctx, bot)
 
+    if state == "pet:rename":
+        from world.virtual_world.pets.service import handle_pet_rename
+        return await handle_pet_rename(ctx, bot)
+
     # --- Задачи ---
     if state.startswith("task:") or state.startswith("reminder:"):
         from services.tasks.task_service import handle_task_fsm
