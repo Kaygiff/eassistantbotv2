@@ -158,10 +158,11 @@ async def open_wheel(
     bot: Bot,
     chat_id: int,
     message_id: int | None = None,
+    initial_bet: int = 0,
 ) -> None:
     balance = await get_balance(user_id)
-    text = _text_bet_screen(0, balance)
-    kb = _keyboard_bet_amount(0, balance)
+    text = _text_bet_screen(initial_bet, balance)
+    kb = _keyboard_bet_amount(initial_bet, balance)
     if message_id:
         try:
             await bot.edit_message_text(
