@@ -97,10 +97,26 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
     ctx.is_new_user = is_new
     ctx.language = user.language
 
-    # 3. Новый участник группы — не онбордим, просто логируем
+    # 3. Новый участник группы — не онбордим, просим зарегистрироваться в боте
     if is_new:
         logger.info(f"[GroupRouter] New user {ctx.telegram_id} in group {ctx.chat_id}")
-        # Онбординг — только в личке
+        # Реагируем только если сообщение явно адресовано боту (команда или /слэш)
+        text_lower = ctx.text.strip().lower()
+        is_command = text_lower.startswith("/")
+        # Проверяем обращение по любому возможному имени — пока имени нет, смотрим на команды
+        if is_command or any(
+            text_lower.startswith(kw) for kw in [
+                "слоты", "рулетка", "кости", "монетка", "мины", "джокер", "колесо",
+                "казино", "баланс", "питомец", "профил",
+            ]
+        ):
+            bot_info = await bot.get_me()
+            bot_link = f"https://t.me/{bot_info.username}"
+            await bot.send_message(
+                ctx.chat_id,
+                f"👋 Привет! Чтобы пользоваться ботом, сначала пройди регистрацию в личке:\n{bot_link}",
+                reply_to_message_id=ctx.message_id,
+            )
         return
 
     # 4. Safety check
@@ -166,6 +182,34 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
             return
 
     else:
+        # Проверяем: не пытается ли пользователь обратиться по чужому имени?
+        # Эвристика: первое слово написано с заглавной, не является командой и не совпадает с именем бота
+        first_word = ctx.text.strip().split()[0].rstrip(",:- ") if ctx.text.strip() else ""
+        if (
+            first_word
+            and first_word[0].isupper()
+            and not first_word.startswith("/")
+            and first_word.lower() != (user.assistant_name or "").lower()
+            and len(first_word) >= 3
+            and first_word.lower() not in [
+                "привет", "пока", "спасибо", "да", "нет", "окей", "ок",
+                "слоты", "рулетка", "кости", "монетка", "мины", "джокер",
+                "колесо", "казино", "баланс", "питомец", "профиль",
+            ]
+        ):
+            # Похоже на обращение к боту по имени, но имя не совпадает
+            # Проверяем: есть ли в тексте после первого слова что-то осмысленное
+            rest = ctx.text.strip()[len(first_word):].lstrip(",:- ").strip()
+            if rest:
+                assistant_name = user.assistant_name or "Ассистент"
+                await bot.send_message(
+                    ctx.chat_id,
+                    f"Меня зовут *{assistant_name}* 😊 Обращайся по имени!",
+                    parse_mode="Markdown",
+                    reply_to_message_id=ctx.message_id,
+                )
+                return
+
         # Режим WORLD: работают только world-интенты без обращения по имени.
         # Используем СТРОГИЙ классификатор — только паттерны с ^ или /команда.
         # Brain AI здесь не вызывается: он слишком широко интерпретирует
