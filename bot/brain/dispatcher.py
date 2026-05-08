@@ -28,7 +28,7 @@ def register_all_handlers() -> None:
     import bot.brain.handlers.economy         # баланс, бонус, перевод, рефералы
 
     # --- Питомец ---
-    import bot.brain.handlers.pet             # все действия с питомцем
+    import bot.brain.handlers.pets            # все действия с питомцем (30 видов, XP, уровни)
 
     # --- Виртуальный мир ---
     import bot.brain.handlers.relationships   # отношения и браки
