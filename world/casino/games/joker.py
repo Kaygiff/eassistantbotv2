@@ -65,9 +65,7 @@ def _history_rows(history: list[dict]) -> list[list[InlineKeyboardButton]]:
             else:
                 icons.append(CARD_JOKER if card == "joker" else CARD_SAFE)
 
-        status = f"×{mult} ✅" if result == "win" else "💥 Джокер"
         row = [_noop(icon) for icon in icons]
-        row.append(_noop(status))
         rows.append(row)
     return rows
 
@@ -127,13 +125,19 @@ def _keyboard_round_active(round_num: int, history: list[dict]) -> InlineKeyboar
 
 
 def _keyboard_with_cashout(completed_round: int, next_round: int, bet: int, history: list[dict]) -> InlineKeyboardMarkup:
-    """История + карты следующего раунда (без кнопки Забрать)."""
+    """История + карты следующего раунда + кнопка Забрать награду."""
+    mult   = ROUND_MULTIPLIERS[completed_round - 1]
+    payout = int(bet * mult)
     rows = _history_rows(history)
     rows.append([
         InlineKeyboardButton(text=CARD_BACK, callback_data=f"joker:pick:{next_round}:0"),
         InlineKeyboardButton(text=CARD_BACK, callback_data=f"joker:pick:{next_round}:1"),
         InlineKeyboardButton(text=CARD_BACK, callback_data=f"joker:pick:{next_round}:2"),
     ])
+    rows.append([InlineKeyboardButton(
+        text=f"💰 Забрать награду ({payout} Ecoins)",
+        callback_data="joker:cashout",
+    )])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
