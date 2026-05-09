@@ -200,6 +200,17 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
 
     else:
         # Режим WORLD: работают только world-интенты без обращения по имени.
+
+        # 6а. Семейные команды — жёсткий match, без brain/NLP, без спама в группах
+        from bot.brain.handlers.family import is_family_command, handle_family_command
+        if is_family_command(ctx.text):
+            try:
+                await handle_family_command(ctx, bot)
+            except Exception as e:
+                logger.exception(f"[GroupRouter] Family handler error: {e}")
+                await bot.send_message(ctx.chat_id, t(ctx.language, "common.error"))
+            return
+
         # Используем СТРОГИЙ классификатор — только паттерны с ^ или /команда.
         # Brain AI здесь не вызывается: он слишком широко интерпретирует
         # обычный разговор и порождает ложные срабатывания.
