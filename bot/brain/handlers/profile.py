@@ -12,12 +12,14 @@ async def handle_profile_view(ctx: BrainContext, bot) -> None:
     from world.economy.wallet import get_balance
     from world.virtual_world.pets.service import get_pet_profile_line
     from world.virtual_world.relationships.service import get_relationship_profile_line
+    from world.virtual_world.family.service import get_family_profile_lines
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
     user = ctx.user
     balance = await get_balance(ctx.user_id)
     pet_line = await get_pet_profile_line(ctx.user_id)
     rel_line = await get_relationship_profile_line(ctx.user_id)
+    family_lines = await get_family_profile_lines(ctx.user_id)
 
     lines = ["👤 *Профиль*\n"]
     if user.nickname:
@@ -32,6 +34,9 @@ async def handle_profile_view(ctx: BrainContext, bot) -> None:
     lines.append(f"\n{rel_line}" if rel_line else "\n💔 Свободен(а)")
     if pet_line:
         lines.append(f"🐾 {pet_line}")
+    if family_lines:
+        lines.append("")
+        lines.extend(family_lines)
 
     pet_btn = (
         InlineKeyboardButton(text="🥚 Создать питомца", callback_data="pet:new")
