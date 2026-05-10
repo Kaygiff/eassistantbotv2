@@ -39,6 +39,7 @@ async def handle_group_message(message: Message) -> None:
     if message.reply_to_message and message.reply_to_message.from_user:
         reply_user = message.reply_to_message.from_user
         ctx.reply_to_user_telegram_id = reply_user.id
+        ctx.reply_to_message_id = message.reply_to_message.message_id
         ctx.extra["reply_to_user_name"] = (
             reply_user.first_name
             or (f"@{reply_user.username}" if reply_user.username else None)

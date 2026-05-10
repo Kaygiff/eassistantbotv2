@@ -30,6 +30,7 @@ class BrainContext:
     is_voice: bool = False
     voice_file_id: Optional[str] = None
     reply_to_user_telegram_id: Optional[int] = None  # @ упоминание или reply
+    reply_to_message_id: Optional[int] = None         # message_id для реплая в чат
 
     # --- Telegram-данные отправителя (из Message.from_user) ---
     tg_username: Optional[str] = None
