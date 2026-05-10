@@ -186,6 +186,7 @@ GROUP_WORLD_INTENTS = {
     Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
     Intent.GROUP_ROLE, Intent.GROUP_ADMINS, Intent.GROUP_RULES,
     Intent.HELP, Intent.BALANCE, Intent.DAILY_BONUS, Intent.LEADERBOARD,
+    Intent.TRANSFER,  # перевод Ecoins через реплай
     Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL,
     Intent.CASINO_OPEN, Intent.CASINO_SLOTS, Intent.CASINO_ROULETTE,
     Intent.CASINO_DICE, Intent.CASINO_COIN, Intent.CASINO_MINES,
