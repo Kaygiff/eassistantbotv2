@@ -5,9 +5,11 @@ bot/handlers/group.py — Обработка сообщений в группо�
 from __future__ import annotations
 import logging
 
+import os
+
 from aiogram import Router, F
-from aiogram.types import Message, ChatMemberUpdated
-from aiogram.filters import ChatMemberUpdatedFilter, JOIN_TRANSITION, LEAVE_TRANSITION
+from aiogram.types import Message, ChatMemberUpdated, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import ChatMemberUpdatedFilter, JOIN_TRANSITION, LEAVE_TRANSITION, Command
 
 from bot.brain.context import BrainContext
 
@@ -15,6 +17,32 @@ logger = logging.getLogger(__name__)
 
 group_router = Router()
 group_router.message.filter(F.chat.type.in_({"group", "supergroup"}))
+
+_RAILWAY_URL = os.getenv("RAILWAY_PUBLIC_DOMAIN", "eassistantbotv2-production.up.railway.app")
+_GUIDE_URL = f"https://{_RAILWAY_URL}/guide"
+
+HELP_TEXT = (
+    "🎉 Вот лишь малая часть того, на что я способен:\n\n"
+    "🤖 AI-чат на любые темы\n"
+    "🎮 Казино и мини-игры на Ecoins\n"
+    "🎵 Музыка по запросу\n"
+    "🌤 Погода в любом городе\n"
+    "👨‍👩‍👧 Виртуальная семья и питомцы\n"
+    "💰 Экономика, бонусы, топ игроков\n\n"
+    "Но это только начало — в руководстве спрятано всё остальное: "
+    "скрытые команды, лайфхаки, как быстро заработать Ecoins и не только.\n\n"
+    "📖 Загляни — там интереснее, чем кажется."
+)
+
+
+@group_router.message(Command("help", "справка", "руководство", "помощь"))
+async def handle_group_help(message: Message) -> None:
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📖 Открыть руководство", web_app={"url": _GUIDE_URL})]
+        ]
+    )
+    await message.answer(HELP_TEXT, parse_mode="Markdown", reply_markup=keyboard)
 
 
 @group_router.message()
