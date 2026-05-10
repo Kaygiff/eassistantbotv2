@@ -11,6 +11,18 @@ from core.i18n import t
 _RAILWAY_URL = os.getenv("RAILWAY_PUBLIC_DOMAIN", "eassistantbotv2-production.up.railway.app")
 _GUIDE_URL = f"https://{_RAILWAY_URL}/guide"
 
+HELP_TEXT = (
+    "🎉 Вот лишь малая часть того, на что я способен:\n\n"
+    "🤖 AI-чат на любые темы\n"
+    "🎮 Казино и мини-игры на Ecoins\n"
+    "🎵 Музыка по запросу\n"
+    "🌤 Погода в любом городе\n"
+    "👨‍👩‍👧 Виртуальная семья и питомцы\n"
+    "💰 Экономика, бонусы, топ игроков\n\n"
+    "Но это только начало — в руководстве спрятано всё остальное: скрытые команды, лайфхаки, как быстро заработать Ecoins и не только.\n\n"
+    "📖 Загляни — там интереснее, чем кажется."
+)
+
 
 def _guide_keyboard():
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -35,21 +47,12 @@ async def handle_start(ctx: BrainContext, bot) -> None:
 
 @register(Intent.HELP)
 async def handle_help(ctx: BrainContext, bot) -> None:
-    text = (
-        f"*{ctx.assistant_name}* — список команд:\n\n"
-        f"🤖 /ai — AI-чат\n"
-        f"💰 /balance — баланс Ecoins\n"
-        f"🎁 /daily — ежедневный бонус\n"
-        f"🐾 /pet — мой питомец\n"
-        f"🎰 /casino — казино\n"
-        f"🎵 /music — найти музыку\n"
-        f"🌤 /weather — погода\n"
-        f"📚 /book — найти книгу\n"
-        f"📝 /tasks — мои задачи\n"
-        f"👤 /profile — мой профиль\n"
-        f"⚙️ /settings — настройки\n"
+    await bot.send_message(
+        ctx.chat_id,
+        HELP_TEXT,
+        parse_mode="Markdown",
+        reply_markup=_guide_keyboard(),
     )
-    await bot.send_message(ctx.chat_id, text, parse_mode="Markdown", reply_markup=_guide_keyboard())
 
 
 @register(Intent.WHO_MADE_YOU)
