@@ -102,17 +102,34 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
 
     if is_new or not is_registered:
         logger.info(f"[GroupRouter] Unregistered user {ctx.telegram_id} in group {ctx.chat_id}")
-        # Реагируем только если сообщение адресовано боту — не спамим на каждое слово
         text_lower = ctx.text.strip().lower()
         is_command = text_lower.startswith("/")
-        is_addressed = any(
+
+        # Проверяем обращение по имени любого бота в группе
+        is_addressed_by_name = False
+        try:
+            from infra.db.supabase import get_supabase_admin
+            names_res = get_supabase_admin().table("users").select("assistant_name").not_.is_("assistant_name", "null").execute()
+            if names_res and names_res.data:
+                for row in names_res.data:
+                    name = row.get("assistant_name", "")
+                    if name and name != "Ассистент":
+                        addressed, _ = _extract_assistant_address(ctx.text, name)
+                        if addressed:
+                            is_addressed_by_name = True
+                            break
+        except Exception:
+            pass
+
+        is_keyword = any(
             text_lower.startswith(kw) for kw in [
                 "слоты", "рулетка", "кости", "монетка", "мины", "джокер", "колесо",
                 "казино", "баланс", "питомец", "профил", "передать", "помощь",
                 "справка", "руководство",
             ]
         )
-        if is_command or is_addressed:
+
+        if is_command or is_addressed_by_name or is_keyword:
             bot_info = await bot.get_me()
             bot_link = f"https://t.me/{bot_info.username}"
             await bot.send_message(
