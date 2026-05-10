@@ -829,3 +829,36 @@ async def cb_relationship(callback: CallbackQuery) -> None:
     if text:
         await callback.message.edit_text(text, parse_mode="Markdown")
     await callback.answer()
+
+
+
+# --- Чёрный список ---
+@callback_router.callback_query(F.data.startswith("blacklist:"))
+async def cb_blacklist(callback: CallbackQuery) -> None:
+    """blacklist:unblock:{blocked_uuid} — разблокировать из ЧС и обновить список."""
+    parts = callback.data.split(":")
+    action = parts[1]
+    blocked_uuid = parts[2]
+
+    from api.auth.identity import get_user_by_telegram_id
+    user = await get_user_by_telegram_id(callback.from_user.id)
+    if not user:
+        await callback.answer("❌ Ошибка авторизации.", show_alert=True)
+        return
+
+    if action == "unblock":
+        from world.virtual_world.blacklist.service import remove_from_blacklist_by_uuid, get_blacklist
+        result_text = await remove_from_blacklist_by_uuid(str(user.id), blocked_uuid)
+
+        # Обновляем список прямо в сообщении
+        new_text, keyboard = await get_blacklist(str(user.id))
+        try:
+            await callback.message.edit_text(
+                result_text + "\n\n" + new_text,
+                parse_mode="Markdown",
+                reply_markup=keyboard,
+            )
+        except Exception:
+            pass
+
+    await callback.answer()
