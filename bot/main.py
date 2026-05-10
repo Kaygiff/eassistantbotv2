@@ -42,6 +42,43 @@ async def on_startup(bot: Bot) -> None:
     # Загружаем стоп-слова для модерации
     await load_stopwords()
 
+    # ── Меню команд ────────────────────────────────────────────────────────
+    from aiogram.types import BotCommand, BotCommandScopeAllPrivateChats
+
+    commands = [
+        BotCommand(command="start",       description="🚀 Начать / перезапустить"),
+        BotCommand(command="help",        description="📖 Справка и руководство"),
+        BotCommand(command="profile",     description="👤 Мой профиль"),
+        BotCommand(command="balance",     description="💰 Баланс Ecoins"),
+        BotCommand(command="daily",       description="🎁 Ежедневный бонус"),
+        BotCommand(command="pet",         description="🐾 Мой питомец"),
+        BotCommand(command="casino",      description="🎰 Казино"),
+        BotCommand(command="tasks",       description="📝 Мои задачи"),
+        BotCommand(command="top",         description="🏆 Топ игроков"),
+        BotCommand(command="settings",    description="⚙️ Настройки"),
+    ]
+    await bot.set_my_commands(commands, scope=BotCommandScopeAllPrivateChats())
+
+    # Краткое описание (показывается в профиле бота и при первом открытии)
+    try:
+        await bot.set_my_short_description(
+            "🤖 AI-ассистент • 🎮 Игры • 💰 Ecoins • 🌤 Погода • 🎵 Музыка | /help — справка"
+        )
+        await bot.set_my_description(
+            "👋 Привет! Я — персональный AI-ассистент.\n\n"
+            "Умею:\n"
+            "🤖 Общаться на любые темы (AI-чат)\n"
+            "🎮 Казино и мини-игры на Ecoins\n"
+            "🎵 Найти и отправить музыку\n"
+            "🌤 Прогноз погоды для любого города\n"
+            "📚 Энциклопедия и справочник\n"
+            "👨‍👩‍👧 Виртуальная семья и питомцы\n\n"
+            "Нажми /start чтобы начать, или /help чтобы открыть руководство 📖"
+        )
+    except Exception as e:
+        logger.warning(f"[Bot] Could not set description: {e}")
+    # ───────────────────────────────────────────────────────────────────────
+
     if APP_ENV == "production" and WEBHOOK_URL:
         await bot.set_webhook(
             url=f"{WEBHOOK_URL}/webhook",

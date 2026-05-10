@@ -35,6 +35,33 @@ async def cmd_help(message: Message) -> None:
     await process(ctx, message.bot)
 
 
+# Русскоязычные алиасы для справки
+@private_router.message(Command("справка", "руководство", "помощь"))
+async def cmd_help_ru(message: Message) -> None:
+    import os
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+    RAILWAY_URL = os.getenv("RAILWAY_PUBLIC_DOMAIN", "eassistantbotv2-production.up.railway.app")
+    guide_url = f"https://{RAILWAY_URL}/guide"
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="📖 Открыть руководство",
+                web_app={"url": guide_url},
+            )]
+        ]
+    )
+    ctx = _build_context(message)
+    ctx.set_intent(Intent.HELP, confidence="keyword")
+    await process(ctx, message.bot)
+    # Дополнительно шлём кнопку руководства
+    await message.answer(
+        "📚 Полное руководство доступно по кнопке ниже:",
+        reply_markup=keyboard,
+    )
+
+
 @private_router.message(Command("profile"))
 async def cmd_profile(message: Message) -> None:
     ctx = _build_context(message)

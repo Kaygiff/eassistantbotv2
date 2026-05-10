@@ -177,7 +177,22 @@ async def handle_onboarding_text(ctx: BrainContext, bot) -> bool:
 
 
 async def _show_intro(ctx: BrainContext, bot, bot_name: str, nickname: str, lang: str) -> None:
-    """Шаг 5 — финальный экран."""
+    """Шаг 5 — финальный экран с кнопкой руководства."""
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    import os
+
+    RAILWAY_URL = os.getenv("RAILWAY_PUBLIC_DOMAIN", "eassistantbotv2-production.up.railway.app")
+    guide_url = f"https://{RAILWAY_URL}/guide"
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="📖 Открыть руководство",
+                web_app={"url": guide_url},
+            )]
+        ]
+    )
+
     await bot.send_message(
         ctx.chat_id,
         t(lang, "onboarding.profile_created"),
@@ -186,6 +201,7 @@ async def _show_intro(ctx: BrainContext, bot, bot_name: str, nickname: str, lang
         ctx.chat_id,
         t(lang, "onboarding.intro"),
         parse_mode="Markdown",
+        reply_markup=keyboard,
     )
     logger.info(f"[Onboarding] Completed user={ctx.telegram_id} bot_name={bot_name} nickname={nickname}")
 

@@ -1,11 +1,27 @@
 """
 brain/handlers/system.py — Системные команды: /start, /help, /settings.
 """
+import os
 
 from bot.brain.router import register
 from bot.brain.intent import Intent
 from bot.brain.context import BrainContext
 from core.i18n import t
+
+_RAILWAY_URL = os.getenv("RAILWAY_PUBLIC_DOMAIN", "eassistantbotv2-production.up.railway.app")
+_GUIDE_URL = f"https://{_RAILWAY_URL}/guide"
+
+
+def _guide_keyboard():
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(
+                text="📖 Открыть руководство",
+                web_app={"url": _GUIDE_URL},
+            )]
+        ]
+    )
 
 
 @register(Intent.START)
@@ -19,7 +35,6 @@ async def handle_start(ctx: BrainContext, bot) -> None:
 
 @register(Intent.HELP)
 async def handle_help(ctx: BrainContext, bot) -> None:
-    lang = ctx.language
     text = (
         f"*{ctx.assistant_name}* — список команд:\n\n"
         f"🤖 /ai — AI-чат\n"
@@ -34,7 +49,7 @@ async def handle_help(ctx: BrainContext, bot) -> None:
         f"👤 /profile — мой профиль\n"
         f"⚙️ /settings — настройки\n"
     )
-    await bot.send_message(ctx.chat_id, text, parse_mode="Markdown")
+    await bot.send_message(ctx.chat_id, text, parse_mode="Markdown", reply_markup=_guide_keyboard())
 
 
 @register(Intent.WHO_MADE_YOU)
@@ -44,6 +59,8 @@ async def handle_who_made_you(ctx: BrainContext, bot) -> None:
         f"🛠 Меня создал *Кай Гиффенс*\\nTelegram: @kxygxf",
         parse_mode="Markdown",
     )
+
+
 async def handle_settings(ctx: BrainContext, bot) -> None:
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     keyboard = InlineKeyboardMarkup(inline_keyboard=[

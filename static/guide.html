@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EAssistant — Руководство пользователя</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Manrope:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e11;
+    --bg2: #16161c;
+    --bg3: #1e1e28;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0eff5;
+    --muted: #8b8a9a;
+    --accent: #7c6cfc;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --accent4: #f59e0b;
+    --accent5: #f472b6;
+    --accent6: #38bdf8;
+    --accent7: #fb7185;
+    --pill-r: 8px;
+    --card-r: 16px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Manrope', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 80px 24px 60px;
+    border-bottom: 1px solid var(--border);
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,108,252,0.12) 0%, transparent 70%);
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    background: rgba(124,108,252,0.15);
+    border: 1px solid rgba(124,108,252,0.3);
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent2);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(32px, 6vw, 56px);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #f0eff5 30%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    color: var(--muted);
+    font-size: 16px;
+    max-width: 520px;
+    margin: 0 auto 40px;
+  }
+
+  .hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .hero-tag {
+    padding: 6px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(14,14,17,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  nav ul {
+    display: inline-flex;
+    list-style: none;
+    gap: 0;
+    height: 52px;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  nav a {
+    display: block;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  nav a:hover { color: var(--text); background: var(--bg3); }
+
+  /* LAYOUT */
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  section {
+    padding: 64px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+
+  .section-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  /* COMMAND GRID */
+  .cmd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+
+  .cmd-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--card-r);
+    padding: 16px 18px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .cmd-card:hover {
+    border-color: var(--border2);
+    background: var(--bg3);
+  }
+
+  .cmd-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .cmd-emoji {
+    font-size: 18px;
+    line-height: 1;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .cmd-name {
+    font-family: 'Manrope', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent2);
+    background: rgba(124,108,252,0.1);
+    border: 1px solid rgba(124,108,252,0.2);
+    padding: 2px 8px;
+    border-radius: 5px;
+  }
+
+  .cmd-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-left: 28px;
+  }
+
+  .cmd-examples {
+    margin: 10px 0 0 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .example-pill {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--bg);
+    font-style: italic;
+  }
+
+  /* INFO BOX */
+  .info-box {
+    background: rgba(52,211,153,0.07);
+    border: 1px solid rgba(52,211,153,0.2);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #6ee7b7;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .warn-box {
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #fcd34d;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  /* CASINO TABLE */
+  .game-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+
+  .game-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    transition: transform 0.15s, border-color 0.2s;
+  }
+
+  .game-card:hover { transform: translateY(-2px); border-color: var(--border2); }
+
+  .game-card-icon { font-size: 28px; margin-bottom: 8px; }
+  .game-card-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .game-card-cmd { font-size: 12px; color: var(--muted); }
+  .game-card-syntax {
+    margin-top: 8px;
+    font-size: 11px;
+    font-family: monospace;
+    background: var(--bg);
+    padding: 3px 8px;
+    border-radius: 5px;
+    color: var(--accent3);
+  }
+
+  /* ACTIONS */
+  .action-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .action-pill {
+    padding: 6px 14px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    color: var(--text);
+    transition: border-color 0.2s;
+  }
+
+  .action-pill:hover { border-color: var(--border2); }
+
+  /* HOW IT WORKS */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .step {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--card-r);
+    padding: 20px;
+  }
+
+  .step-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .step-title { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+  .step-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .color-tag {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  .group-only {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(56,189,248,0.12);
+    border: 1px solid rgba(56,189,248,0.25);
+    color: #7dd3fc;
+    margin-left: 6px;
+    vertical-align: middle;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .private-only {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(244,114,182,0.12);
+    border: 1px solid rgba(244,114,182,0.25);
+    color: #f9a8d4;
+    margin-left: 6px;
+    vertical-align: middle;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">📖 Руководство пользователя</div>
+  <h1>EAssistant</h1>
+  <p>Твой умный помощник в Telegram — виртуальный мир, казино, медиасервисы и модерация в одном боте.</p>
+  <div class="hero-tags">
+    <span class="hero-tag">🤖 AI-чат</span>
+    <span class="hero-tag">🎰 Казино</span>
+    <span class="hero-tag">🐾 Питомцы</span>
+    <span class="hero-tag">💑 Отношения</span>
+    <span class="hero-tag">🛡 Модерация</span>
+    <span class="hero-tag">🎵 Медиасервисы</span>
+    <span class="hero-tag">📝 Задачи</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <ul>
+    <li><a href="#start">Старт</a></li>
+    <li><a href="#economy">Экономика</a></li>
+    <li><a href="#pet">Питомец</a></li>
+    <li><a href="#world">Виртуальный мир</a></li>
+    <li><a href="#casino">Казино</a></li>
+    <li><a href="#games">Мини-игры</a></li>
+    <li><a href="#media">Медиасервисы</a></li>
+    <li><a href="#tasks">Задачи</a></li>
+    <li><a href="#moderation">Модерация</a></li>
+    <li><a href="#ai">AI-чат</a></li>
+  </ul>
+</nav>
+
+<!-- КАК РАБОТАЕТ БОТ -->
+<section>
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(124,108,252,0.15);">⚡</div>
+      <h2 class="section-title">Как работает бот</h2>
+    </div>
+    <div class="info-box">
+      <span>💡</span>
+      <span>Бот понимает естественную речь — не обязательно писать точные команды. Достаточно написать что хочешь своими словами.</span>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">Шаг 1</div>
+        <div class="step-title">В личном чате</div>
+        <div class="step-desc">Пишешь сообщение напрямую боту — он понимает тебя без обращения по имени.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">Шаг 2</div>
+        <div class="step-title">В группе — по имени</div>
+        <div class="step-desc">Для AI и медиасервисов обращайся по имени ассистента: <em>«Альфа, найди музыку...»</em></div>
+      </div>
+      <div class="step">
+        <div class="step-num">Шаг 3</div>
+        <div class="step-title">В группе — без имени</div>
+        <div class="step-desc">Команды казино, игр, модерации и мира работают без обращения — просто напиши «слоты» или «варн».</div>
+      </div>
+      <div class="step">
+        <div class="step-num">Шаг 4</div>
+        <div class="step-title">Реплай</div>
+        <div class="step-desc">Действия на других пользователей (обнять, заблокировать, варн) требуют реплая на их сообщение.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- СТАРТ И ПРОФИЛЬ -->
+<section id="start">
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(124,108,252,0.15);">🚀</div>
+      <h2 class="section-title">Начало работы и профиль</h2>
+    </div>
+    <div class="cmd-grid">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">👋</span>
+          <span class="cmd-name">/start</span>
+        </div>
+        <div class="cmd-desc">Регистрация и онбординг. Запускай первым делом в личке.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">старт</span>
+          <span class="example-pill">начать</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">❓</span>
+          <span class="cmd-name">/help</span>
+        </div>
+        <div class="cmd-desc">Список всего что умеет бот.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">помоги</span>
+          <span class="example-pill">что ты умеешь</span>
+          <span class="example-pill">команды</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">👤</span>
+          <span class="cmd-name">/profile</span>
+        </div>
+        <div class="cmd-desc">Просмотр своего профиля — баланс, уровень, питомец, статус отношений.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">мой профиль</span>
+          <span class="example-pill">моя анкета</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">✏️</span>
+          <span class="cmd-name">редактировать профиль</span><span class="private-only">личка</span>
+        </div>
+        <div class="cmd-desc">Изменить имя, никнейм или имя ассистента.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">измени мой профиль</span>
+          <span class="example-pill">смени имя ассистента</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">⚙️</span>
+          <span class="cmd-name">/settings</span><span class="private-only">личка</span>
+        </div>
+        <div class="cmd-desc">Настройки бота — язык и прочие параметры.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">настройки</span>
+          <span class="example-pill">настроить бота</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ЭКОНОМИКА -->
+<section id="economy">
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(245,158,11,0.15);">💰</div>
+      <h2 class="section-title">Экономика</h2>
+    </div>
+    <div class="cmd-grid">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">💎</span>
+          <span class="cmd-name">/balance</span>
+        </div>
+        <div class="cmd-desc">Посмотреть свой баланс монет.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">баланс</span>
+          <span class="example-pill">мой баланс</span>
+          <span class="example-pill">сколько монет</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🎁</span>
+          <span class="cmd-name">/daily</span><span class="private-only">личка</span>
+        </div>
+        <div class="cmd-desc">Ежедневный бонус. Получай монеты раз в день.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">бонус</span>
+          <span class="example-pill">дейли</span>
+          <span class="example-pill">бонус дня</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">💸</span>
+          <span class="cmd-name">/transfer</span><span class="private-only">личка</span>
+        </div>
+        <div class="cmd-desc">Перевести монеты другому пользователю. Укажи сумму и @юзернейм.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">передать 100 @user</span>
+          <span class="example-pill">дать 50 монет</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🔗</span>
+          <span class="cmd-name">/referral</span><span class="private-only">личка</span>
+        </div>
+        <div class="cmd-desc">Реферальная ссылка — приглашай друзей и получай бонусы.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">реф</span>
+          <span class="example-pill">реферальная ссылка</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🏆</span>
+          <span class="cmd-name">/top</span>
+        </div>
+        <div class="cmd-desc">Таблица лидеров по монетам.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">топ</span>
+          <span class="example-pill">лидеры</span>
+          <span class="example-pill">лучшие по монетам</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ПИТОМЕЦ -->
+<section id="pet">
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(52,211,153,0.15);">🐾</div>
+      <h2 class="section-title">Питомец</h2>
+    </div>
+    <div class="info-box">
+      <span>🐾</span>
+      <span>За питомцем нужно следить — кормить, играть и лечить. Если питомец умрёт, придётся заводить нового.</span>
+    </div>
+    <div class="cmd-grid">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🐣</span>
+          <span class="cmd-name">новый питомец</span><span class="private-only">личка</span>
+        </div>
+        <div class="cmd-desc">Завести питомца — выбери вид и дай имя.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">создать питомца</span>
+          <span class="example-pill">хочу питомца</span>
+          <span class="example-pill">купить питомца</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">📋</span>
+          <span class="cmd-name">/pet</span>
+        </div>
+        <div class="cmd-desc">Главное меню питомца со всеми действиями.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">питомец</span>
+          <span class="example-pill">мой питомец</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">❤️</span>
+          <span class="cmd-name">статус питомца</span>
+        </div>
+        <div class="cmd-desc">Проверить здоровье, сытость и настроение питомца.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">как питомец</span>
+          <span class="example-pill">состояние питомца</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🍖</span>
+          <span class="cmd-name">покорми питомца</span>
+        </div>
+        <div class="cmd-desc">Накормить питомца чтобы поднять сытость.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">покорми питомца</span>
+          <span class="example-pill">накорми питомца</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🎮</span>
+          <span class="cmd-name">поиграй с питомцем</span>
+        </div>
+        <div class="cmd-desc">Поиграть с питомцем чтобы поднять настроение.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">поиграй с питомцем</span>
+          <span class="example-pill">питомец скучает</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">💊</span>
+          <span class="cmd-name">лечи питомца</span>
+        </div>
+        <div class="cmd-desc">Вылечить заболевшего питомца.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">вылечить питомца</span>
+          <span class="example-pill">питомец болеет</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">✏️</span>
+          <span class="cmd-name">переименовать питомца</span>
+        </div>
+        <div class="cmd-desc">Сменить имя питомца.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">сменить имя питомцу</span>
+          <span class="example-pill">новое имя питомцу</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ВИРТУАЛЬНЫЙ МИР -->
+<section id="world">
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(244,114,182,0.15);">💑</div>
+      <h2 class="section-title">Виртуальный мир</h2>
+    </div>
+
+    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px; color:var(--muted);">Отношения и семья</h3>
+    <div class="cmd-grid" style="margin-bottom:32px;">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">💕</span>
+          <span class="cmd-name">встречаться</span><span class="group-only">реплай</span>
+        </div>
+        <div class="cmd-desc">Предложить отношения пользователю. Ответь на его сообщение и напиши «встречаться».</div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">💔</span>
+          <span class="cmd-name">расстаться</span><span class="group-only">реплай</span>
+        </div>
+        <div class="cmd-desc">Разорвать отношения с партнёром.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">расстанемся</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">💍</span>
+          <span class="cmd-name">брак</span><span class="group-only">реплай</span>
+        </div>
+        <div class="cmd-desc">Предложение руки и сердца. Ответь реплаем на сообщение партнёра.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">пожениться</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">📜</span>
+          <span class="cmd-name">развод</span>
+        </div>
+        <div class="cmd-desc">Расторгнуть брак.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">развестись</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">👨‍👩‍👧</span>
+          <span class="cmd-name">семья</span>
+        </div>
+        <div class="cmd-desc">Посмотреть своё семейное дерево.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">моя семья</span>
+          <span class="example-pill">список семьи</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">➕</span>
+          <span class="cmd-name">добавить в семью</span><span class="group-only">реплай</span>
+        </div>
+        <div class="cmd-desc">Предложить кому-то стать членом семьи — братом, сестрой, отцом, матерью.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">хочу быть братом</span>
+          <span class="example-pill">стать сестрой</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">💬</span>
+          <span class="cmd-name">статус отношений</span>
+        </div>
+        <div class="cmd-desc">Узнать свой текущий статус.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">мои отношения</span>
+          <span class="example-pill">мой брак</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px; color:var(--muted);">Действия <span style="font-weight:400; font-size:13px;">(реплай на сообщение пользователя)</span></h3>
+    <div class="action-wrap" style="margin-bottom:32px;">
+      <span class="action-pill">🤗 обнять</span>
+      <span class="action-pill">💋 поцеловать</span>
+      <span class="action-pill">🤚 погладить</span>
+      <span class="action-pill">👊 ударить</span>
+      <span class="action-pill">🎁 подарить</span>
+      <span class="action-pill">🦷 укусить</span>
+      <span class="action-pill">💃 станцевать</span>
+      <span class="action-pill">😉 подмигнуть</span>
+      <span class="action-pill">🤝 прижать</span>
+      <span class="action-pill">👏 похлопать</span>
+      <span class="action-pill">🖐 дать пять</span>
+      <span class="action-pill">💪 подбодрить</span>
+      <span class="action-pill">🍭 угостить</span>
+      <span class="action-pill">👏 поаплодировать</span>
+    </div>
+
+    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px; color:var(--muted);">Чёрный список</h3>
+    <div class="cmd-grid">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🚫</span>
+          <span class="cmd-name">блок</span><span class="group-only">реплай</span>
+        </div>
+        <div class="cmd-desc">Добавить пользователя в чёрный список. Он не сможет выполнять действия на тебя.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">заблокировать</span>
+          <span class="example-pill">в чс</span>
+          <span class="example-pill">добавить в чс</span>
+          <span class="example-pill">чс</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">✅</span>
+          <span class="cmd-name">разблок</span><span class="group-only">реплай</span>
+        </div>
+        <div class="cmd-desc">Убрать пользователя из чёрного списка.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">разблокировать</span>
+          <span class="example-pill">убери из чс</span>
+          <span class="example-pill">из чс</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">📋</span>
+          <span class="cmd-name">/blacklist</span>
+        </div>
+        <div class="cmd-desc">Просмотр своего чёрного списка с кнопками разблокировки.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">мой чс</span>
+          <span class="example-pill">чёрный список</span>
+          <span class="example-pill">покажи чс</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- КАЗИНО -->
+<section id="casino">
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(245,158,11,0.15);">🎰</div>
+      <h2 class="section-title">Казино</h2>
+    </div>
+    <div class="warn-box">
+      <span>⚠️</span>
+      <span>Казино работает на монеты внутри бота. Не забудь пополнить баланс через ежедневный бонус или реферальную программу.</span>
+    </div>
+    <div class="game-grid">
+      <div class="game-card">
+        <div class="game-card-icon">🎰</div>
+        <div class="game-card-name">Казино</div>
+        <div class="game-card-cmd">/casino</div>
+        <div class="game-card-syntax">казино</div>
+      </div>
+      <div class="game-card">
+        <div class="game-card-icon">🍒</div>
+        <div class="game-card-name">Слоты</div>
+        <div class="game-card-cmd">/slots</div>
+        <div class="game-card-syntax">слоты [ставка]</div>
+      </div>
+      <div class="game-card">
+        <div class="game-card-icon">🎡</div>
+        <div class="game-card-name">Рулетка</div>
+        <div class="game-card-cmd">/roulette</div>
+        <div class="game-card-syntax">рулетка [тип] [ставка]</div>
+      </div>
+      <div class="game-card">
+        <div class="game-card-icon">🎲</div>
+        <div class="game-card-name">Кости</div>
+        <div class="game-card-cmd">/dice</div>
+        <div class="game-card-syntax">кости [число] [ставка]</div>
+      </div>
+      <div class="game-card">
+        <div class="game-card-icon">🪙</div>
+        <div class="game-card-name">Монетка</div>
+        <div class="game-card-cmd">/coin</div>
+        <div class="game-card-syntax">монетка [о/р] [ставка]</div>
+      </div>
+      <div class="game-card">
+        <div class="game-card-icon">💣</div>
+        <div class="game-card-name">Мины</div>
+        <div class="game-card-cmd">/mines</div>
+        <div class="game-card-syntax">мины [ставка]</div>
+      </div>
+      <div class="game-card">
+        <div class="game-card-icon">🃏</div>
+        <div class="game-card-name">Джокер</div>
+        <div class="game-card-cmd">/joker</div>
+        <div class="game-card-syntax">джокер [ставка]</div>
+      </div>
+      <div class="game-card">
+        <div class="game-card-icon">🎡</div>
+        <div class="game-card-name">Колесо</div>
+        <div class="game-card-cmd">/wheel</div>
+        <div class="game-card-syntax">колесо [ставка]</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- МИНИ-ИГРЫ -->
+<section id="games">
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(52,211,153,0.15);">🎮</div>
+      <h2 class="section-title">Мини-игры</h2>
+    </div>
+    <div class="cmd-grid">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🧠</span>
+          <span class="cmd-name">/quiz</span>
+        </div>
+        <div class="cmd-desc">Викторина — ответь на вопрос и проверь свои знания.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">викторина</span>
+          <span class="example-pill">задай вопрос</span>
+          <span class="example-pill">тест на знания</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🎲</span>
+          <span class="cmd-name">кубик</span>
+        </div>
+        <div class="cmd-desc">Бросить кубик — просто для веселья.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">брось кубик</span>
+          <span class="example-pill">кинь кубик</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🎭</span>
+          <span class="cmd-name">/truth</span>
+        </div>
+        <div class="cmd-desc">Правда или действие — классическая игра для компании.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">правда или действие</span>
+          <span class="example-pill">truth or dare</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🤔</span>
+          <span class="cmd-name">/wouldyou</span>
+        </div>
+        <div class="cmd-desc">«Что бы ты выбрал» — сложный выбор между двумя вариантами.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">что бы ты выбрал</span>
+          <span class="example-pill">выбор между</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🔮</span>
+          <span class="cmd-name">/riddle</span>
+        </div>
+        <div class="cmd-desc">Загадка — угадай ответ.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">загадка</span>
+          <span class="example-pill">загадай загадку</span>
+          <span class="example-pill">задай загадку</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- МЕДИАСЕРВИСЫ -->
+<section id="media">
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(56,189,248,0.15);">🌐</div>
+      <h2 class="section-title">Медиасервисы</h2>
+    </div>
+    <div class="info-box">
+      <span>💡</span>
+      <span>В группе медиасервисы работают только при обращении по имени ассистента: <em>«Альфа, переведи...»</em></span>
+    </div>
+    <div class="cmd-grid">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🎵</span>
+          <span class="cmd-name">музыка</span>
+        </div>
+        <div class="cmd-desc">Найти и получить ссылку на трек или исполнителя.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">найди музыку Coldplay</span>
+          <span class="example-pill">включи рок</span>
+          <span class="example-pill">хочу послушать джаз</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🌤</span>
+          <span class="cmd-name">погода</span>
+        </div>
+        <div class="cmd-desc">Прогноз погоды в любом городе — сейчас, завтра или на неделю.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">погода в Москве</span>
+          <span class="example-pill">прогноз на завтра</span>
+          <span class="example-pill">/weather</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🌐</span>
+          <span class="cmd-name">перевод</span>
+        </div>
+        <div class="cmd-desc">Перевести текст на любой язык.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">переведи «hello» на русский</span>
+          <span class="example-pill">как по-английски «привет»</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🖼</span>
+          <span class="cmd-name">генерация картинок</span><span class="private-only">личка</span>
+        </div>
+        <div class="cmd-desc">Создать изображение по текстовому описанию с помощью AI.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">нарисуй кота в космосе</span>
+          <span class="example-pill">сгенерируй закат</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">📚</span>
+          <span class="cmd-name">энциклопедия</span>
+        </div>
+        <div class="cmd-desc">Узнать что-то о любой теме — wiki и общие знания.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">что такое квант</span>
+          <span class="example-pill">кто такой Тесла</span>
+          <span class="example-pill">расскажи о Марсе</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">📖</span>
+          <span class="cmd-name">книги</span>
+        </div>
+        <div class="cmd-desc">Найти книгу по названию или автору, получить описание.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">найди книгу Дюна</span>
+          <span class="example-pill">посоветуй роман</span>
+          <span class="example-pill">/book</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🎌</span>
+          <span class="cmd-name">аниме</span>
+        </div>
+        <div class="cmd-desc">Найти аниме по названию или получить рекомендации.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">найди аниме Наруто</span>
+          <span class="example-pill">посоветуй аниме</span>
+          <span class="example-pill">/anime</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🎤</span>
+          <span class="cmd-name">голосовые сообщения</span><span class="private-only">личка</span>
+        </div>
+        <div class="cmd-desc">Отправь голосовое — бот автоматически транскрибирует и обработает.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">просто отправь голосовое</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ЗАДАЧИ -->
+<section id="tasks">
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(52,211,153,0.15);">📝</div>
+      <h2 class="section-title">Задачи и напоминания</h2>
+    </div>
+    <div class="cmd-grid">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">➕</span>
+          <span class="cmd-name">создать задачу</span>
+        </div>
+        <div class="cmd-desc">Добавить новую задачу в список.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">создай задачу купить хлеб</span>
+          <span class="example-pill">добавь задачу</span>
+          <span class="example-pill">/todo</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">📋</span>
+          <span class="cmd-name">мои задачи</span>
+        </div>
+        <div class="cmd-desc">Список всех активных задач.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">мои задачи</span>
+          <span class="example-pill">список дел</span>
+          <span class="example-pill">/tasks</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">✅</span>
+          <span class="cmd-name">задача выполнена</span>
+        </div>
+        <div class="cmd-desc">Отметить задачу как выполненную.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">выполнил задачу</span>
+          <span class="example-pill">готово</span>
+          <span class="example-pill">закрой задачу</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">⏰</span>
+          <span class="cmd-name">напомни</span>
+        </div>
+        <div class="cmd-desc">Установить напоминание на указанное время.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">напомни завтра в 9 позвонить маме</span>
+          <span class="example-pill">напоминание через 2 часа</span>
+          <span class="example-pill">/remind</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- МОДЕРАЦИЯ -->
+<section id="moderation">
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(239,68,68,0.15);">🛡</div>
+      <h2 class="section-title">Модерация групп</h2>
+    </div>
+    <div class="warn-box">
+      <span>⚠️</span>
+      <span>Команды модерации доступны только администраторам и модераторам группы. В ответ на сообщение нарушителя.</span>
+    </div>
+
+    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px; color:var(--muted);">Предупреждения</h3>
+    <div class="cmd-grid" style="margin-bottom:32px;">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">⚠️</span>
+          <span class="cmd-name">/warn</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Выдать предупреждение пользователю.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">варн</span>
+          <span class="example-pill">предупреждение</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🔄</span>
+          <span class="cmd-name">/unwarn</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Снять одно предупреждение.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">снять варн</span>
+          <span class="example-pill">убрать варн</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">📊</span>
+          <span class="cmd-name">/warns</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Посмотреть количество предупреждений у пользователя.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">варны</span>
+          <span class="example-pill">сколько варнов</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🧹</span>
+          <span class="cmd-name">/clearwarns</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Снять все предупреждения.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">очистить варны</span>
+          <span class="example-pill">сбросить варны</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px; color:var(--muted);">Бан и мут</h3>
+    <div class="cmd-grid" style="margin-bottom:32px;">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🔨</span>
+          <span class="cmd-name">/ban</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Забанить пользователя в группе.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">бан</span>
+          <span class="example-pill">забанить</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🔓</span>
+          <span class="cmd-name">/unban</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Разбанить пользователя.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">разбан</span>
+          <span class="example-pill">разбанить</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🔇</span>
+          <span class="cmd-name">/mute</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Заглушить пользователя — он не сможет писать.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">мут</span>
+          <span class="example-pill">замутить</span>
+          <span class="example-pill">помолчи</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🔊</span>
+          <span class="cmd-name">/unmute</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Снять мут с пользователя.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">размут</span>
+          <span class="example-pill">размутить</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:15px; font-weight:600; margin-bottom:16px; color:var(--muted);">Роли и настройки</h3>
+    <div class="cmd-grid">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">⬆️</span>
+          <span class="cmd-name">/promote</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Повысить пользователя до модератора/администратора.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">повысить</span>
+          <span class="example-pill">назначить</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">⬇️</span>
+          <span class="cmd-name">/demote</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Понизить пользователя — снять роль.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">понизить</span>
+          <span class="example-pill">разжаловать</span>
+          <span class="example-pill">снять роль</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">👤</span>
+          <span class="cmd-name">/role</span>
+        </div>
+        <div class="cmd-desc">Узнать свою роль в группе.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">моя роль</span>
+          <span class="example-pill">кто я в группе</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">👥</span>
+          <span class="cmd-name">/admins</span>
+        </div>
+        <div class="cmd-desc">Список администраторов группы.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">список админов</span>
+          <span class="example-pill">кто админ</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">⚙️</span>
+          <span class="cmd-name">/groupsettings</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Настройки группы — язык, правила и прочее.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">настройки группы</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">📊</span>
+          <span class="cmd-name">/stats</span>
+        </div>
+        <div class="cmd-desc">Статистика активности группы.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">статистика</span>
+          <span class="example-pill">активность группы</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">👋</span>
+          <span class="cmd-name">/setwelcome</span><span class="group-only">группа</span>
+        </div>
+        <div class="cmd-desc">Настроить приветственное сообщение для новых участников. Используй <code>{name}</code> для имени.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">приветствие группы</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AI ЧАТ -->
+<section id="ai">
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(124,108,252,0.15);">🤖</div>
+      <h2 class="section-title">AI-чат</h2>
+    </div>
+    <div class="info-box">
+      <span>🤖</span>
+      <span>Бот поддерживает свободный диалог с историей сообщений. Просто пиши — если запрос не подходит ни одной функции, бот ответит как AI-ассистент.</span>
+    </div>
+    <div class="cmd-grid">
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">💬</span>
+          <span class="cmd-name">/ai</span>
+        </div>
+        <div class="cmd-desc">Явно начать разговор с AI. В группе — обратись по имени ассистента.</div>
+        <div class="cmd-examples">
+          <span class="example-pill">поговори со мной</span>
+          <span class="example-pill">давай поговорим</span>
+          <span class="example-pill">/chat</span>
+        </div>
+      </div>
+      <div class="cmd-card">
+        <div class="cmd-header">
+          <span class="cmd-emoji">🎤</span>
+          <span class="cmd-name">голосовые</span>
+        </div>
+        <div class="cmd-desc">Отправь голосовое сообщение — бот транскрибирует и ответит на него.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>EAssistant — Руководство пользователя</div>
+  <div style="margin-top:8px; opacity:0.5;">
+    <span style="background:rgba(244,114,182,0.15);border:1px solid rgba(244,114,182,0.25);color:#f9a8d4;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;margin-right:6px;">ЛИЧКА</span> только в личных сообщениях &nbsp;|&nbsp;
+    <span style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.25);color:#7dd3fc;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;margin-right:6px;">ГРУППА</span> только в групповых чатах
+  </div>
+</footer>
+
+</body>
+</html>
