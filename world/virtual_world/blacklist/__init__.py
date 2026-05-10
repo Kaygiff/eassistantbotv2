@@ -1,1 +1,1 @@
-from world.virtual_world.blacklist.service import add_to_blacklist, remove_from_blacklist, is_blocked
+from world.virtual_world.blacklist.service import add_to_blacklist, remove_from_blacklist_by_telegram_id, remove_from_blacklist_by_uuid, is_blocked
