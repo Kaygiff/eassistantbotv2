@@ -42,6 +42,7 @@ class Intent(str, Enum):
     ACTION_DO = "action_do"
     BLACKLIST_ADD = "blacklist_add"
     BLACKLIST_REMOVE = "blacklist_remove"
+    BLACKLIST_VIEW = "blacklist_view"
 
     # --- События ---
     EVENT_CREATE = "event_create"
@@ -132,7 +133,7 @@ VIRTUAL_WORLD_INTENTS = {
     Intent.RELATIONSHIP_PROPOSE, Intent.RELATIONSHIP_STATUS, Intent.RELATIONSHIP_BREAKUP,
     Intent.MARRIAGE_PROPOSE, Intent.MARRIAGE_DIVORCE,
     Intent.FAMILY_ADD, Intent.FAMILY_VIEW,
-    Intent.ACTION_DO, Intent.BLACKLIST_ADD, Intent.BLACKLIST_REMOVE,
+    Intent.ACTION_DO, Intent.BLACKLIST_ADD, Intent.BLACKLIST_REMOVE, Intent.BLACKLIST_VIEW,
     Intent.PET_MENU, Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL, Intent.PET_NEW, Intent.PET_RENAME,
     Intent.EVENT_CREATE, Intent.EVENT_LIST, Intent.EVENT_JOIN,
 }
@@ -191,7 +192,7 @@ GROUP_WORLD_INTENTS = {
     Intent.CASINO_JOKER, Intent.CASINO_WHEEL,
     Intent.RELATIONSHIP_STATUS, Intent.RELATIONSHIP_BREAKUP,
     Intent.MARRIAGE_DIVORCE, Intent.FAMILY_ADD, Intent.FAMILY_VIEW,
-    Intent.BLACKLIST_ADD, Intent.BLACKLIST_REMOVE,
+    Intent.BLACKLIST_ADD, Intent.BLACKLIST_REMOVE, Intent.BLACKLIST_VIEW,
     Intent.PROFILE_VIEW,
 }
 
