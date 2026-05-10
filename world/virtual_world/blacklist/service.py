@@ -139,6 +139,12 @@ async def get_blacklist(blocker_id: str) -> tuple[str, InlineKeyboardMarkup | No
     # Строим словарь id → данные
     users_map = {u["id"]: u for u in users_res}
 
+    def _escape_md(text: str) -> str:
+        """Экранирует спецсимволы Markdown v1 в тексте."""
+        for ch in ("*", "_", "`", "["):
+            text = text.replace(ch, f"\\{ch}")
+        return text
+
     text_lines = ["🚫 *Твой чёрный список:*\n"]
     buttons = []
 
@@ -146,8 +152,8 @@ async def get_blacklist(blocker_id: str) -> tuple[str, InlineKeyboardMarkup | No
         uid = row["blocked_id"]
         user = users_map.get(uid)
         if user:
-            name = user.get("first_name") or f"@{user.get('username', '?')}"
-            username_part = f" (@{user['username']})" if user.get("username") else ""
+            name = _escape_md(user.get("first_name") or f"@{user.get('username', '?')}")
+            username_part = f" (@{_escape_md(user['username'])})" if user.get("username") else ""
         else:
             name = "Неизвестный"
             username_part = ""
