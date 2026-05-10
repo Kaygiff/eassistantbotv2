@@ -267,12 +267,12 @@ async def perform_action(ctx: BrainContext, bot) -> None:
                 .table("users")
                 .select("*")
                 .eq("username", match.group(1))
-                .maybe_single()
+                .limit(1)
                 .execute()
             )
-            if res.data:
+            if res and res.data:
                 from core.models.user import User
-                target = User(**res.data)
+                target = User(**res.data[0])
 
     if not target:
         await bot.send_message(
@@ -295,16 +295,21 @@ async def perform_action(ctx: BrainContext, bot) -> None:
         return
 
     # 4. Проверяем чёрный список
-    bl = (
-        get_supabase_admin()
-        .table("blacklist")
-        .select("id")
-        .eq("blocker_id", target_id)
-        .eq("blocked_id", initiator_id)
-        .maybe_single()
-        .execute()
-    )
-    if bl.data:
+    try:
+        bl = (
+            get_supabase_admin()
+            .table("blacklist")
+            .select("id")
+            .eq("blocker_id", target_id)
+            .eq("blocked_id", initiator_id)
+            .limit(1)
+            .execute()
+        )
+        bl_blocked = bool(bl and bl.data)
+    except Exception:
+        bl_blocked = False
+
+    if bl_blocked:
         await bot.send_message(
             ctx.chat_id,
             "🚫 Этот пользователь заблокировал тебя.",
