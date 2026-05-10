@@ -19,21 +19,20 @@ HELP_TEXT = (
     "🌤 Погода в любом городе\n"
     "👨‍👩‍👧 Виртуальная семья и питомцы\n"
     "💰 Экономика, бонусы, топ игроков\n\n"
-    "Но это только начало — в руководстве спрятано всё остальное: скрытые команды, лайфхаки, как быстро заработать Ecoins и не только.\n\n"
+    "Но это только начало — в руководстве спрятано всё остальное: "
+    "скрытые команды, лайфхаки, как быстро заработать Ecoins и не только.\n\n"
     "📖 Загляни — там интереснее, чем кажется."
 )
 
 
-def _guide_keyboard():
+def _guide_keyboard(is_group: bool = False):
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(
-                text="📖 Открыть руководство",
-                web_app={"url": _GUIDE_URL},
-            )]
-        ]
-    )
+    if is_group:
+        # web_app не поддерживается в группах — используем обычную ссылку
+        button = InlineKeyboardButton(text="📖 Открыть руководство", url=f"https://{_RAILWAY_URL}/guide")
+    else:
+        button = InlineKeyboardButton(text="📖 Открыть руководство", web_app={"url": _GUIDE_URL})
+    return InlineKeyboardMarkup(inline_keyboard=[[button]])
 
 
 @register(Intent.START)
@@ -51,7 +50,7 @@ async def handle_help(ctx: BrainContext, bot) -> None:
         ctx.chat_id,
         HELP_TEXT,
         parse_mode="Markdown",
-        reply_markup=_guide_keyboard(),
+        reply_markup=_guide_keyboard(is_group=ctx.is_group),
     )
 
 
@@ -59,7 +58,7 @@ async def handle_help(ctx: BrainContext, bot) -> None:
 async def handle_who_made_you(ctx: BrainContext, bot) -> None:
     await bot.send_message(
         ctx.chat_id,
-        f"🛠 Меня создал *Кай Гиффенс*\\nTelegram: @kxygxf",
+        f"🛠 Меня создал *Кай Гиффенс*\nTelegram: @kxygxf",
         parse_mode="Markdown",
     )
 

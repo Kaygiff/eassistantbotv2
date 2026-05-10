@@ -39,7 +39,7 @@ HELP_TEXT = (
 async def handle_group_help(message: Message) -> None:
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="📖 Открыть руководство", web_app={"url": _GUIDE_URL})]
+            [InlineKeyboardButton(text="📖 Открыть руководство", url=f"https://{_RAILWAY_URL}/guide")]
         ]
     )
     await message.answer(HELP_TEXT, parse_mode="Markdown", reply_markup=keyboard)
