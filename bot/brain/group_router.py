@@ -97,24 +97,27 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
     ctx.is_new_user = is_new
     ctx.language = user.language
 
-    # 3. Новый участник группы — не онбордим, просим зарегистрироваться в боте
-    if is_new:
-        logger.info(f"[GroupRouter] New user {ctx.telegram_id} in group {ctx.chat_id}")
-        # Реагируем только если сообщение явно адресовано боту (команда или /слэш)
+    # 3. Проверяем регистрацию — nickname заполняется на последнем шаге онбординга
+    is_registered = bool(user.nickname)
+
+    if is_new or not is_registered:
+        logger.info(f"[GroupRouter] Unregistered user {ctx.telegram_id} in group {ctx.chat_id}")
+        # Реагируем только если сообщение адресовано боту — не спамим на каждое слово
         text_lower = ctx.text.strip().lower()
         is_command = text_lower.startswith("/")
-        # Проверяем обращение по любому возможному имени — пока имени нет, смотрим на команды
-        if is_command or any(
+        is_addressed = any(
             text_lower.startswith(kw) for kw in [
                 "слоты", "рулетка", "кости", "монетка", "мины", "джокер", "колесо",
-                "казино", "баланс", "питомец", "профил",
+                "казино", "баланс", "питомец", "профил", "передать", "помощь",
+                "справка", "руководство",
             ]
-        ):
+        )
+        if is_command or is_addressed:
             bot_info = await bot.get_me()
             bot_link = f"https://t.me/{bot_info.username}"
             await bot.send_message(
                 ctx.chat_id,
-                f"👋 Привет! Чтобы пользоваться ботом, сначала пройди регистрацию в личке:\n{bot_link}",
+                f"👋 Чтобы пользоваться ботом — сначала пройди регистрацию в личке:\n{bot_link}",
                 reply_to_message_id=ctx.message_id,
             )
         return
