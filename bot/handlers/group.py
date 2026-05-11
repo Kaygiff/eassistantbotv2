@@ -1,10 +1,8 @@
 """
 bot/handlers/group.py — Обработка сообщений в групповых чатах.
 
-Изменения:
-- /start в группе полностью отключён (молча игнорируется)
-- handle_member_join не создаёт пользователя в БД если не зарегистрирован,
-  вместо этого шлёт ссылку на личку
+Slash-команды: нет ни одной (включая /start — молча игнорируется).
+Все функции доступны словесно через brain-классификатор.
 """
 
 from __future__ import annotations
@@ -25,41 +23,16 @@ group_router.message.filter(F.chat.type.in_({"group", "supergroup"}))
 _RAILWAY_URL = os.getenv("RAILWAY_PUBLIC_DOMAIN", "eassistantbotv2-production.up.railway.app")
 _GUIDE_URL = f"https://{_RAILWAY_URL}/guide"
 
-HELP_TEXT = (
-    "🎉 Вот лишь малая часть того, на что я способен:\n\n"
-    "🤖 AI-чат на любые темы\n"
-    "🎮 Казино и мини-игры на Ecoins\n"
-    "🎵 Музыка по запросу\n"
-    "🌤 Погода в любом городе\n"
-    "👨‍👩‍👧 Виртуальная семья и питомцы\n"
-    "💰 Экономика, бонусы, топ игроков\n\n"
-    "Но это только начало — в руководстве спрятано всё остальное: "
-    "скрытые команды, лайфхаки, как быстро заработать Ecoins и не только.\n\n"
-    "📖 Загляни — там интереснее, чем кажется."
-)
 
+# ── Все slash-команды в группе — молча игнорируем ───────────────────────────
 
-# ── /start в группе — молча игнорируем ──────────────────────────────────────
-
-@group_router.message(Command("start"))
-async def handle_group_start(message: Message) -> None:
+@group_router.message(F.text.startswith("/"))
+async def handle_group_slash(message: Message) -> None:
     """
-    /start в группе не имеет смысла и не должен запускать онбординг.
-    Игнорируем без ответа, чтобы не засорять чат.
+    Любая /команда в группе игнорируется без ответа.
+    Функции доступны словесно.
     """
     pass
-
-
-# ── /help и алиасы ──────────────────────────────────────────────────────────
-
-@group_router.message(Command("help", "справка", "руководство", "помощь"))
-async def handle_group_help(message: Message) -> None:
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="📖 Открыть руководство", url=_GUIDE_URL)]
-        ]
-    )
-    await message.answer(HELP_TEXT, parse_mode="Markdown", reply_markup=keyboard)
 
 
 # ── Все остальные сообщения ──────────────────────────────────────────────────
@@ -102,7 +75,7 @@ async def handle_member_join(event: ChatMemberUpdated) -> None:
     """
     Вступление участника в группу.
 
-    - Зарегистрированный (есть nickname) → обычное приветствие из настроек группы.
+    - Зарегистрированный (есть nickname) → приветствие из настроек группы.
     - Незарегистрированный → НЕ создаём запись в БД,
       шлём только ссылку на личку бота.
     """
@@ -112,7 +85,6 @@ async def handle_member_join(event: ChatMemberUpdated) -> None:
     user_tg = event.new_chat_member.user
     name = user_tg.first_name or user_tg.username or "Участник"
 
-    # Проверяем регистрацию БЕЗ создания новой записи
     existing_user = await get_user_by_telegram_id(user_tg.id)
     is_registered = bool(existing_user and existing_user.nickname)
 
@@ -130,7 +102,6 @@ async def handle_member_join(event: ChatMemberUpdated) -> None:
             logger.warning(f"[Group] Failed to send registration prompt: {e}")
         return
 
-    # Зарегистрированный — приветствие и правила из настроек группы
     group = await get_group_by_chat_id(event.chat.id)
     if not group:
         return
