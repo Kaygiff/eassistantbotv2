@@ -1,14 +1,11 @@
 """
 brain/group_router.py — Роутер для групповых чатов.
-Отличается от приватного роутера:
-- Проверяет регистрацию пользователя (не онбордит в группе)
-- Логика двух режимов:
-    * МИКРОСЕРВИСЫ (музыка, погода, перевод и т.д.) — только если сообщение
-      начинается с имени ассистента пользователя (assistant_name).
-      Пример: "Альфа, найди музыку Coldplay"
-    * WORLD-функции (игры, отношения, модерация и т.д.) — без обращения по имени
-- Логирует вступление новых участников
-- Отправляет приветственное сообщение
+
+Изменения:
+- Шаг 2: используем get_user_by_telegram_id вместо get_or_create_user,
+  чтобы незарегистрированные пользователи НЕ записывались в БД при каждом
+  сообщении в группе.
+- Незарегистрированный/новый пользователь → только ссылка в личку, без записи.
 """
 
 from __future__ import annotations
@@ -19,7 +16,7 @@ from bot.brain.intent import Intent, GROUP_ALLOWED_INTENTS, GROUP_WORLD_INTENTS,
 from bot.brain.classifier import classify
 from bot.brain.context import BrainContext
 from bot.brain.router import process as private_process, _handlers
-from api.auth.identity import get_or_create_user
+from api.auth.identity import get_user_by_telegram_id
 from infra.safety import check_user_access
 from infra.safety.group_moderation import ensure_group_exists
 from core.i18n import t
@@ -84,32 +81,32 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
         logger.error(f"[GroupRouter] Failed to resolve group_id for chat {ctx.chat_id}: {e}")
         return
 
-    # 2. Загружаем пользователя
-    user, is_new = await get_or_create_user(
-        telegram_id=ctx.telegram_id,
-        username=ctx.tg_username,
-        first_name=ctx.tg_first_name,
-        last_name=ctx.tg_last_name,
-        is_premium=ctx.tg_is_premium,
-        locale=ctx.tg_locale,
-    )
+    # 2. Ищем пользователя только по telegram_id — НЕ создаём запись автоматически.
+    #    Незарегистрированные не должны попадать в БД через групповые чаты.
+    user = await get_user_by_telegram_id(ctx.telegram_id)
+    is_registered = bool(user and user.nickname)
+
     ctx.user = user
-    ctx.is_new_user = is_new
-    ctx.language = user.language
+    ctx.is_new_user = user is None
+    ctx.language = (user.language if user else None) or "ru"
 
-    # 3. Проверяем регистрацию — nickname заполняется на последнем шаге онбординга
-    is_registered = bool(user.nickname)
-
-    if is_new or not is_registered:
+    # 3. Если не зарегистрирован — предлагаем личку и выходим
+    if not is_registered:
         logger.info(f"[GroupRouter] Unregistered user {ctx.telegram_id} in group {ctx.chat_id}")
         text_lower = ctx.text.strip().lower()
         is_command = text_lower.startswith("/")
 
-        # Проверяем обращение по имени любого бота в группе
+        # Проверяем обращение по имени любого зарегистрированного ассистента
         is_addressed_by_name = False
         try:
             from infra.db.supabase import get_supabase_admin
-            names_res = get_supabase_admin().table("users").select("assistant_name").not_.is_("assistant_name", "null").execute()
+            names_res = (
+                get_supabase_admin()
+                .table("users")
+                .select("assistant_name")
+                .not_.is_("assistant_name", "null")
+                .execute()
+            )
             if names_res and names_res.data:
                 for row in names_res.data:
                     name = row.get("assistant_name", "")
@@ -157,9 +154,8 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
         transcribed = await transcribe_voice(ctx.voice_file_id, ctx.language, bot)
         if not transcribed:
             return  # не удалось распознать — молча выходим
-        # Whisper добавляет кавычки и пунктуацию — чистим чтобы "Бишкек." не ломало запросы
-        transcribed = re.sub(r'[«»""„"\']+', '', transcribed)  # убираем кавычки
-        transcribed = transcribed.rstrip('.,!?;: ')               # убираем пунктуацию в конце
+        transcribed = re.sub(r'[«»""„"\']+', '', transcribed)
+        transcribed = transcribed.rstrip('.,!?;: ')
         transcribed = transcribed.strip()
         ctx.text = transcribed
         await bot.send_message(
@@ -168,7 +164,6 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
             parse_mode="Markdown",
             reply_to_message_id=ctx.message_id,
         )
-        # После транскрипции падаём в общую логику ниже (голос = текст)
 
     # 6. Определяем режим: обращение по имени или нет
     addressed, clean_text = _extract_assistant_address(ctx.text, user.assistant_name)
@@ -176,9 +171,8 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
     if addressed:
         # Режим МИКРОСЕРВИСОВ + AI: пользователь явно обратился к боту
         ctx.extra["addressed_by_name"] = True
-        ctx.text = clean_text  # классифицируем без имени бота
+        ctx.text = clean_text
 
-        # Если после имени ничего нет — бот откликается
         if not clean_text:
             import random
             responses = [
@@ -198,7 +192,6 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
         intent = await classify(ctx.text, ctx.language)
         ctx.set_intent(intent)
 
-        # Не понял запрос — просим уточнить
         if ctx.intent == Intent.CLARIFICATION:
             from bot.brain.classifier import build_clarification_message
             clarification = await build_clarification_message(ctx.text, ctx.language)
@@ -209,7 +202,6 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
             )
             return
 
-        # Интент есть, но недоступен в группах (например, PROFILE_EDIT, SETTINGS)
         if ctx.intent not in GROUP_ALLOWED_INTENTS:
             await bot.send_message(
                 ctx.chat_id,
@@ -219,9 +211,8 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
             return
 
     else:
-        # Режим WORLD: работают только world-интенты без обращения по имени.
+        # Режим WORLD: работают только world-интенты без обращения по имени
 
-        # 6а. Семейные команды — жёсткий match, без brain/NLP, без спама в группах
         from bot.brain.handlers.family import is_family_command, handle_family_command
         if is_family_command(ctx.text):
             try:
@@ -231,9 +222,6 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
                 await bot.send_message(ctx.chat_id, t(ctx.language, "common.error"))
             return
 
-        # Используем СТРОГИЙ классификатор — только паттерны с ^ или /команда.
-        # Brain AI здесь не вызывается: он слишком широко интерпретирует
-        # обычный разговор и порождает ложные срабатывания.
         from bot.brain.classifier import classify_by_patterns_strict
         intent = classify_by_patterns_strict(ctx.text)
         if intent is None or intent not in GROUP_WORLD_INTENTS:
@@ -245,7 +233,7 @@ async def process_group_message(ctx: BrainContext, bot) -> None:
 
     logger.info(f"[GroupRouter] {ctx} addressed={addressed}")
 
-    # 7. Маршрутизация — используем тот же реестр хэндлеров
+    # 7. Маршрутизация
     handler = _handlers.get(ctx.intent)
     if handler is None:
         handler = _handlers.get(Intent.AI_CHAT)
@@ -269,7 +257,6 @@ async def handle_new_chat_member(ctx: BrainContext, bot, new_member_telegram_id:
     if not ctx.group_id:
         return
 
-    # Синхронизируем владельца группы через Telegram API
     from infra.safety.group_moderation import sync_group_owner
     await sync_group_owner(ctx.group_id, bot, ctx.chat_id)
 
@@ -289,11 +276,11 @@ async def handle_new_chat_member(ctx: BrainContext, bot, new_member_telegram_id:
     lang = res.data.get("language", "ru")
 
     if welcome_msg:
-        # Подставляем имя пользователя
-        from api.auth.identity import get_user_by_telegram_id
         new_user = await get_user_by_telegram_id(new_member_telegram_id)
         name = new_user.first_name or f"@{new_user.username}" if new_user else "Новый участник"
-        msg = welcome_msg.replace("{name}", name).replace("{username}", f"@{new_user.username}" if new_user and new_user.username else name)
+        msg = welcome_msg.replace("{name}", name).replace(
+            "{username}", f"@{new_user.username}" if new_user and new_user.username else name
+        )
         await bot.send_message(ctx.chat_id, msg, parse_mode="Markdown")
 
 
