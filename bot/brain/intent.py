@@ -168,7 +168,7 @@ MICROSERVICE_INTENTS = {
     Intent.AI_CHAT,
     Intent.MUSIC_SEARCH, Intent.WEATHER, Intent.TRANSLATE,
     Intent.ENCYCLOPEDIA, Intent.BOOK_SEARCH, Intent.ANIME_SEARCH,
-    Intent.IMAGE_GEN, Intent.VOICE_TO_TEXT,
+    Intent.IMAGE_GEN,
     Intent.TASK_CREATE, Intent.TASK_LIST, Intent.TASK_DONE, Intent.REMINDER_CREATE,
 }
 
@@ -197,6 +197,7 @@ GROUP_WORLD_INTENTS = {
     Intent.MARRIAGE_DIVORCE, Intent.FAMILY_ADD, Intent.FAMILY_VIEW,
     Intent.BLACKLIST_ADD, Intent.BLACKLIST_REMOVE, Intent.BLACKLIST_VIEW,
     Intent.PROFILE_VIEW, Intent.PROFILE_EDIT,  # просмотр и редактирование профиля
+    Intent.VOICE_TO_TEXT,                      # голос в текст без обращения по имени
 }
 
 # Все интенты разрешённые в группах (объединение)
