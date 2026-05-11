@@ -46,16 +46,7 @@ async def on_startup(bot: Bot) -> None:
     from aiogram.types import BotCommand, BotCommandScopeAllPrivateChats
 
     commands = [
-        BotCommand(command="start",       description="🚀 Начать / перезапустить"),
-        BotCommand(command="help",        description="📖 Справка и руководство"),
-        BotCommand(command="profile",     description="👤 Мой профиль"),
-        BotCommand(command="balance",     description="💰 Баланс Ecoins"),
-        BotCommand(command="daily",       description="🎁 Ежедневный бонус"),
-        BotCommand(command="pet",         description="🐾 Мой питомец"),
-        BotCommand(command="casino",      description="🎰 Казино"),
-        BotCommand(command="tasks",       description="📝 Мои задачи"),
-        BotCommand(command="top",         description="🏆 Топ игроков"),
-        BotCommand(command="settings",    description="⚙️ Настройки"),
+        BotCommand(command="start", description="🚀 Начать / перезапустить"),
     ]
     await bot.set_my_commands(commands, scope=BotCommandScopeAllPrivateChats())
 
