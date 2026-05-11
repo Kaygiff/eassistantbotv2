@@ -5,8 +5,15 @@
     "enter_assistant_name": "✨ Great! Now give your assistant a name.\n\nType any name — I'll respond to it:",
     "name_too_long": "⚠️ Name is too long. Maximum 50 characters.",
     "name_saved": "💾 Name saved!",
-    "profile_created": "✅ Your profile has been created!",
-    "intro": "🚀 Here's what I can do:\n\n🤖 *AI Chat* — talk about anything\n🎮 *Games* — mini-games and casino with Ecoins\n🎵 *Music* — find and send tracks\n🌤 *Weather* — forecast for any city\n📚 *Encyclopedia* — reference on everything\n💰 *Ecoins* — internal platform currency\n\nJust write to me — and let's start! 😊"
+    "profile_created": "✅ Nice, *{nickname}*! Your assistant *{bot_name}* is ready.",
+    "intro": "🚀 Here's what I can do:\n\n🤖 *AI Chat* — talk about anything\n🎮 *Games* — mini-games and casino with Ecoins\n🎵 *Music* — find and send tracks\n🌤 *Weather* — forecast for any city\n📚 *Encyclopedia* — reference on everything\n💰 *Ecoins* — internal platform currency\n\nJust write to me — and let's start! 😊",
+    "enter_bot_name": "✨ Great! Choose a name for your bot *(max 50 characters)*.\n\nYou can address it by this name in group chats:",
+    "choose_personality": "🎭 Now choose your bot's personality.\n\n_This affects the tone of replies — friendly, sarcastic, or neutral. You can change it later in settings._",
+    "persona_kind": "Kind",
+    "persona_evil": "Evil",
+    "persona_neutral": "Neutral",
+    "enter_nickname": "😎 Last step! Choose a nickname for yourself *(max 32 characters)*.\n\nIt will appear in your profile and group chats:",
+    "nickname_too_long": "⚠️ Nickname is too long. Maximum 32 characters."
   },
   "common": {
     "error": "❌ An error occurred. Please try again.",
