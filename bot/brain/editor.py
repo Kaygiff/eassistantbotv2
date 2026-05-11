@@ -138,12 +138,12 @@ async def load_rules_into_classifier() -> int:
             # Проверяем нет ли уже такого правила
             existing_intents = [i for _, i in PATTERN_MAP]
             if intent not in existing_intents:
-                PATTERN_MAP.insert(0, (keywords, intent))
+                PATTERN_MAP.insert(0, (keywords, intent, False))
             else:
                 # Обновляем существующее
                 for idx, (kws, i) in enumerate(PATTERN_MAP):
                     if i == intent:
-                        PATTERN_MAP[idx] = (keywords, intent)
+                        PATTERN_MAP[idx] = (keywords, intent, False)
                         break
             injected += 1
         except ValueError:

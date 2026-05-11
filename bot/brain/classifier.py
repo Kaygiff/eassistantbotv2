@@ -109,7 +109,7 @@ PATTERN_MAP: list[tuple[str, Intent, bool]] = [
 
     # --- Мини-игры ---
     (r"^/quiz\b|викторина|quiz|задай вопрос|тест на знания", Intent.GAME_QUIZ, True),
-    (r"кубик|брось кубик|кинь кубик", Intent.GAME_DICE),  # /dice убран — занят CASINO_DICE
+    (r"кубик|брось кубик|кинь кубик", Intent.GAME_DICE, False),  # /dice убран — занят CASINO_DICE
     (r"правда или действие|^/truth\b|^/dare\b|truth or dare", Intent.GAME_TRUTH_DARE, True),
     (r"что бы ты выбрал|что лучше|^/wouldyou\b|выбор между", Intent.GAME_WOULD_YOU, True),
     (r"загадк|загадай|^/riddle\b|задай загадку", Intent.GAME_RIDDLE, True),
