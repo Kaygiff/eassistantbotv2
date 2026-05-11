@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 _ADOPT_RE        = re.compile(r"^(усынови|удочери)", re.IGNORECASE | re.UNICODE)
 _ACCEPT_RE       = re.compile(r"^принять усыновление$", re.IGNORECASE | re.UNICODE)
 _DECLINE_RE      = re.compile(r"^отказаться от усыновления$", re.IGNORECASE | re.UNICODE)
-_REMOVE_CHILD_RE = re.compile(r"^отказаться от ребёнка$|^отказываюсь от ребёнка$", re.IGNORECASE | re.UNICODE)
+_REMOVE_CHILD_RE = re.compile(r"^отказаться от реб[её]нка$|^отказываюсь от реб[её]нка$|^убрать реб[её]нка$|^удалить реб[её]нка$", re.IGNORECASE | re.UNICODE)
 _LEAVE_RE        = re.compile(r"^отказаться от родителя$|^выйти из семьи$", re.IGNORECASE | re.UNICODE)
 _VIEW_RE         = re.compile(r"^(моя семья|семья)$", re.IGNORECASE | re.UNICODE)
 
@@ -82,7 +82,7 @@ async def handle_family_command(ctx: BrainContext, bot) -> None:
     # отказаться от ребёнка
     if _REMOVE_CHILD_RE.match(text):
         if not reply_tg_id:
-            result = "👆 Ответь на сообщение ребёнка, от которого хочешь отказаться."
+            result = "👆 Ответь на сообщение ребёнка, от которого хочешь отказаться, и повтори команду."
         else:
             result = await remove_child(my_tg_id, reply_tg_id)
         await bot.send_message(ctx.chat_id, result, parse_mode="Markdown",
