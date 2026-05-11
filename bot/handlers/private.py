@@ -24,6 +24,14 @@ private_router.message.filter(F.chat.type == "private")
 @private_router.message(Command("start"))
 async def cmd_start(message: Message) -> None:
     ctx = _build_context(message)
+
+    # Если онбординг уже запущен — возобновляем с текущего шага
+    from bot.onboarding.flow import is_in_onboarding, resume_onboarding
+    if await is_in_onboarding(str(message.from_user.id)):
+        resumed = await resume_onboarding(ctx, message.bot)
+        if resumed:
+            return
+
     ctx.set_intent(Intent.START, confidence="keyword")
     await process(ctx, message.bot)
 
