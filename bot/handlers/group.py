@@ -35,6 +35,32 @@ async def handle_group_slash(message: Message) -> None:
     pass
 
 
+# ── Голосовые сообщения ─────────────────────────────────────────────────────
+
+@group_router.message(F.voice)
+async def handle_group_voice(message: Message) -> None:
+    """Голосовые сообщения в группе — передаём в brain со флагом is_voice."""
+    from bot.brain.group_router import process_group_message
+
+    ctx = BrainContext(
+        telegram_id=message.from_user.id,
+        chat_id=message.chat.id,
+        message_id=message.message_id,
+        text="",
+        is_group=True,
+        tg_username=message.from_user.username,
+        tg_first_name=message.from_user.first_name,
+        tg_last_name=message.from_user.last_name,
+        tg_is_premium=bool(getattr(message.from_user, "is_premium", False)),
+        tg_locale=message.from_user.language_code,
+    )
+    ctx.extra["chat_title"] = message.chat.title or ""
+    ctx.is_voice = True
+    ctx.voice_file_id = message.voice.file_id
+
+    await process_group_message(ctx, message.bot)
+
+
 # ── Все остальные сообщения ──────────────────────────────────────────────────
 
 @group_router.message()
