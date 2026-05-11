@@ -1,10 +1,14 @@
 """
 bot/handlers/group.py — Обработка сообщений в групповых чатах.
+
+Изменения:
+- /start в группе полностью отключён (молча игнорируется)
+- handle_member_join не создаёт пользователя в БД если не зарегистрирован,
+  вместо этого шлёт ссылку на личку
 """
 
 from __future__ import annotations
 import logging
-
 import os
 
 from aiogram import Router, F
@@ -35,19 +39,33 @@ HELP_TEXT = (
 )
 
 
+# ── /start в группе — молча игнорируем ──────────────────────────────────────
+
+@group_router.message(Command("start"))
+async def handle_group_start(message: Message) -> None:
+    """
+    /start в группе не имеет смысла и не должен запускать онбординг.
+    Игнорируем без ответа, чтобы не засорять чат.
+    """
+    pass
+
+
+# ── /help и алиасы ──────────────────────────────────────────────────────────
+
 @group_router.message(Command("help", "справка", "руководство", "помощь"))
 async def handle_group_help(message: Message) -> None:
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="📖 Открыть руководство", url=f"https://{_RAILWAY_URL}/guide")]
+            [InlineKeyboardButton(text="📖 Открыть руководство", url=_GUIDE_URL)]
         ]
     )
     await message.answer(HELP_TEXT, parse_mode="Markdown", reply_markup=keyboard)
 
 
+# ── Все остальные сообщения ──────────────────────────────────────────────────
+
 @group_router.message()
 async def handle_group_message(message: Message) -> None:
-    from api.auth.identity import get_or_create_user
     from bot.brain.group_router import process_group_message
 
     ctx = BrainContext(
@@ -77,19 +95,46 @@ async def handle_group_message(message: Message) -> None:
     await process_group_message(ctx, message.bot)
 
 
+# ── Вступление участника ─────────────────────────────────────────────────────
+
 @group_router.chat_member(ChatMemberUpdatedFilter(JOIN_TRANSITION))
 async def handle_member_join(event: ChatMemberUpdated) -> None:
-    """Отправляет приветствие и правила при вступлении участника."""
+    """
+    Вступление участника в группу.
+
+    - Зарегистрированный (есть nickname) → обычное приветствие из настроек группы.
+    - Незарегистрированный → НЕ создаём запись в БД,
+      шлём только ссылку на личку бота.
+    """
+    from api.auth.identity import get_user_by_telegram_id
     from world.groups.settings import get_group_by_chat_id
 
+    user_tg = event.new_chat_member.user
+    name = user_tg.first_name or user_tg.username or "Участник"
+
+    # Проверяем регистрацию БЕЗ создания новой записи
+    existing_user = await get_user_by_telegram_id(user_tg.id)
+    is_registered = bool(existing_user and existing_user.nickname)
+
+    if not is_registered:
+        try:
+            bot_info = await event.bot.get_me()
+            bot_link = f"https://t.me/{bot_info.username}"
+            await event.bot.send_message(
+                event.chat.id,
+                f"👋 {name}, добро пожаловать!\n\n"
+                f"Чтобы пользоваться ботом в этой группе — сначала пройди регистрацию в личке:\n"
+                f"{bot_link}",
+            )
+        except Exception as e:
+            logger.warning(f"[Group] Failed to send registration prompt: {e}")
+        return
+
+    # Зарегистрированный — приветствие и правила из настроек группы
     group = await get_group_by_chat_id(event.chat.id)
     if not group:
         return
 
-    user = event.new_chat_member.user
-    name = user.first_name or user.username or "Участник"
-
-    # Приветствие
     welcome = group.get("welcome_message")
     if welcome:
         try:
@@ -98,7 +143,6 @@ async def handle_member_join(event: ChatMemberUpdated) -> None:
         except Exception as e:
             logger.warning(f"[Group] Failed to send welcome: {e}")
 
-    # Правила — отдельным сообщением после приветствия
     rules = group.get("rules_text")
     if rules:
         try:
@@ -110,6 +154,8 @@ async def handle_member_join(event: ChatMemberUpdated) -> None:
         except Exception as e:
             logger.warning(f"[Group] Failed to send rules on join: {e}")
 
+
+# ── Выход участника ──────────────────────────────────────────────────────────
 
 @group_router.chat_member(ChatMemberUpdatedFilter(LEAVE_TRANSITION))
 async def handle_member_leave(event: ChatMemberUpdated) -> None:
