@@ -2,9 +2,17 @@
 brain/handlers/profile.py — Просмотр и редактирование профиля.
 """
 
+import re
 from bot.brain.router import register
 from bot.brain.intent import Intent
 from bot.brain.context import BrainContext
+
+
+def _esc(text: str) -> str:
+    """Экранирует спецсимволы Markdown v1 для Telegram."""
+    if not text:
+        return text
+    return re.sub(r'([_*`\[])', r'\\\1', str(text))
 
 
 @register(Intent.PROFILE_VIEW)
@@ -23,20 +31,20 @@ async def handle_profile_view(ctx: BrainContext, bot) -> None:
 
     lines = ["👤 *Профиль*\n"]
     if user.nickname:
-        lines.append(f"✏️ *{user.nickname}*")
-    lines.append(f"🏷 Ассистент: *{user.assistant_name}*")
+        lines.append(f"✏️ *{_esc(user.nickname)}*")
+    lines.append(f"🏷 Ассистент: *{_esc(user.assistant_name)}*")
     if user.bio:
-        lines.append(f"📝 {user.bio}")
+        lines.append(f"📝 {_esc(user.bio)}")
     if user.birthday:
         lines.append(f"🎂 {user.birthday.strftime('%d.%m.%Y')}")
-    lines.append(f"🌐 {user.language.upper()}")
+    lines.append(f"🌐 {_esc(user.language.upper())}")
     lines.append(f"💰 *{balance} Ecoins*")
-    lines.append(f"\n{rel_line}" if rel_line else "\n💔 Свободен(а)")
+    lines.append(f"\n{_esc(rel_line)}" if rel_line else "\n💔 Свободен(а)")
     if pet_line:
-        lines.append(f"🐾 {pet_line}")
+        lines.append(f"🐾 {_esc(pet_line)}")
     if family_lines:
         lines.append("")
-        lines.extend(family_lines)
+        lines.extend([_esc(fl) for fl in family_lines])
 
     pet_btn = (
         InlineKeyboardButton(text="🥚 Создать питомца", callback_data="pet:new")
