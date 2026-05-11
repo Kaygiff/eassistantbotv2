@@ -64,8 +64,10 @@ async def update_rule(intent: str, keywords: list[str]) -> dict[str, Any]:
         .execute()
     )
 
-    # Сброс кэша
+    # Сброс кэша правил и intent-кэша (п.8 + п.4)
     await invalidate_rules_cache()
+    from bot.brain.cache import invalidate_intent_cache
+    await invalidate_intent_cache()
 
     logger.info(f"[BrainEditor] Updated rules for intent={intent}: {len(keywords)} keywords")
     return res.data[0] if res.data else {}
@@ -154,13 +156,18 @@ async def load_rules_into_classifier() -> int:
 async def get_editor_stats() -> dict[str, Any]:
     """
     Возвращает статистику Brain Editor для EAdmin дашборда.
+    п.7: включает телеметрию интентов и провайдеров из Redis.
     """
     from bot.brain.router import get_registered_intents
     from bot.brain.classifier import PATTERN_MAP
+    from bot.brain.telemetry import get_telemetry_summary
+    from bot.brain.cache import invalidate_intent_cache
 
-    return {
+    base = {
         "total_intents": len(get_registered_intents()),
         "total_keyword_rules": len(PATTERN_MAP),
         "custom_rules_count": len(await get_all_rules()),
-        "cache_active": (await get_cached_rules()) is not None,
+        "rules_cache_active": (await get_cached_rules()) is not None,
     }
+    telemetry = await get_telemetry_summary()
+    return {**base, **telemetry}
