@@ -63,6 +63,7 @@ async def handle_who_made_you(ctx: BrainContext, bot) -> None:
     )
 
 
+@register(Intent.SETTINGS)
 async def handle_settings(ctx: BrainContext, bot) -> None:
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
