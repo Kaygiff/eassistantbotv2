@@ -3,10 +3,10 @@ onboarding/flow.py — FSM-онбординг нового пользовате�
 
 Шаги:
   1. Приветствие + выбор языка
-  2. Ввод имени бота
-  3. Выбор характера бота (кнопки)
+  2. Ввод имени бота          (с подсказкой о макс. длине)
+  3. Выбор характера бота     (с пояснением что изменится)
   4. Ввод никнейма пользователя
-  5. Интро
+  5. Интро с обращением по имени
 """
 
 from __future__ import annotations
@@ -36,6 +36,19 @@ PERSONALITIES = {
     "neutral": ("😐", "onboarding.persona_neutral"),
 }
 
+# Прогресс: шаг → точки
+_PROGRESS = {
+    STATE_CHOOSE_LANGUAGE: "● ○ ○ ○",
+    STATE_ENTER_BOT_NAME:  "● ● ○ ○",
+    STATE_CHOOSE_PERSONA:  "● ● ● ○",
+    STATE_ENTER_NICKNAME:  "● ● ● ●",
+}
+
+
+def _progress_line(state: str) -> str:
+    dots = _PROGRESS.get(state, "")
+    return f"`{dots}`\n\n" if dots else ""
+
 
 def _persona_keyboard(lang: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
@@ -64,9 +77,10 @@ async def start_onboarding(ctx: BrainContext, bot) -> None:
         ]
     )
 
+    progress = _progress_line(STATE_CHOOSE_LANGUAGE)
     await bot.send_message(
         ctx.chat_id,
-        t("ru", "onboarding.welcome"),
+        progress + t("ru", "onboarding.welcome"),
         parse_mode="Markdown",
         reply_markup=keyboard,
     )
@@ -94,8 +108,9 @@ async def handle_onboarding_callback(
         await set_fsm_state(user_id, STATE_ENTER_BOT_NAME)
         await set_fsm_data(user_id, {"language": lang})
 
+        progress = _progress_line(STATE_ENTER_BOT_NAME)
         await callback.message.edit_text(
-            t(lang, "onboarding.enter_bot_name"),
+            progress + t(lang, "onboarding.enter_bot_name"),
             parse_mode="Markdown",
         )
 
@@ -106,8 +121,9 @@ async def handle_onboarding_callback(
         await set_fsm_data(user_id, data)
         await set_fsm_state(user_id, STATE_ENTER_NICKNAME)
 
+        progress = _progress_line(STATE_ENTER_NICKNAME)
         await callback.message.edit_text(
-            t(lang, "onboarding.enter_nickname"),
+            progress + t(lang, "onboarding.enter_nickname"),
             parse_mode="Markdown",
         )
 
@@ -135,7 +151,8 @@ async def handle_onboarding_text(ctx: BrainContext, bot) -> bool:
     # Шаг 2: ввод имени бота
     if state == STATE_ENTER_BOT_NAME:
         if not text:
-            await bot.send_message(ctx.chat_id, t(lang, "onboarding.enter_bot_name"), parse_mode="Markdown")
+            progress = _progress_line(STATE_ENTER_BOT_NAME)
+            await bot.send_message(ctx.chat_id, progress + t(lang, "onboarding.enter_bot_name"), parse_mode="Markdown")
             return True
         if len(text) > 50:
             await bot.send_message(ctx.chat_id, t(lang, "onboarding.name_too_long"))
@@ -146,9 +163,10 @@ async def handle_onboarding_text(ctx: BrainContext, bot) -> bool:
         await set_fsm_data(user_id, data)
         await set_fsm_state(user_id, STATE_CHOOSE_PERSONA)
 
+        progress = _progress_line(STATE_CHOOSE_PERSONA)
         await bot.send_message(
             ctx.chat_id,
-            t(lang, "onboarding.choose_personality"),
+            progress + t(lang, "onboarding.choose_personality"),
             parse_mode="Markdown",
             reply_markup=_persona_keyboard(lang),
         )
@@ -157,7 +175,8 @@ async def handle_onboarding_text(ctx: BrainContext, bot) -> bool:
     # Шаг 4: ввод никнейма
     if state == STATE_ENTER_NICKNAME:
         if not text:
-            await bot.send_message(ctx.chat_id, t(lang, "onboarding.enter_nickname"), parse_mode="Markdown")
+            progress = _progress_line(STATE_ENTER_NICKNAME)
+            await bot.send_message(ctx.chat_id, progress + t(lang, "onboarding.enter_nickname"), parse_mode="Markdown")
             return True
         if len(text) > 32:
             await bot.send_message(ctx.chat_id, t(lang, "onboarding.nickname_too_long"))
@@ -177,7 +196,7 @@ async def handle_onboarding_text(ctx: BrainContext, bot) -> bool:
 
 
 async def _show_intro(ctx: BrainContext, bot, bot_name: str, nickname: str, lang: str) -> None:
-    """Шаг 5 — финальный экран с кнопкой руководства."""
+    """Шаг 5 — финальный экран с обращением по имени и кнопкой руководства."""
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     import os
 
@@ -193,9 +212,11 @@ async def _show_intro(ctx: BrainContext, bot, bot_name: str, nickname: str, lang
         ]
     )
 
+    # profile_created теперь содержит {nickname} и {bot_name} — см. локаль
     await bot.send_message(
         ctx.chat_id,
-        t(lang, "onboarding.profile_created"),
+        t(lang, "onboarding.profile_created", nickname=nickname, bot_name=bot_name),
+        parse_mode="Markdown",
     )
     await bot.send_message(
         ctx.chat_id,
@@ -209,3 +230,50 @@ async def _show_intro(ctx: BrainContext, bot, bot_name: str, nickname: str, lang
 async def is_in_onboarding(user_id: str) -> bool:
     state = await get_fsm_state(user_id)
     return bool(state and state.startswith("onboarding:"))
+
+
+async def resume_onboarding(ctx: BrainContext, bot) -> bool:
+    """
+    Возобновляет онбординг с того шага, где пользователь остановился.
+    Вызывается при повторном /start если онбординг не завершён.
+    Возвращает True если онбординг был возобновлён.
+    """
+    if not ctx.user:
+        return False
+
+    user_id = str(ctx.user.id)
+    state = await get_fsm_state(user_id)
+
+    if not state or not state.startswith("onboarding:"):
+        return False
+
+    data = await get_fsm_data(user_id) or {}
+    lang = data.get("language", "ru")
+
+    if state == STATE_CHOOSE_LANGUAGE:
+        # Повторно шлём выбор языка
+        await start_onboarding(ctx, bot)
+        return True
+
+    if state == STATE_ENTER_BOT_NAME:
+        progress = _progress_line(STATE_ENTER_BOT_NAME)
+        await bot.send_message(ctx.chat_id, progress + t(lang, "onboarding.enter_bot_name"), parse_mode="Markdown")
+        return True
+
+    if state == STATE_CHOOSE_PERSONA:
+        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+        progress = _progress_line(STATE_CHOOSE_PERSONA)
+        await bot.send_message(
+            ctx.chat_id,
+            progress + t(lang, "onboarding.choose_personality"),
+            parse_mode="Markdown",
+            reply_markup=_persona_keyboard(lang),
+        )
+        return True
+
+    if state == STATE_ENTER_NICKNAME:
+        progress = _progress_line(STATE_ENTER_NICKNAME)
+        await bot.send_message(ctx.chat_id, progress + t(lang, "onboarding.enter_nickname"), parse_mode="Markdown")
+        return True
+
+    return False
