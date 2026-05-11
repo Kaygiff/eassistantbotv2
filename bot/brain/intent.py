@@ -157,8 +157,7 @@ TASK_INTENTS = {
 
 # Интенты доступные только в личном чате
 PRIVATE_ONLY_INTENTS = {
-    Intent.PROFILE_EDIT, Intent.SETTINGS, Intent.DAILY_BONUS,
-    Intent.TRANSFER, Intent.REFERRAL, Intent.PET_NEW,
+    Intent.SETTINGS,
     Intent.IMAGE_GEN, Intent.VOICE_TO_TEXT,
 }
 
@@ -186,15 +185,18 @@ GROUP_WORLD_INTENTS = {
     Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
     Intent.GROUP_ROLE, Intent.GROUP_ADMINS, Intent.GROUP_RULES,
     Intent.HELP, Intent.BALANCE, Intent.DAILY_BONUS, Intent.LEADERBOARD,
-    Intent.TRANSFER,  # перевод Ecoins через реплай
-    Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL,
+    Intent.TRANSFER,
+    Intent.REFERRAL,                          # реферальная ссылка
+    Intent.WHO_MADE_YOU,                      # кто тебя создал
+    Intent.PET_MENU, Intent.PET_STATUS, Intent.PET_FEED, Intent.PET_PLAY, Intent.PET_HEAL,
+    Intent.PET_NEW, Intent.PET_RENAME,        # завести / переименовать питомца
     Intent.CASINO_OPEN, Intent.CASINO_SLOTS, Intent.CASINO_ROULETTE,
     Intent.CASINO_DICE, Intent.CASINO_COIN, Intent.CASINO_MINES,
     Intent.CASINO_JOKER, Intent.CASINO_WHEEL,
     Intent.RELATIONSHIP_STATUS, Intent.RELATIONSHIP_BREAKUP,
     Intent.MARRIAGE_DIVORCE, Intent.FAMILY_ADD, Intent.FAMILY_VIEW,
     Intent.BLACKLIST_ADD, Intent.BLACKLIST_REMOVE, Intent.BLACKLIST_VIEW,
-    Intent.PROFILE_VIEW,
+    Intent.PROFILE_VIEW, Intent.PROFILE_EDIT,  # просмотр и редактирование профиля
 }
 
 # Все интенты разрешённые в группах (объединение)
