@@ -105,7 +105,7 @@ async def handle_casino_open(ctx: BrainContext, bot) -> None:
             f"🎰 *Казино*\n\n"
             f"💰 Твой баланс: *{balance} Ecoins*\n\n"
             f"{t(ctx.language, 'casino.warning')}\n\n"
-            f"Выбери игру:"
+            f"{t(ctx.language, 'casino.choose_game')}"
         ),
         parse_mode="Markdown",
         reply_markup=_casino_keyboard(),

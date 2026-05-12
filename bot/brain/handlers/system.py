@@ -11,27 +11,16 @@ from core.i18n import t
 _RAILWAY_URL = os.getenv("RAILWAY_PUBLIC_DOMAIN", "eassistantbotv2-production.up.railway.app")
 _GUIDE_URL = f"https://{_RAILWAY_URL}/guide"
 
-HELP_TEXT = (
-    "🎉 Вот лишь малая часть того, на что я способен:\n\n"
-    "🤖 AI-чат на любые темы\n"
-    "🎮 Казино и мини-игры на Ecoins\n"
-    "🎵 Музыка по запросу\n"
-    "🌤 Погода в любом городе\n"
-    "👨‍👩‍👧 Виртуальная семья и питомцы\n"
-    "💰 Экономика, бонусы, топ игроков\n\n"
-    "Но это только начало — в руководстве спрятано всё остальное: "
-    "скрытые команды, лайфхаки, как быстро заработать Ecoins и не только.\n\n"
-    "📖 Загляни — там интереснее, чем кажется."
-)
 
 
-def _guide_keyboard(is_group: bool = False):
+
+def _guide_keyboard(lang: str = "ru", is_group: bool = False):
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    label = t(lang, "help.open_guide")
     if is_group:
-        # web_app не поддерживается в группах — используем обычную ссылку
-        button = InlineKeyboardButton(text="📖 Открыть руководство", url=f"https://{_RAILWAY_URL}/guide")
+        button = InlineKeyboardButton(text=label, url=f"https://{_RAILWAY_URL}/guide")
     else:
-        button = InlineKeyboardButton(text="📖 Открыть руководство", web_app={"url": _GUIDE_URL})
+        button = InlineKeyboardButton(text=label, web_app={"url": _GUIDE_URL})
     return InlineKeyboardMarkup(inline_keyboard=[[button]])
 
 
@@ -48,9 +37,9 @@ async def handle_start(ctx: BrainContext, bot) -> None:
 async def handle_help(ctx: BrainContext, bot) -> None:
     await bot.send_message(
         ctx.chat_id,
-        HELP_TEXT,
+        t(ctx.language, "help.text"),
         parse_mode="Markdown",
-        reply_markup=_guide_keyboard(is_group=ctx.is_group),
+        reply_markup=_guide_keyboard(lang=ctx.language, is_group=ctx.is_group),
     )
 
 
@@ -58,7 +47,7 @@ async def handle_help(ctx: BrainContext, bot) -> None:
 async def handle_who_made_you(ctx: BrainContext, bot) -> None:
     await bot.send_message(
         ctx.chat_id,
-        f"🛠 Меня создал *Кай Гиффенс*\nTelegram: @kxygxf",
+        t(ctx.language, "who_made_you.text"),
         parse_mode="Markdown",
     )
 
@@ -66,14 +55,15 @@ async def handle_who_made_you(ctx: BrainContext, bot) -> None:
 @register(Intent.SETTINGS)
 async def handle_settings(ctx: BrainContext, bot) -> None:
     from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    lang = ctx.language
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🌐 Язык / Language", callback_data="settings:language")],
-        [InlineKeyboardButton(text="✏️ Имя ассистента", callback_data="settings:assistant_name")],
-        [InlineKeyboardButton(text="👤 Редактировать профиль", callback_data="settings:profile")],
+        [InlineKeyboardButton(text=t(lang, "settings.language"), callback_data="settings:language")],
+        [InlineKeyboardButton(text=t(lang, "settings.assistant_name"), callback_data="settings:assistant_name")],
+        [InlineKeyboardButton(text=t(lang, "settings.edit_profile"), callback_data="settings:profile")],
     ])
     await bot.send_message(
         ctx.chat_id,
-        "⚙️ *Настройки*\n\nЧто хочешь изменить?",
+        t(lang, "settings.title"),
         parse_mode="Markdown",
         reply_markup=keyboard,
     )

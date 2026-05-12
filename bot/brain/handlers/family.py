@@ -12,6 +12,7 @@ import re
 import logging
 
 from bot.brain.router import register
+from core.i18n import t
 from bot.brain.intent import Intent
 from bot.brain.context import BrainContext
 
@@ -128,13 +129,7 @@ async def handle_family_add(ctx: BrainContext, bot) -> None:
     elif reply_tg_id:
         result = await adopt(my_tg_id, reply_tg_id)
     else:
-        result = (
-            "👨‍👩‍👧 *Семья*\n\n"
-            "Чтобы усыновить/удочерить — ответь на сообщение нужного пользователя "
-            "и напиши *усыновить* или *удочерить*.\n\n"
-            "Чтобы принять входящий запрос — напиши *принять усыновление*.\n"
-            "Чтобы отклонить — *отказаться от усыновления*."
-        )
+        result = "👨‍👩‍👧 *Семья*\n\n" + t(ctx.language, "family.adopt_hint")
 
     await bot.send_message(ctx.chat_id, result, parse_mode="Markdown")
 

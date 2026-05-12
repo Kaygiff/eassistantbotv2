@@ -1,13 +1,91 @@
 {
-  "_note": "Translation pending. Fallback to ru.json.",
-  "onboarding": {},
-  "common": {
-    "only_group": "👥 Bu aýratynlyk diňe topar söhbetdeşliginde elýeterlidir."
+  "onboarding": {
+    "welcome": "👋 Salam! Men siziň şahsy AI-kömekçiňiz.\n\nTanyşalyň. Ilki interfeýs dilini saýlaň:",
+    "choose_language": "🌐 Dili saýlaň:",
+    "enter_assistant_name": "✨ Ajaýyp! Indi kömekçiňize at beriň.\n\nIsleýän adyňyzy ýazyň — men oňa jogap bererin:",
+    "name_too_long": "⚠️ At gaty uzyn. Iň köp 50 simwol.",
+    "name_saved": "💾 At saklandy!",
+    "profile_created": "✅ Gowy, *{nickname}*! Siziň kömekçiňiz *{bot_name}* işe taýýar.",
+    "intro": "🚀 Men näme edip bilerin:\n\n🤖 Islendik mowzukda AI-çat\n🎮 Ecoins üçin kazino we mini-oýunlar\n🎵 Isleg boýunça sazlar\n🌤 Islendik şäherde howa maglumaty\n👨‍👩‍👧 Wirtual maşgala we öý haýwanlar\n💰 Ykdysadyýet, bonuslar, oýunçylaryň reýtingi\n\nSadeje ýazyň — başlalyň! 😊",
+    "enter_bot_name": "✨ Ajaýyp! Bota at beriň *(iň köp 50 simwol)*.\n\nGuruh çatlarda şu at bilen ýüz tutup bilersiňiz:",
+    "choose_personality": "🎭 Indi botoňyzyň häsiýetini saýlaň.\n\n_Bu jogap äheňini kesgitleýär — mylaýym, kineli ýa-da bitarap. Soňra sazlamalarda üýtgedip bilersiňiz._",
+    "persona_kind": "Mylaýym",
+    "persona_evil": "Ýaman",
+    "persona_neutral": "Bitarap",
+    "enter_nickname": "😎 Soňky ädim! Özüňize lakam saýlaň *(iň köp 32 simwol)*.\n\nOl profilde we guruh çatlarda görner:",
+    "nickname_too_long": "⚠️ Lakam gaty uzyn. Iň köp 32 simwol."
   },
-  "ai_chat": {},
-  "economy": {},
-  "pets": {},
-  "casino": {},
-  "relationships": {},
-  "moderation": {}
+  "common": {
+    "error": "❌ Ýalňyşlyk ýüze çykdy. Gaýtadan synanyşyň.",
+    "not_found": "🔍 Hiç zat tapylmady.",
+    "access_denied": "🚫 Giriş gadagan.",
+    "banned": "⛔ Siziň hasabyňyz bloklanan.",
+    "rate_limit": "⏳ Gaty köp sorag. Biraz garaşyň.",
+    "only_private": "🔒 Bu funksiýa diňe şahsy çatda elýeterli.",
+    "register_first": "📲 Hasaba almak üçin şahsy çata /start ýazyň."
+  },
+  "ai_chat": {
+    "thinking": "💭 Pikirlenmek...",
+    "history_cleared": "🗑 Çat taryhy arassalandy.",
+    "no_history": "📭 Çat taryhy boş."
+  },
+  "economy": {
+    "balance": "💰 Siziň balansyňyz: *{balance} Ecoins*",
+    "daily_bonus": "🎁 Gündelik bonus: *+{amount} Ecoins*\n🔥 Yzygiderlilik: {streak} gün",
+    "already_claimed": "✅ Bonus şu gün alyndy. Ertir gaýdyň!",
+    "streak_reset": "😔 Yzygiderlilik nola düşdi. Täzeden başlalyň!",
+    "transfer_sent": "✅ {username} ulanyjysyna *{amount} Ecoins* iberildi",
+    "transfer_received": "💰 Siz {username} ulanyjysyndan *{amount} Ecoins* aldyňyz",
+    "insufficient_funds": "❌ Ecoins ýeterlik däl. Balans: {balance}"
+  },
+  "pets": {
+    "status": "🐾 *{name}* ({species})\n❤️ Keýpiýet: {mood}\n🍖 Dokluk: {hunger}%\n⚡ Güýç: {energy}%\n⭐ Dereje: {level}",
+    "fed": "🍖 {name} iýmitlendirildi! +20 doklyga.",
+    "played": "🎮 Siz {name} bilen oýnadyňyz! +15 güýje.",
+    "sick": "🤒 {name} keselledi! {cost} Ecoins üçin bejeriň.",
+    "healed": "💊 {name} sagaldy!",
+    "dead": "💀 {name} öldi... Täze öý haýwany alyp bilersiňiz.",
+    "new_pet": "🐾 Öý haýwanynyň görnüşini saýlaň:",
+    "name_pet": "✏️ Öý haýwanyňyzy nähili atlandyrjaksyňyz?"
+  },
+  "casino": {
+    "warning": "⚠️ Bular içerki Ecoins walýutasy üçin güýmenje oýunlarydyr. Hakyky pul ulanylmaýar we çykarylmaýar.",
+    "choose_game": "🎰 Oýuny saýlaň:",
+    "enter_bet": "💰 Stavkany giriziň (Ecoins):",
+    "win": "🎉 Siz *{amount} Ecoins* utdyňyz!",
+    "loss": "😔 Siz *{amount} Ecoins* ýutdurdy.",
+    "push": "🤝 Deňlik! Stavka yzyna gaýtaryldy."
+  },
+  "relationships": {
+    "propose_dating": "💌 {username} ulanyjysyna teklip iberildi. Jogapy garaşýarys...",
+    "dating_accepted": "❤️ {username} teklip kabul etdi! Indi siz duşuşýaňyz.",
+    "propose_marriage": "💍 {username} ulanyjysyna nikah teklip iberildi.",
+    "married": "💒 Gutlaýarys! Indi siz nikahly.",
+    "already_in_relation": "💔 Siziň eýýäm gatnaşygyňyz bar.",
+    "breakup": "💔 Gatnaşyk tamamlandy.",
+    "divorce": "📝 Aýrylyşyk resmileşdirildi."
+  },
+  "moderation": {
+    "muted": "🔇 {username} {duration} wagty üçin sessiz edildi.",
+    "kicked": "👢 {username} grupdan çykaryldy.",
+    "banned": "⛔ {username} bloklandi.",
+    "warned": "⚠️ {username} duýduryş aldy ({count}/{max}).",
+    "auto_banned": "⛔ {username} {max} duýduryşdan soň awtomatik bloklandi."
+  },
+  "help": {
+    "text": "🎉 Ukyp başarýanlarymy az bölegi:\n\n🤖 Islendik mowzukda AI-çat\n🎮 Ecoins üçin kazino we mini-oýunlar\n🎵 Isleg boýunça sazlar\n🌤 Islendik şäherde howa maglumaty\n👨‍👩‍👧 Wirtual maşgala we öý haýwanlar\n💰 Ykdysadyýet, bonuslar, oýunçylaryň reýtingi\n\nEmma bu diňe başlangyç — gollanmada hemme zat bar.\n\n📖 Göz aýla.",
+    "open_guide": "📖 Gollanmany açmak"
+  },
+  "settings": {
+    "title": "⚙️ *Sazlamalar*\n\nNäme üýtgetmek isleýärsiňiz?",
+    "language": "🌐 Dil / Language",
+    "assistant_name": "✏️ Kömekçiniň ady",
+    "edit_profile": "👤 Profili redaktirlemek"
+  },
+  "who_made_you": {
+    "text": "🛠 Meni *Kaý Giffens* döretdi\nTelegram: @kxygxf"
+  },
+  "family": {
+    "adopt_hint": "Ogullyga/gyzlyga almak üçin — zerur ulanyjynyň habaryna jogap beriň we *ogullyga almak* ýazyň.\n\nGelen haýyşy kabul etmek üçin — *kabul etmek* ýazyň.\nRet etmek üçin — *ret etmek*."
+  }
 }

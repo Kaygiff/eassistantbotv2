@@ -1,13 +1,91 @@
 {
-  "_note": "Translation pending. Fallback to ru.json.",
-  "onboarding": {},
-  "common": {
-    "only_group": "👥 Bu funksiya faqat guruh chatida mavjud."
+  "onboarding": {
+    "welcome": "👋 Salom! Men sizning shaxsiy AI-yordamchingizman.\n\nTanishamiz. Avval interfeys tilini tanlang:",
+    "choose_language": "🌐 Tilni tanlang:",
+    "enter_assistant_name": "✨ Ajoyib! Endi yordamchingizga nom bering.\n\nIstalgan nom yozing — men unga javob beraman:",
+    "name_too_long": "⚠️ Nom juda uzun. Maksimum 50 belgi.",
+    "name_saved": "💾 Nom saqlandi!",
+    "profile_created": "✅ Zo'r, *{nickname}*! Sizning yordamchingiz *{bot_name}* ishga tayyor.",
+    "intro": "🚀 Men nima qila olaman:\n\n🤖 AI-chat istalgan mavzuda\n🎮 Kazino va mini-o'yinlar Ecoins uchun\n🎵 So'rov bo'yicha musiqa\n🌤 Istalgan shaharda ob-havo\n👨‍👩‍👧 Virtual oila va uy hayvonlari\n💰 Iqtisodiyot, bonuslar, o'yinchilar reytingi\n\nShunchaki yozing — boshlaymiz! 😊",
+    "enter_bot_name": "✨ Ajoyib! Botingizga nom bering *(maksimum 50 belgi)*.\n\nGuruh chatlarda shu nom bilan murojaat qilishingiz mumkin:",
+    "choose_personality": "🎭 Endi botingizning xarakterini tanlang.\n\n_Bu javob ohangini belgilaydi — mehribon, kinoyali yoki neytral. Keyinroq sozlamalarda o'zgartirishingiz mumkin._",
+    "persona_kind": "Mehribon",
+    "persona_evil": "Yovuz",
+    "persona_neutral": "Neytral",
+    "enter_nickname": "😎 Oxirgi qadam! O'zingizga taxallus tanlang *(maksimum 32 belgi)*.\n\nU profilda va guruh chatlarda ko'rinadi:",
+    "nickname_too_long": "⚠️ Taxallus juda uzun. Maksimum 32 belgi."
   },
-  "ai_chat": {},
-  "economy": {},
-  "pets": {},
-  "casino": {},
-  "relationships": {},
-  "moderation": {}
+  "common": {
+    "error": "❌ Xatolik yuz berdi. Qayta urining.",
+    "not_found": "🔍 Hech narsa topilmadi.",
+    "access_denied": "🚫 Kirish taqiqlangan.",
+    "banned": "⛔ Sizning akkauntingiz bloklangan.",
+    "rate_limit": "⏳ Juda ko'p so'rov. Biroz kuting.",
+    "only_private": "🔒 Bu funksiya faqat shaxsiy chatda mavjud.",
+    "register_first": "📲 Ro'yxatdan o'tish uchun shaxsiy chatga /start yozing."
+  },
+  "ai_chat": {
+    "thinking": "💭 O'ylamoqdaman...",
+    "history_cleared": "🗑 Chat tarixi tozalandi.",
+    "no_history": "📭 Chat tarixi bo'sh."
+  },
+  "economy": {
+    "balance": "💰 Sizning balansingiz: *{balance} Ecoins*",
+    "daily_bonus": "🎁 Kunlik bonus: *+{amount} Ecoins*\n🔥 Streak: {streak} kun",
+    "already_claimed": "✅ Bonus bugun allaqachon olindi. Ertaga qayting!",
+    "streak_reset": "😔 Streak nolga tushdi. Qaytadan boshlaymiz!",
+    "transfer_sent": "✅ {username} foydalanuvchisiga *{amount} Ecoins* yuborildi",
+    "transfer_received": "💰 Siz {username} foydalanuvchisidan *{amount} Ecoins* oldingiz",
+    "insufficient_funds": "❌ Ecoins yetarli emas. Balans: {balance}"
+  },
+  "pets": {
+    "status": "🐾 *{name}* ({species})\n❤️ Kayfiyat: {mood}\n🍖 To'yinganlik: {hunger}%\n⚡ Energiya: {energy}%\n⭐ Daraja: {level}",
+    "fed": "🍖 {name} boqildi! +20 to'yinganlikkа.",
+    "played": "🎮 Siz {name} bilan o'yndingiz! +15 energiyaga.",
+    "sick": "🤒 {name} kasal bo'ldi! {cost} Ecoins evaziga davolang.",
+    "healed": "💊 {name} tuzaldi!",
+    "dead": "💀 {name} o'ldi... Yangi uy hayvoni olishingiz mumkin.",
+    "new_pet": "🐾 Uy hayvoni turini tanlang:",
+    "name_pet": "✏️ Uy hayvonингizga qanday nom berasiz?"
+  },
+  "casino": {
+    "warning": "⚠️ Bular ichki Ecoins valyutasiga mo'ljallangan o'yin-kulgi o'yinlari. Haqiqiy pul ishlatilmaydi va chiqarib olinmaydi.",
+    "choose_game": "🎰 O'yinni tanlang:",
+    "enter_bet": "💰 Stavkani kiriting (Ecoins):",
+    "win": "🎉 Siz *{amount} Ecoins* yutdingiz!",
+    "loss": "😔 Siz *{amount} Ecoins* yutqazdingiz.",
+    "push": "🤝 Durrang! Stavka qaytarildi."
+  },
+  "relationships": {
+    "propose_dating": "💌 {username} foydalanuvchisiga taklif yuborildi. Javob kutmoqdamiz...",
+    "dating_accepted": "❤️ {username} taklifni qabul qildi! Endi siz uchrashib yuribsiz.",
+    "propose_marriage": "💍 {username} foydalanuvchisiga nikoh taklifi yuborildi.",
+    "married": "💒 Tabriklaymiz! Endi siz nikohda turibsiz.",
+    "already_in_relation": "💔 Sizda allaqachon munosabat bor.",
+    "breakup": "💔 Munosabat tugadi.",
+    "divorce": "📝 Ajralish rasmiylashtirildi."
+  },
+  "moderation": {
+    "muted": "🔇 {username} {duration} muddatga jim qoldirildi.",
+    "kicked": "👢 {username} guruhdan chiqarildi.",
+    "banned": "⛔ {username} bloklandi.",
+    "warned": "⚠️ {username} ogohlantirish oldi ({count}/{max}).",
+    "auto_banned": "⛔ {username} {max} ta ogohlantirishdan keyin avtomatik bloklandi."
+  },
+  "help": {
+    "text": "🎉 Mening imkoniyatlarimning faqat bir qismi:\n\n🤖 AI-chat istalgan mavzuda\n🎮 Kazino va mini-o'yinlar Ecoins uchun\n🎵 So'rov bo'yicha musiqa\n🌤 Istalgan shaharda ob-havo\n👨‍👩‍👧 Virtual oila va uy hayvonlari\n💰 Iqtisodiyot, bonuslar, o'yinchilar reytingi\n\nAmmo bu faqat boshlanishi — qo'llanmada hamma narsa bor.\n\n📖 Ko'rib chiq.",
+    "open_guide": "📖 Qo'llanmani ochish"
+  },
+  "settings": {
+    "title": "⚙️ *Sozlamalar*\n\nNimani o'zgartirmoqchisiz?",
+    "language": "🌐 Til / Language",
+    "assistant_name": "✏️ Yordamchi nomi",
+    "edit_profile": "👤 Profilni tahrirlash"
+  },
+  "who_made_you": {
+    "text": "🛠 Meni *Kay Giffens* yaratdi\nTelegram: @kxygxf"
+  },
+  "family": {
+    "adopt_hint": "Asrab olish uchun — kerakli foydalanuvchi xabariga javob bering va *asrab olish* yozing.\n\nKiruvchi so'rovni qabul qilish uchun — *asrab olishni qabul qilish* yozing.\nRad etish uchun — *asrab olishdan voz kechish*."
+  }
 }

@@ -22,8 +22,7 @@
     "banned": "⛔ Your account is banned.",
     "rate_limit": "⏳ Too many requests. Please wait.",
     "only_private": "🔒 This feature is only available in private chat.",
-    "register_first": "📲 Send /start in private chat to register.",
-    "only_group": "👥 This feature is only available in group chats."
+    "register_first": "📲 Send /start in private chat to register."
   },
   "ai_chat": {
     "thinking": "💭 Thinking...",
@@ -72,5 +71,21 @@
     "banned": "⛔ {username} banned.",
     "warned": "⚠️ {username} received a warning ({count}/{max}).",
     "auto_banned": "⛔ {username} automatically banned after {max} warnings."
+  },
+  "help": {
+    "text": "🎉 Here's just a small part of what I can do:\n\n🤖 AI chat on any topic\n🎮 Casino and mini-games for Ecoins\n🎵 Music on request\n🌤 Weather in any city\n👨‍👩‍👧 Virtual family and pets\n💰 Economy, bonuses, player leaderboard\n\nBut that's just the beginning — the guide has everything else: hidden features, tips, how to earn Ecoins fast and more.\n\n📖 Check it out — it's more interesting than it looks.",
+    "open_guide": "📖 Open guide"
+  },
+  "settings": {
+    "title": "⚙️ *Settings*\n\nWhat would you like to change?",
+    "language": "🌐 Language",
+    "assistant_name": "✏️ Assistant name",
+    "edit_profile": "👤 Edit profile"
+  },
+  "who_made_you": {
+    "text": "🛠 I was created by *Kai Giffens*\nTelegram: @kxygxf"
+  },
+  "family": {
+    "adopt_hint": "To adopt — reply to the user's message and write *adopt*.\n\nTo accept an incoming request — write *accept adoption*.\nTo decline — *decline adoption*."
   }
 }
