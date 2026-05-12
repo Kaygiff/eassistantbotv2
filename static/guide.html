@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EAssistant — Руководство пользователя</title>
+<meta name="description" content="Полное руководство по EAssistant — AI-чат, казино, питомцы, отношения, модерация и медиасервисы в одном Telegram-боте.">
+<meta property="og:title" content="EAssistant — Руководство пользователя">
+<meta property="og:description" content="Полное руководство по EAssistant — AI-чат, казино, питомцы, отношения, модерация и медиасервисы в одном Telegram-боте.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://via.placeholder.com/1200x630/0e0e11/a78bfa?text=EAssistant">
+<meta name="twitter:card" content="summary_large_image">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Manrope:wght@400;500;600&display=swap');
 
@@ -518,9 +524,148 @@
   .cmd-card.hidden { display: none; }
   section.all-hidden { opacity: 0.3; pointer-events: none; }
   section.all-hidden .section-title::after { content: ' — нет результатов'; font-size: 12px; color: var(--muted); }
+
+  /* PROGRESS BAR */
+  #progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+    z-index: 999;
+    transition: width 0.1s linear;
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* COMPACT MODE */
+  body.compact .cmd-desc { display: none; }
+  body.compact .cmd-examples { display: none; }
+  body.compact .cmd-card { padding: 10px 14px; }
+  body.compact .copy-btn { display: none; }
+  body.compact .cmd-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+
+  /* COMPACT TOGGLE */
+  .compact-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Manrope', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .compact-toggle:hover { border-color: var(--border2); color: var(--text); }
+  .compact-toggle.active { border-color: var(--accent); color: var(--accent2); background: rgba(124,108,252,0.1); }
+
+  /* SHARE BUTTON on section headers */
+  .share-btn {
+    margin-left: 8px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Manrope', sans-serif;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .section-header:hover .share-btn { opacity: 1; }
+  .share-btn:hover { color: var(--accent2); border-color: rgba(124,108,252,0.4); }
+  .share-btn.copied { color: var(--accent3); border-color: rgba(52,211,153,0.4); }
+
+  /* TOP BADGE */
+  .top-badge {
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.3);
+    color: #fcd34d;
+    margin-left: 6px;
+    vertical-align: middle;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  /* SCROLL ANIMATIONS */
+  .cmd-card, .game-card, .step {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .cmd-card.revealed, .game-card.revealed, .step.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* CASINO HOVER ANIMATIONS */
+  .game-card-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+  .game-card:hover .game-card-icon {
+    animation: casino-spin 0.5s ease;
+  }
+  @keyframes casino-spin {
+    0%   { transform: scale(1) rotate(0deg); }
+    30%  { transform: scale(1.3) rotate(-15deg); }
+    70%  { transform: scale(1.2) rotate(10deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  /* FAQ SECTION */
+  .faq-list { display: flex; flex-direction: column; gap: 10px; }
+  .faq-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--card-r);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .faq-item:hover { border-color: var(--border2); }
+  .faq-q {
+    padding: 16px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    user-select: none;
+  }
+  .faq-q::after {
+    content: '＋';
+    font-size: 18px;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: transform 0.2s, color 0.2s;
+  }
+  .faq-item.open .faq-q::after { transform: rotate(45deg); color: var(--accent2); }
+  .faq-a {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    padding: 0 20px;
+  }
+  .faq-item.open .faq-a { max-height: 300px; padding: 0 20px 16px; }
 </style>
 </head>
 <body>
+<div id="progress-bar"></div>
 
 <!-- HERO -->
 <div class="hero">
@@ -552,6 +697,7 @@
     <li><a href="#tasks">Задачи</a></li>
     <li><a href="#moderation">Модерация</a></li>
     <li><a href="#ai">AI-чат</a></li>
+    <li><a href="#faq">FAQ</a></li>
   </ul>
 </nav>
 
@@ -563,6 +709,7 @@
       <button class="filter-btn active-all" data-filter="all">Все</button>
       <button class="filter-btn" data-filter="private">💗 Личка</button>
       <button class="filter-btn" data-filter="group">💬 Группа</button>
+      <button class="compact-toggle" id="compact-toggle">⚡ Режим шпаргалки</button>
     </div>
   </div>
 </div>
@@ -1506,6 +1653,50 @@
   </div>
 </section>
 
+<!-- FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="section-header">
+      <div class="section-icon" style="background: rgba(124,108,252,0.15);">❓</div>
+      <h2 class="section-title">Частые вопросы</h2>
+    </div>
+    <div class="info-box">
+      <span>💡</span>
+      <span><strong>Что такое реплай?</strong> Реплай — это функция Telegram «Ответить на сообщение». Нажми и удержи сообщение пользователя → выбери «Ответить» → напиши команду. Так бот понимает, к кому обращено действие (обнять, варн, блок и т.д.).</span>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q">Бот не отвечает на мои сообщения в группе — почему?</div>
+        <div class="faq-a">Для AI-ответов и медиасервисов нужно обращаться по имени ассистента: «Альфа, ...». Команды казино, игр и модерации работают без имени. Убедись, что бот добавлен в группу и имеет нужные права.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Мой питомец умер — что делать?</div>
+        <div class="faq-a">После гибели питомца нужно завести нового командой «новый питомец». Прогресс предыдущего питомца не сохраняется, поэтому не забывай кормить и играть с ним регулярно.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Как пополнить баланс монет?</div>
+        <div class="faq-a">Монеты можно получить через ежедневный бонус (/daily — раз в 24 часа), реферальную программу (/referral — за каждого приглашённого друга), а также выигрывая в играх и казино.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Как изменить имя ассистента в группе?</div>
+        <div class="faq-a">Имя ассистента меняется только в личке через команду «редактировать профиль» → «смени имя ассистента». После смены бот в группе будет откликаться на новое имя.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Можно ли вернуть потерянные монеты из казино?</div>
+        <div class="faq-a">Нет — монеты в казино ставятся на честных условиях и возврату не подлежат. Рекомендуем ставить только то, что готов потерять, и следить за балансом через команду «баланс».</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Минимальная и максимальная ставка в казино?</div>
+        <div class="faq-a">Минимальная ставка — 10 монет. Максимальная зависит от игры и твоего текущего баланса. Для слотов синтаксис: «слоты 100» — где 100 это сумма ставки. Для рулетки: «рулетка красное 50».</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Как предложить отношения или брак?</div>
+        <div class="faq-a">Оба действия требуют реплая: ответь на сообщение нужного пользователя и напиши «встречаться» или «брак». Пользователь получит запрос и сможет принять или отклонить его.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <footer>
   <div>EAssistant — Руководство пользователя</div>
   <div style="margin-top:8px; opacity:0.5;">
@@ -1518,6 +1709,14 @@
 <div id="scroll-top" title="Наверх">↑</div>
 
 <script>
+// ── Progress bar ───────────────────────────────────────────
+const progressBar = document.getElementById('progress-bar');
+window.addEventListener('scroll', () => {
+  const scrolled = window.scrollY;
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (total > 0 ? (scrolled / total) * 100 : 0) + '%';
+});
+
 // ── Scroll to top ──────────────────────────────────────────
 const scrollBtn = document.getElementById('scroll-top');
 window.addEventListener('scroll', () => {
@@ -1528,7 +1727,7 @@ scrollBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 's
 // ── Active nav on scroll ───────────────────────────────────
 const sections = document.querySelectorAll('section[id]');
 const navLinks = document.querySelectorAll('nav a[href^="#"]');
-const observer = new IntersectionObserver((entries) => {
+const navObserver = new IntersectionObserver((entries) => {
   entries.forEach(e => {
     if (e.isIntersecting) {
       navLinks.forEach(a => a.classList.remove('nav-active'));
@@ -1537,7 +1736,23 @@ const observer = new IntersectionObserver((entries) => {
     }
   });
 }, { rootMargin: '-30% 0px -65% 0px' });
-sections.forEach(s => observer.observe(s));
+sections.forEach(s => navObserver.observe(s));
+
+// ── Scroll animations ──────────────────────────────────────
+const animItems = document.querySelectorAll('.cmd-card, .game-card, .step');
+const animObserver = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      // stagger delay based on position among siblings
+      const siblings = [...e.target.parentElement.children];
+      const idx = siblings.indexOf(e.target);
+      e.target.style.transitionDelay = Math.min(idx * 40, 300) + 'ms';
+      e.target.classList.add('revealed');
+      animObserver.unobserve(e.target);
+    }
+  });
+}, { rootMargin: '0px 0px -60px 0px' });
+animItems.forEach(el => animObserver.observe(el));
 
 // ── Section counts ─────────────────────────────────────────
 document.querySelectorAll('section').forEach(sec => {
@@ -1547,6 +1762,7 @@ document.querySelectorAll('section').forEach(sec => {
   if (cards.length === 0) return;
   const badge = document.createElement('span');
   badge.className = 'section-count';
+  badge.dataset.total = cards.length;
   badge.textContent = cards.length + ' команд';
   header.appendChild(badge);
 });
@@ -1569,11 +1785,71 @@ document.querySelectorAll('.cmd-card').forEach(card => {
   card.appendChild(btn);
 });
 
+// ── Share buttons on section headers ──────────────────────
+document.querySelectorAll('section[id]').forEach(sec => {
+  const header = sec.querySelector('.section-header');
+  if (!header) return;
+  const btn = document.createElement('button');
+  btn.className = 'share-btn';
+  btn.textContent = '🔗 поделиться';
+  btn.addEventListener('click', () => {
+    const url = location.href.split('#')[0] + '#' + sec.id;
+    navigator.clipboard.writeText(url).then(() => {
+      btn.textContent = '✓ ссылка скопирована';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '🔗 поделиться'; btn.classList.remove('copied'); }, 2000);
+    });
+  });
+  header.appendChild(btn);
+});
+
+// ── Top badges ─────────────────────────────────────────────
+const topCmds = ['баланс', '/daily', 'мой профиль', 'слоты', 'питомец', 'варн', 'поговори со мной', 'погода', 'создать задачу'];
+document.querySelectorAll('.cmd-name').forEach(el => {
+  if (topCmds.includes(el.textContent.trim())) {
+    const badge = document.createElement('span');
+    badge.className = 'top-badge';
+    badge.textContent = '★ Топ';
+    el.after(badge);
+  }
+});
+
+// ── FAQ accordion ──────────────────────────────────────────
+document.querySelectorAll('.faq-item').forEach(item => {
+  item.querySelector('.faq-q').addEventListener('click', () => {
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(o => o.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  });
+});
+
+// ── Compact (cheatsheet) mode ──────────────────────────────
+const compactBtn = document.getElementById('compact-toggle');
+let compact = localStorage.getItem('ea-compact') === '1';
+function applyCompact() {
+  document.body.classList.toggle('compact', compact);
+  compactBtn.classList.toggle('active', compact);
+  compactBtn.textContent = compact ? '📖 Полный вид' : '⚡ Режим шпаргалки';
+  localStorage.setItem('ea-compact', compact ? '1' : '0');
+}
+applyCompact();
+compactBtn.addEventListener('click', () => { compact = !compact; applyCompact(); });
+
 // ── Search + Filter ────────────────────────────────────────
 const searchInput = document.getElementById('search-input');
 const emptyState  = document.getElementById('search-empty');
 const filterBtns  = document.querySelectorAll('.filter-btn');
-let currentFilter = 'all';
+let currentFilter = localStorage.getItem('ea-filter') || 'all';
+
+// Restore saved filter
+filterBtns.forEach(b => {
+  b.className = 'filter-btn';
+  if (b.dataset.filter === currentFilter) {
+    if (currentFilter === 'all')     b.classList.add('active-all');
+    if (currentFilter === 'private') b.classList.add('active-private');
+    if (currentFilter === 'group')   b.classList.add('active-group');
+  }
+});
 
 function hasContext(card, filter) {
   if (filter === 'all') return true;
@@ -1588,33 +1864,45 @@ function applyFilters() {
 
   document.querySelectorAll('section').forEach(sec => {
     const cards = sec.querySelectorAll('.cmd-card');
-    if (cards.length === 0) return;
+    if (cards.length === 0) {
+      // Handle game-cards (casino)
+      const gamecards = sec.querySelectorAll('.game-card');
+      if (gamecards.length > 0) {
+        const text = sec.textContent.toLowerCase();
+        const matchSearch = q === '' || text.includes(q);
+        gamecards.forEach(gc => gc.classList.toggle('hidden', !matchSearch));
+        if (matchSearch) totalVisible += gamecards.length;
+      }
+      return;
+    }
     let sectionVisible = 0;
-
     cards.forEach(card => {
       const text = card.textContent.toLowerCase();
-      const matchSearch  = q === '' || text.includes(q);
-      const matchFilter  = hasContext(card, currentFilter);
-      const visible = matchSearch && matchFilter;
+      const visible = (q === '' || text.includes(q)) && hasContext(card, currentFilter);
       card.classList.toggle('hidden', !visible);
       if (visible) sectionVisible++;
     });
-
     totalVisible += sectionVisible;
-    // Also handle game-cards (casino) — just show all or hide section
-    const gamecards = sec.querySelectorAll('.game-card');
-    if (gamecards.length > 0 && cards.length === 0) {
-      const text = sec.textContent.toLowerCase();
-      const matchSearch = q === '' || text.includes(q);
-      gamecards.forEach(gc => gc.classList.toggle('hidden', !matchSearch));
-      if (matchSearch) totalVisible += gamecards.length;
-    }
+    sec.classList.toggle('all-hidden', sectionVisible === 0);
 
-    sec.classList.toggle('all-hidden', sectionVisible === 0 && cards.length > 0);
+    // Update section count badge
+    const countBadge = sec.querySelector('.section-count');
+    if (countBadge) {
+      const total = parseInt(countBadge.dataset.total);
+      countBadge.textContent = q || currentFilter !== 'all'
+        ? sectionVisible + ' / ' + total
+        : total + ' команд';
+    }
   });
 
   emptyState.classList.toggle('visible', totalVisible === 0);
+  localStorage.setItem('ea-search', q);
 }
+
+// Restore saved search
+const savedSearch = localStorage.getItem('ea-search') || '';
+if (savedSearch) { searchInput.value = savedSearch; }
+applyFilters();
 
 searchInput.addEventListener('input', applyFilters);
 
@@ -1625,6 +1913,7 @@ filterBtns.forEach(btn => {
     if (currentFilter === 'all')     btn.classList.add('active-all');
     if (currentFilter === 'private') btn.classList.add('active-private');
     if (currentFilter === 'group')   btn.classList.add('active-group');
+    localStorage.setItem('ea-filter', currentFilter);
     applyFilters();
   });
 });
