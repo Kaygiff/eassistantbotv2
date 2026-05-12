@@ -388,6 +388,136 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
+
+  /* SEARCH BAR */
+  .search-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 24px 0;
+  }
+  .search-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 10px 16px 10px 40px;
+    font-size: 14px;
+    font-family: 'Manrope', sans-serif;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238b8a9a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 14px center;
+  }
+  .search-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,108,252,0.15); }
+  .search-box::placeholder { color: var(--muted); }
+
+  /* FILTER BUTTONS */
+  .filter-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Manrope', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--border2); color: var(--text); }
+  .filter-btn.active-all { border-color: var(--accent); color: var(--accent2); background: rgba(124,108,252,0.1); }
+  .filter-btn.active-private { border-color: rgba(244,114,182,0.4); color: #f9a8d4; background: rgba(244,114,182,0.1); }
+  .filter-btn.active-group { border-color: rgba(56,189,248,0.4); color: #7dd3fc; background: rgba(56,189,248,0.1); }
+
+  /* SEARCH EMPTY STATE */
+  .search-empty {
+    display: none;
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .search-empty.visible { display: block; }
+
+  /* SECTION COUNT */
+  .section-count {
+    font-family: 'Manrope', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 2px 10px;
+    border-radius: 100px;
+    margin-left: auto;
+  }
+
+  /* COPY BUTTON */
+  .cmd-card { position: relative; }
+  .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+  }
+  .cmd-card:hover .copy-btn { opacity: 1; }
+  .copy-btn:hover { color: var(--accent2); border-color: rgba(124,108,252,0.4); }
+  .copy-btn.copied { color: var(--accent3); border-color: rgba(52,211,153,0.4); }
+
+  /* SCROLL TO TOP */
+  #scroll-top {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 44px;
+    height: 44px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s, transform 0.2s, border-color 0.15s;
+    z-index: 200;
+    font-size: 18px;
+  }
+  #scroll-top.visible { opacity: 1; transform: translateY(0); }
+  #scroll-top:hover { border-color: var(--accent); }
+
+  /* ACTIVE NAV */
+  nav a.nav-active { color: var(--text); background: var(--bg3); }
+
+  /* HIDDEN CARDS */
+  .cmd-card.hidden { display: none; }
+  section.all-hidden { opacity: 0.3; pointer-events: none; }
+  section.all-hidden .section-title::after { content: ' — нет результатов'; font-size: 12px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -411,6 +541,7 @@
 <!-- NAV -->
 <nav>
   <ul>
+    <li><a href="#howto">Как работает</a></li>
     <li><a href="#start">Старт</a></li>
     <li><a href="#economy">Экономика</a></li>
     <li><a href="#pet">Питомец</a></li>
@@ -424,8 +555,21 @@
   </ul>
 </nav>
 
+<!-- SEARCH + FILTERS -->
+<div class="search-wrap">
+  <div class="search-row">
+    <input class="search-box" id="search-input" type="text" placeholder="Поиск команд... (например «слоты» или «погода»)" autocomplete="off" />
+    <div class="filter-btns">
+      <button class="filter-btn active-all" data-filter="all">Все</button>
+      <button class="filter-btn" data-filter="private">💗 Личка</button>
+      <button class="filter-btn" data-filter="group">💬 Группа</button>
+    </div>
+  </div>
+</div>
+<div class="search-empty" id="search-empty">🔍 Ничего не найдено — попробуй другой запрос</div>
+
 <!-- КАК РАБОТАЕТ БОТ -->
-<section>
+<section id="howto">
   <div class="wrap">
     <div class="section-header">
       <div class="section-icon" style="background: rgba(124,108,252,0.15);">⚡</div>
@@ -482,7 +626,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">❓</span>
-          <span class="cmd-name">/help</span>
+          <span class="cmd-name">помоги</span>
         </div>
         <div class="cmd-desc">Список всего что умеет бот.</div>
         <div class="cmd-examples">
@@ -494,7 +638,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">👤</span>
-          <span class="cmd-name">/profile</span>
+          <span class="cmd-name">мой профиль</span>
         </div>
         <div class="cmd-desc">Просмотр своего профиля — баланс, уровень, питомец, статус отношений.</div>
         <div class="cmd-examples">
@@ -539,7 +683,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">💎</span>
-          <span class="cmd-name">/balance</span>
+          <span class="cmd-name">баланс</span>
         </div>
         <div class="cmd-desc">Посмотреть свой баланс монет.</div>
         <div class="cmd-examples">
@@ -585,7 +729,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">🏆</span>
-          <span class="cmd-name">/top</span>
+          <span class="cmd-name">топ</span>
         </div>
         <div class="cmd-desc">Таблица лидеров по монетам.</div>
         <div class="cmd-examples">
@@ -625,7 +769,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">📋</span>
-          <span class="cmd-name">/pet</span>
+          <span class="cmd-name">питомец</span>
         </div>
         <div class="cmd-desc">Главное меню питомца со всеми действиями.</div>
         <div class="cmd-examples">
@@ -822,7 +966,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">📋</span>
-          <span class="cmd-name">/blacklist</span>
+          <span class="cmd-name">мой чс</span>
         </div>
         <div class="cmd-desc">Просмотр своего чёрного списка с кнопками разблокировки.</div>
         <div class="cmd-examples">
@@ -850,49 +994,49 @@
       <div class="game-card">
         <div class="game-card-icon">🎰</div>
         <div class="game-card-name">Казино</div>
-        <div class="game-card-cmd">/casino</div>
+        <div class="game-card-cmd">казино</div>
         <div class="game-card-syntax">казино</div>
       </div>
       <div class="game-card">
         <div class="game-card-icon">🍒</div>
         <div class="game-card-name">Слоты</div>
-        <div class="game-card-cmd">/slots</div>
+        <div class="game-card-cmd">слоты</div>
         <div class="game-card-syntax">слоты [ставка]</div>
       </div>
       <div class="game-card">
         <div class="game-card-icon">🎡</div>
         <div class="game-card-name">Рулетка</div>
-        <div class="game-card-cmd">/roulette</div>
+        <div class="game-card-cmd">рулетка</div>
         <div class="game-card-syntax">рулетка [тип] [ставка]</div>
       </div>
       <div class="game-card">
         <div class="game-card-icon">🎲</div>
         <div class="game-card-name">Кости</div>
-        <div class="game-card-cmd">/dice</div>
+        <div class="game-card-cmd">кости</div>
         <div class="game-card-syntax">кости [число] [ставка]</div>
       </div>
       <div class="game-card">
         <div class="game-card-icon">🪙</div>
         <div class="game-card-name">Монетка</div>
-        <div class="game-card-cmd">/coin</div>
+        <div class="game-card-cmd">монетка</div>
         <div class="game-card-syntax">монетка [о/р] [ставка]</div>
       </div>
       <div class="game-card">
         <div class="game-card-icon">💣</div>
         <div class="game-card-name">Мины</div>
-        <div class="game-card-cmd">/mines</div>
+        <div class="game-card-cmd">мины</div>
         <div class="game-card-syntax">мины [ставка]</div>
       </div>
       <div class="game-card">
         <div class="game-card-icon">🃏</div>
         <div class="game-card-name">Джокер</div>
-        <div class="game-card-cmd">/joker</div>
+        <div class="game-card-cmd">джокер</div>
         <div class="game-card-syntax">джокер [ставка]</div>
       </div>
       <div class="game-card">
         <div class="game-card-icon">🎡</div>
         <div class="game-card-name">Колесо</div>
-        <div class="game-card-cmd">/wheel</div>
+        <div class="game-card-cmd">колесо</div>
         <div class="game-card-syntax">колесо [ставка]</div>
       </div>
     </div>
@@ -910,7 +1054,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">🧠</span>
-          <span class="cmd-name">/quiz</span>
+          <span class="cmd-name">викторина</span>
         </div>
         <div class="cmd-desc">Викторина — ответь на вопрос и проверь свои знания.</div>
         <div class="cmd-examples">
@@ -933,7 +1077,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">🎭</span>
-          <span class="cmd-name">/truth</span>
+          <span class="cmd-name">правда или действие</span>
         </div>
         <div class="cmd-desc">Правда или действие — классическая игра для компании.</div>
         <div class="cmd-examples">
@@ -944,7 +1088,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">🤔</span>
-          <span class="cmd-name">/wouldyou</span>
+          <span class="cmd-name">что бы ты выбрал</span>
         </div>
         <div class="cmd-desc">«Что бы ты выбрал» — сложный выбор между двумя вариантами.</div>
         <div class="cmd-examples">
@@ -955,7 +1099,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">🔮</span>
-          <span class="cmd-name">/riddle</span>
+          <span class="cmd-name">загадка</span>
         </div>
         <div class="cmd-desc">Загадка — угадай ответ.</div>
         <div class="cmd-examples">
@@ -1001,7 +1145,7 @@
         <div class="cmd-examples">
           <span class="example-pill">погода в Москве</span>
           <span class="example-pill">прогноз на завтра</span>
-          <span class="example-pill">/weather</span>
+          
         </div>
       </div>
       <div class="cmd-card">
@@ -1047,7 +1191,7 @@
         <div class="cmd-examples">
           <span class="example-pill">найди книгу Дюна</span>
           <span class="example-pill">посоветуй роман</span>
-          <span class="example-pill">/book</span>
+          
         </div>
       </div>
       <div class="cmd-card">
@@ -1059,7 +1203,7 @@
         <div class="cmd-examples">
           <span class="example-pill">найди аниме Наруто</span>
           <span class="example-pill">посоветуй аниме</span>
-          <span class="example-pill">/anime</span>
+          
         </div>
       </div>
       <div class="cmd-card">
@@ -1093,7 +1237,7 @@
         <div class="cmd-examples">
           <span class="example-pill">создай задачу купить хлеб</span>
           <span class="example-pill">добавь задачу</span>
-          <span class="example-pill">/todo</span>
+          
         </div>
       </div>
       <div class="cmd-card">
@@ -1105,7 +1249,7 @@
         <div class="cmd-examples">
           <span class="example-pill">мои задачи</span>
           <span class="example-pill">список дел</span>
-          <span class="example-pill">/tasks</span>
+          
         </div>
       </div>
       <div class="cmd-card">
@@ -1129,7 +1273,7 @@
         <div class="cmd-examples">
           <span class="example-pill">напомни завтра в 9 позвонить маме</span>
           <span class="example-pill">напоминание через 2 часа</span>
-          <span class="example-pill">/remind</span>
+          
         </div>
       </div>
     </div>
@@ -1153,7 +1297,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">⚠️</span>
-          <span class="cmd-name">/warn</span><span class="group-only">группа</span>
+          <span class="cmd-name">варн</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Выдать предупреждение пользователю.</div>
         <div class="cmd-examples">
@@ -1164,7 +1308,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">🔄</span>
-          <span class="cmd-name">/unwarn</span><span class="group-only">группа</span>
+          <span class="cmd-name">снять варн</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Снять одно предупреждение.</div>
         <div class="cmd-examples">
@@ -1175,7 +1319,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">📊</span>
-          <span class="cmd-name">/warns</span><span class="group-only">группа</span>
+          <span class="cmd-name">варны</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Посмотреть количество предупреждений у пользователя.</div>
         <div class="cmd-examples">
@@ -1186,7 +1330,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">🧹</span>
-          <span class="cmd-name">/clearwarns</span><span class="group-only">группа</span>
+          <span class="cmd-name">очистить варны</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Снять все предупреждения.</div>
         <div class="cmd-examples">
@@ -1201,7 +1345,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">🔨</span>
-          <span class="cmd-name">/ban</span><span class="group-only">группа</span>
+          <span class="cmd-name">бан</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Забанить пользователя в группе.</div>
         <div class="cmd-examples">
@@ -1212,7 +1356,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">🔓</span>
-          <span class="cmd-name">/unban</span><span class="group-only">группа</span>
+          <span class="cmd-name">разбан</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Разбанить пользователя.</div>
         <div class="cmd-examples">
@@ -1223,7 +1367,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">🔇</span>
-          <span class="cmd-name">/mute</span><span class="group-only">группа</span>
+          <span class="cmd-name">мут</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Заглушить пользователя — он не сможет писать.</div>
         <div class="cmd-examples">
@@ -1235,7 +1379,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">🔊</span>
-          <span class="cmd-name">/unmute</span><span class="group-only">группа</span>
+          <span class="cmd-name">размут</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Снять мут с пользователя.</div>
         <div class="cmd-examples">
@@ -1250,7 +1394,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">⬆️</span>
-          <span class="cmd-name">/promote</span><span class="group-only">группа</span>
+          <span class="cmd-name">повысить</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Повысить пользователя до модератора/администратора.</div>
         <div class="cmd-examples">
@@ -1261,7 +1405,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">⬇️</span>
-          <span class="cmd-name">/demote</span><span class="group-only">группа</span>
+          <span class="cmd-name">понизить</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Понизить пользователя — снять роль.</div>
         <div class="cmd-examples">
@@ -1273,7 +1417,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">👤</span>
-          <span class="cmd-name">/role</span>
+          <span class="cmd-name">моя роль</span>
         </div>
         <div class="cmd-desc">Узнать свою роль в группе.</div>
         <div class="cmd-examples">
@@ -1284,7 +1428,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">👥</span>
-          <span class="cmd-name">/admins</span>
+          <span class="cmd-name">список админов</span>
         </div>
         <div class="cmd-desc">Список администраторов группы.</div>
         <div class="cmd-examples">
@@ -1295,7 +1439,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">⚙️</span>
-          <span class="cmd-name">/groupsettings</span><span class="group-only">группа</span>
+          <span class="cmd-name">настройки группы</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Настройки группы — язык, правила и прочее.</div>
         <div class="cmd-examples">
@@ -1305,7 +1449,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">📊</span>
-          <span class="cmd-name">/stats</span>
+          <span class="cmd-name">статистика</span>
         </div>
         <div class="cmd-desc">Статистика активности группы.</div>
         <div class="cmd-examples">
@@ -1316,7 +1460,7 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">👋</span>
-          <span class="cmd-name">/setwelcome</span><span class="group-only">группа</span>
+          <span class="cmd-name">приветствие группы</span><span class="group-only">группа</span>
         </div>
         <div class="cmd-desc">Настроить приветственное сообщение для новых участников. Используй <code>{name}</code> для имени.</div>
         <div class="cmd-examples">
@@ -1342,13 +1486,13 @@
       <div class="cmd-card">
         <div class="cmd-header">
           <span class="cmd-emoji">💬</span>
-          <span class="cmd-name">/ai</span>
+          <span class="cmd-name">поговори со мной</span>
         </div>
         <div class="cmd-desc">Явно начать разговор с AI. В группе — обратись по имени ассистента.</div>
         <div class="cmd-examples">
           <span class="example-pill">поговори со мной</span>
           <span class="example-pill">давай поговорим</span>
-          <span class="example-pill">/chat</span>
+          
         </div>
       </div>
       <div class="cmd-card">
@@ -1370,5 +1514,120 @@
   </div>
 </footer>
 
+<!-- SCROLL TO TOP -->
+<div id="scroll-top" title="Наверх">↑</div>
+
+<script>
+// ── Scroll to top ──────────────────────────────────────────
+const scrollBtn = document.getElementById('scroll-top');
+window.addEventListener('scroll', () => {
+  scrollBtn.classList.toggle('visible', window.scrollY > 400);
+});
+scrollBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+// ── Active nav on scroll ───────────────────────────────────
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a[href^="#"]');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => a.classList.remove('nav-active'));
+      const link = document.querySelector(`nav a[href="#${e.target.id}"]`);
+      if (link) link.classList.add('nav-active');
+    }
+  });
+}, { rootMargin: '-30% 0px -65% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// ── Section counts ─────────────────────────────────────────
+document.querySelectorAll('section').forEach(sec => {
+  const header = sec.querySelector('.section-header');
+  if (!header) return;
+  const cards = sec.querySelectorAll('.cmd-card, .game-card');
+  if (cards.length === 0) return;
+  const badge = document.createElement('span');
+  badge.className = 'section-count';
+  badge.textContent = cards.length + ' команд';
+  header.appendChild(badge);
+});
+
+// ── Copy button ────────────────────────────────────────────
+document.querySelectorAll('.cmd-card').forEach(card => {
+  const nameEl = card.querySelector('.cmd-name');
+  if (!nameEl) return;
+  const btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'копировать';
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(nameEl.textContent.trim()).then(() => {
+      btn.textContent = '✓ скопировано';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'копировать'; btn.classList.remove('copied'); }, 1500);
+    });
+  });
+  card.appendChild(btn);
+});
+
+// ── Search + Filter ────────────────────────────────────────
+const searchInput = document.getElementById('search-input');
+const emptyState  = document.getElementById('search-empty');
+const filterBtns  = document.querySelectorAll('.filter-btn');
+let currentFilter = 'all';
+
+function hasContext(card, filter) {
+  if (filter === 'all') return true;
+  if (filter === 'private') return card.querySelector('.private-only') !== null;
+  if (filter === 'group')   return card.querySelector('.group-only') !== null;
+  return true;
+}
+
+function applyFilters() {
+  const q = searchInput.value.trim().toLowerCase();
+  let totalVisible = 0;
+
+  document.querySelectorAll('section').forEach(sec => {
+    const cards = sec.querySelectorAll('.cmd-card');
+    if (cards.length === 0) return;
+    let sectionVisible = 0;
+
+    cards.forEach(card => {
+      const text = card.textContent.toLowerCase();
+      const matchSearch  = q === '' || text.includes(q);
+      const matchFilter  = hasContext(card, currentFilter);
+      const visible = matchSearch && matchFilter;
+      card.classList.toggle('hidden', !visible);
+      if (visible) sectionVisible++;
+    });
+
+    totalVisible += sectionVisible;
+    // Also handle game-cards (casino) — just show all or hide section
+    const gamecards = sec.querySelectorAll('.game-card');
+    if (gamecards.length > 0 && cards.length === 0) {
+      const text = sec.textContent.toLowerCase();
+      const matchSearch = q === '' || text.includes(q);
+      gamecards.forEach(gc => gc.classList.toggle('hidden', !matchSearch));
+      if (matchSearch) totalVisible += gamecards.length;
+    }
+
+    sec.classList.toggle('all-hidden', sectionVisible === 0 && cards.length > 0);
+  });
+
+  emptyState.classList.toggle('visible', totalVisible === 0);
+}
+
+searchInput.addEventListener('input', applyFilters);
+
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentFilter = btn.dataset.filter;
+    filterBtns.forEach(b => b.className = 'filter-btn');
+    if (currentFilter === 'all')     btn.classList.add('active-all');
+    if (currentFilter === 'private') btn.classList.add('active-private');
+    if (currentFilter === 'group')   btn.classList.add('active-group');
+    applyFilters();
+  });
+});
+</script>
 </body>
 </html>
