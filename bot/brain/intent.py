@@ -161,6 +161,29 @@ PRIVATE_ONLY_INTENTS = {
     Intent.IMAGE_GEN, Intent.VOICE_TO_TEXT,
 }
 
+# Интенты доступные только в групповом чате
+# (требуют присутствия других участников — реплай на пользователя, события группы)
+GROUP_ONLY_INTENTS = {
+    # Отношения — предложение/расставание требует реплая на участника группы
+    Intent.RELATIONSHIP_PROPOSE, Intent.RELATIONSHIP_BREAKUP,
+    Intent.MARRIAGE_PROPOSE, Intent.MARRIAGE_DIVORCE,
+    # Семья — добавление члена семьи через реплай
+    Intent.FAMILY_ADD,
+    # Действия — обнять/поцеловать/и т.д. требуют цели (реплай)
+    Intent.ACTION_DO,
+    # ЧС — блокировка/разблокировка другого пользователя через реплай
+    Intent.BLACKLIST_ADD, Intent.BLACKLIST_REMOVE,
+    # События — привязаны к групповому чату
+    Intent.EVENT_CREATE, Intent.EVENT_LIST, Intent.EVENT_JOIN,
+    # Модерация — только для групп
+    Intent.GROUP_WARN, Intent.GROUP_UNWARN, Intent.GROUP_WARNS, Intent.GROUP_CLEARWARNS,
+    Intent.GROUP_BAN, Intent.GROUP_UNBAN,
+    Intent.GROUP_MUTE, Intent.GROUP_UNMUTE,
+    Intent.GROUP_PROMOTE, Intent.GROUP_DEMOTE,
+    Intent.GROUP_SETTINGS, Intent.GROUP_STATS, Intent.GROUP_WELCOME,
+    Intent.GROUP_ROLE, Intent.GROUP_ADMINS, Intent.GROUP_RULES,
+}
+
 # ---------------------------------------------------------------------------
 # Микросервисы — в группе вызываются ТОЛЬКО при обращении по имени ассистента
 # ---------------------------------------------------------------------------

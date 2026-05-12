@@ -22,7 +22,8 @@
     "banned": "⛔ Your account is banned.",
     "rate_limit": "⏳ Too many requests. Please wait.",
     "only_private": "🔒 This feature is only available in private chat.",
-    "register_first": "📲 Send /start in private chat to register."
+    "register_first": "📲 Send /start in private chat to register.",
+    "only_group": "👥 This feature is only available in group chats."
   },
   "ai_chat": {
     "thinking": "💭 Thinking...",

@@ -1,7 +1,9 @@
 {
   "_note": "Translation pending. Fallback to ru.json.",
   "onboarding": {},
-  "common": {},
+  "common": {
+    "only_group": "👥 Bu aýratynlyk diňe topar söhbetdeşliginde elýeterlidir."
+  },
   "ai_chat": {},
   "economy": {},
   "pets": {},

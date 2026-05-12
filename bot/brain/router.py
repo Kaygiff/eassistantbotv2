@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 from typing import Callable, Awaitable, Any
 
-from bot.brain.intent import Intent, PRIVATE_ONLY_INTENTS, GROUP_ALLOWED_INTENTS
+from bot.brain.intent import Intent, PRIVATE_ONLY_INTENTS, GROUP_ONLY_INTENTS, GROUP_ALLOWED_INTENTS
 from bot.brain.classifier import classify
 from bot.brain.context import BrainContext
 from api.auth.identity import get_or_create_user
@@ -82,6 +82,10 @@ async def process(ctx: BrainContext, bot: Any) -> None:
     # 4. Проверка: личный vs. групповой чат
     if ctx.is_group and ctx.intent in PRIVATE_ONLY_INTENTS:
         await bot.send_message(ctx.chat_id, t(ctx.language, "common.only_private"))
+        return
+
+    if not ctx.is_group and ctx.intent in GROUP_ONLY_INTENTS:
+        await bot.send_message(ctx.chat_id, t(ctx.language, "common.only_group"))
         return
 
     # 5. Голосовое → STT → текст

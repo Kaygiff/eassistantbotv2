@@ -1,7 +1,9 @@
 {
   "_note": "Translation pending. Fallback to ru.json.",
   "onboarding": {},
-  "common": {},
+  "common": {
+    "only_group": "👥 Бул функция топтук чатта гана жеткиликтүү."
+  },
   "ai_chat": {},
   "economy": {},
   "pets": {},

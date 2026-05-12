@@ -1,7 +1,9 @@
 {
   "_note": "Translation pending. Fallback to ru.json.",
   "onboarding": {},
-  "common": {},
+  "common": {
+    "only_group": "👥 Ин функсия танҳо дар чати гурӯҳӣ дастрас аст."
+  },
   "ai_chat": {},
   "economy": {},
   "pets": {},
