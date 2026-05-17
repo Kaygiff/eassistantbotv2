@@ -13,7 +13,7 @@ from world.economy.wallet import credit
 
 REFERRAL_BONUS = int(os.getenv("REFERRAL_BONUS", 100))
 REFERRAL_COMMISSION = int(os.getenv("REFERRAL_COMMISSION_PERCENT", 10))
-BOT_USERNAME = os.getenv("BOT_USERNAME", "eassistant_bot")
+BOT_USERNAME = os.getenv("BOT_USERNAME", "envertassisbot")
 
 
 def generate_ref_code(telegram_id: int) -> str:
