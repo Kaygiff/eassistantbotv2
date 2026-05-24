@@ -106,7 +106,7 @@ async def handle_onboarding_callback(
         await update_user_field(user_id, language=param)
         lang = param
         await set_fsm_state(user_id, STATE_ENTER_BOT_NAME)
-        await set_fsm_data(user_id, {"language": lang})
+        await set_fsm_data(user_id, {"language": lang, "pending_ref_code": data.get("pending_ref_code")})
 
         progress = _progress_line(STATE_ENTER_BOT_NAME)
         await callback.message.edit_text(
@@ -186,6 +186,16 @@ async def handle_onboarding_text(ctx: BrainContext, bot) -> bool:
         data["nickname"] = text
         await set_fsm_data(user_id, data)
 
+        # Обрабатываем реферальный код если есть — пользователь уже в базе
+        pending_ref_code = data.get("pending_ref_code")
+        if pending_ref_code:
+            from world.economy.referral import process_referral
+            try:
+                await process_referral(ctx.telegram_id, pending_ref_code)
+                logger.info(f"[Referral] Processed ref_code={pending_ref_code} for user={ctx.telegram_id}")
+            except Exception as e:
+                logger.warning(f"[Referral] Failed to process ref_code={pending_ref_code}: {e}")
+
         await clear_fsm_state(user_id)
         await clear_fsm_data(user_id)
 
@@ -212,7 +222,6 @@ async def _show_intro(ctx: BrainContext, bot, bot_name: str, nickname: str, lang
         ]
     )
 
-    # profile_created теперь содержит {nickname} и {bot_name} — см. локаль
     await bot.send_message(
         ctx.chat_id,
         t(lang, "onboarding.profile_created", nickname=nickname, bot_name=bot_name),
@@ -251,7 +260,6 @@ async def resume_onboarding(ctx: BrainContext, bot) -> bool:
     lang = data.get("language", "ru")
 
     if state == STATE_CHOOSE_LANGUAGE:
-        # Повторно шлём выбор языка
         await start_onboarding(ctx, bot)
         return True
 
