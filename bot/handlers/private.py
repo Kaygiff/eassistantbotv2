@@ -27,6 +27,16 @@ private_router.message.filter(F.chat.type == "private")
 async def cmd_start(message: Message) -> None:
     ctx = _build_context(message)
 
+    # Извлекаем реферальный код из параметра /start ref_XXXXXXXX
+    args = message.text.split(maxsplit=1)
+    if len(args) > 1 and args[1].startswith("ref_"):
+        ref_code = args[1][4:]  # убираем "ref_"
+        from world.economy.referral import process_referral
+        try:
+            await process_referral(message.from_user.id, ref_code)
+        except Exception:
+            pass
+
     # Если онбординг уже запущен — возобновляем с текущего шага
     from bot.onboarding.flow import is_in_onboarding, resume_onboarding
     if await is_in_onboarding(str(message.from_user.id)):
